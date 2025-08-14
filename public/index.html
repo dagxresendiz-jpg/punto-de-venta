@@ -368,11 +368,15 @@
         }
         nav.classList.remove('nav-open');
       }
-
+      
+      // --- CORRECCIÓN DE COLLAPSIBLES ---
       function setupCollapsibles() {
         document.querySelectorAll(".collapsible").forEach(c => {
-          if (c.dataset.listenerAttached) return;
-          c.addEventListener("click", function() {
+          // Remover event listeners antiguos para evitar duplicados, una forma más segura
+          const newC = c.cloneNode(true);
+          c.parentNode.replaceChild(newC, c);
+          
+          newC.addEventListener("click", function() {
             this.classList.toggle("active");
             const content = this.nextElementSibling;
             if (content.style.maxHeight && content.style.maxHeight !== '0px') {
@@ -381,7 +385,6 @@
               content.style.maxHeight = content.scrollHeight + "px";
             }
           });
-          c.dataset.listenerAttached = 'true';
         });
       }
       
@@ -465,7 +468,10 @@
       async function cargarToppings() { try { const data = await fetchAPI('/api/toppings'); renderizarLista(data, 'Topping', ['nombre', 'precio']); } catch (e) { renderizarLista([], 'Topping', ['nombre', 'precio']); } }
       async function cargarJarabes() { try { const data = await fetchAPI('/api/jarabes'); renderizarLista(data, 'Jarabe', ['nombre', 'precio']); } catch (e) { renderizarLista([], 'Jarabe', ['nombre', 'precio']); } }
       async function cargarClientes() { try { const data = await fetchAPI('/api/clientes'); renderizarLista(data, 'Cliente', ['nombre', 'telefono']); } catch (e) { renderizarLista([], 'Cliente', ['nombre', 'telefono']); } }
-      async function cargarOpcionesParaVenta() { await Promise.all([ cargarProductosParaVenta(), cargarToppingsParaVenta(), cargarJarabesParaVenta(), cargarClientesParaVenta() ]); }
+      async function cargarOpcionesParaVenta() { 
+          await Promise.all([ cargarProductosParaVenta(), cargarToppingsParaVenta(), cargarJarabesParaVenta(), cargarClientesParaVenta() ]);
+          setupCollapsibles(); // Llamar aquí para asegurarse de que los botones existan
+      }
       
       async function cargarDataParaSelector(url, selectId, valueField, textField) {
         try {

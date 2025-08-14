@@ -1,0 +1,32 @@
+[
+  {
+    "nombre": "NUTELLA",
+    "precio": 5,
+    "id": 1754784039099
+  },
+  {
+    "nombre": "NUEZ",
+    "precio": 5,
+    "id": 1754784048264
+  },
+  {
+    "nombre": "CHISPAS DE CHOCOLATE",
+    "precio": 5,
+    "id": 1755050525037
+  },
+  {
+    "nombre": "CHISPAS DE COLORES",
+    "precio": 5,
+    "id": 1755050551883
+  },
+  {
+    "nombre": "CREMA DE CHANTILLY",
+    "precio": 5,
+    "id": 1755052527673
+  },
+  {
+    "nombre": "PAY DE QUESO ",
+    "precio": 20,
+    "id": 1755059676151
+  }
+]

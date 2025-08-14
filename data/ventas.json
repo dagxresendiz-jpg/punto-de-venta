@@ -1,0 +1,801 @@
+[
+  {
+    "id": 1754787047269,
+    "fecha": "2025-08-10T00:50:47.245Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "nombre": "NUTELLA",
+            "precio": 5,
+            "id": 1754784039099
+          }
+        ],
+        "jarabes": [
+          {
+            "nombre": "CHOCOLATE",
+            "precio": 5,
+            "id": 1754784061299
+          }
+        ],
+        "total": 60
+      }
+    ],
+    "total": 60
+  },
+  {
+    "id": 1754787168025,
+    "fecha": "2025-08-10T00:52:48.019Z",
+    "items": [
+      {
+        "productoId": 1754784023453,
+        "productoNombre": "PAY DE MANGO",
+        "cantidad": 1,
+        "toppings": [],
+        "jarabes": [],
+        "total": 45
+      },
+      {
+        "productoId": 1754784083555,
+        "productoNombre": "CARLOTA DE LIMON",
+        "cantidad": 1,
+        "toppings": [],
+        "jarabes": [],
+        "total": 50
+      },
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "nombre": "NUTELLA",
+            "precio": 5,
+            "id": 1754784039099
+          },
+          {
+            "nombre": "NUEZ",
+            "precio": 5,
+            "id": 1754784048264
+          }
+        ],
+        "jarabes": [
+          {
+            "nombre": "CHOCOLATE",
+            "precio": 5,
+            "id": 1754784061299
+          }
+        ],
+        "total": 65
+      }
+    ],
+    "total": 160
+  },
+  {
+    "id": 1754787578892,
+    "fecha": "2025-08-10T00:59:38.886Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "nombre": "NUTELLA",
+            "precio": 5,
+            "id": 1754784039099
+          },
+          {
+            "nombre": "NUEZ",
+            "precio": 5,
+            "id": 1754784048264
+          }
+        ],
+        "jarabes": [],
+        "total": 60
+      }
+    ],
+    "total": 60
+  },
+  {
+    "id": 1754788015870,
+    "fecha": "2025-08-10T01:06:55.845Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "nombre": "NUTELLA",
+            "precio": 5,
+            "id": 1754784039099
+          }
+        ],
+        "jarabes": [
+          {
+            "nombre": "CHOCOLATE",
+            "precio": 5,
+            "id": 1754784061299
+          }
+        ],
+        "total": 60
+      }
+    ],
+    "total": 60
+  },
+  {
+    "id": 1754789402066,
+    "fecha": "2025-08-10T01:30:02.060Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [],
+        "jarabes": [],
+        "total": 50
+      }
+    ],
+    "total": 50
+  },
+  {
+    "id": 1754789584305,
+    "fecha": "2025-08-10T01:33:04.300Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [],
+        "jarabes": [],
+        "total": 50
+      }
+    ],
+    "total": 50
+  },
+  {
+    "id": 1754938731608,
+    "fecha": "2025-08-11T18:58:50.796Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "nombre": "NUTELLA",
+            "precio": 5,
+            "id": 1754784039099
+          }
+        ],
+        "jarabes": [
+          {
+            "nombre": "CHOCOLATE",
+            "precio": 5,
+            "id": 1754784061299
+          }
+        ],
+        "total": 60
+      }
+    ],
+    "total": 60
+  },
+  {
+    "id": 1754939068831,
+    "fecha": "2025-08-11T19:04:28.827Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [],
+        "jarabes": [],
+        "total": 50
+      }
+    ],
+    "total": 50
+  },
+  {
+    "id": 1754939803231,
+    "fecha": "2025-08-11T19:16:43.228Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          }
+        ],
+        "jarabes": [
+          {
+            "id": 1754784068109,
+            "nombre": "LECHERA",
+            "precio": 5
+          }
+        ],
+        "total": 60
+      }
+    ],
+    "total": 60
+  },
+  {
+    "id": 1754940483986,
+    "fecha": "2025-08-11T19:28:03.982Z",
+    "items": [
+      {
+        "productoId": 1754784023453,
+        "productoNombre": "PAY DE MANGO",
+        "cantidad": 1,
+        "toppings": [],
+        "jarabes": [],
+        "total": 45
+      },
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          },
+          {
+            "id": 1754784048264,
+            "nombre": "NUEZ",
+            "precio": 5
+          }
+        ],
+        "jarabes": [],
+        "total": 60
+      }
+    ],
+    "total": 105
+  },
+  {
+    "id": 1754950787567,
+    "fecha": "2025-08-11T22:19:47.563Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          }
+        ],
+        "jarabes": [
+          {
+            "id": 1754784068109,
+            "nombre": "LECHERA",
+            "precio": 5
+          }
+        ],
+        "total": 60
+      }
+    ],
+    "total": 60
+  },
+  {
+    "id": 1754950793058,
+    "fecha": "2025-08-11T22:19:53.054Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          }
+        ],
+        "jarabes": [
+          {
+            "id": 1754784068109,
+            "nombre": "LECHERA",
+            "precio": 5
+          }
+        ],
+        "total": 60
+      }
+    ],
+    "total": 60
+  },
+  {
+    "id": 1754950804289,
+    "fecha": "2025-08-11T22:20:04.286Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          }
+        ],
+        "jarabes": [
+          {
+            "id": 1754784068109,
+            "nombre": "LECHERA",
+            "precio": 5
+          }
+        ],
+        "total": 60
+      }
+    ],
+    "total": 60
+  },
+  {
+    "id": 1755049490656,
+    "fecha": "2025-08-13T01:44:49.493Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          }
+        ],
+        "jarabes": [],
+        "total": 55
+      }
+    ],
+    "total": 55
+  },
+  {
+    "id": 1755050048934,
+    "fecha": "2025-08-13T01:54:08.929Z",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          }
+        ],
+        "jarabes": [],
+        "total": 55
+      }
+    ],
+    "total": 55
+  },
+  {
+    "id": 1755052616616,
+    "fecha": "2025-08-13T02:36:56.616Z",
+    "clienteId": null,
+    "clienteNombre": "Público General",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          }
+        ],
+        "jarabes": [],
+        "total": 55
+      }
+    ],
+    "subtotal": 55,
+    "costoDomicilio": 30,
+    "total": 85,
+    "metodoPago": "Efectivo"
+  },
+  {
+    "id": 1755052679928,
+    "fecha": "2025-08-13T02:37:59.928Z",
+    "clienteId": null,
+    "clienteNombre": "Público General",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784048264,
+            "nombre": "NUEZ",
+            "precio": 5
+          },
+          {
+            "id": 1755050525037,
+            "nombre": "CHISPAS DE CHOCOLATE",
+            "precio": 5
+          }
+        ],
+        "jarabes": [],
+        "total": 60
+      }
+    ],
+    "subtotal": 60,
+    "costoDomicilio": 0,
+    "total": 60,
+    "metodoPago": "Efectivo"
+  },
+  {
+    "id": 1755052714599,
+    "fecha": "2025-08-13T02:38:34.599Z",
+    "clienteId": null,
+    "clienteNombre": "Público General",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [],
+        "jarabes": [],
+        "total": 50
+      },
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [],
+        "jarabes": [],
+        "total": 50
+      }
+    ],
+    "subtotal": 100,
+    "costoDomicilio": 0,
+    "total": 100,
+    "metodoPago": "Efectivo"
+  },
+  {
+    "id": 1755053221144,
+    "fecha": "2025-08-13T02:47:01.144Z",
+    "clienteId": 1755052582588,
+    "clienteNombre": "ERICK",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          },
+          {
+            "id": 1755050525037,
+            "nombre": "CHISPAS DE CHOCOLATE",
+            "precio": 5
+          },
+          {
+            "id": 1755050551883,
+            "nombre": "CHISPAS DE COLORES",
+            "precio": 5
+          }
+        ],
+        "jarabes": [],
+        "total": 65
+      }
+    ],
+    "subtotal": 65,
+    "costoDomicilio": 30,
+    "total": 95,
+    "metodoPago": "Efectivo"
+  },
+  {
+    "id": 1755053602016,
+    "fecha": "2025-08-13T02:53:22.016Z",
+    "clienteId": 1755052582588,
+    "clienteNombre": "ERICK",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          },
+          {
+            "id": 1754784048264,
+            "nombre": "NUEZ",
+            "precio": 5
+          }
+        ],
+        "jarabes": [
+          {
+            "id": 1754784068109,
+            "nombre": "LECHERA",
+            "precio": 5
+          }
+        ],
+        "total": 65
+      }
+    ],
+    "subtotal": 65,
+    "costoDomicilio": 0,
+    "total": 65,
+    "metodoPago": "Efectivo"
+  },
+  {
+    "id": 1755054070941,
+    "fecha": "2025-08-13T03:01:10.941Z",
+    "clienteId": 1755052582588,
+    "clienteNombre": "ERICK",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          }
+        ],
+        "jarabes": [],
+        "total": 55
+      }
+    ],
+    "subtotal": 55,
+    "costoDomicilio": 30,
+    "total": 85,
+    "metodoPago": "Efectivo"
+  },
+  {
+    "id": 1755054093082,
+    "fecha": "2025-08-13T03:01:33.082Z",
+    "clienteId": 1755053665264,
+    "clienteNombre": "FANY",
+    "items": [
+      {
+        "productoId": 1754783697344,
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [],
+        "jarabes": [],
+        "total": 50
+      }
+    ],
+    "subtotal": 50,
+    "costoDomicilio": 30,
+    "total": 80,
+    "metodoPago": "Efectivo"
+  },
+  {
+    "id": 1755059459685,
+    "fecha": "2025-08-13T04:30:59.685Z",
+    "clienteId": 1755053665264,
+    "clienteNombre": "FANY",
+    "items": [
+      {
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1754784039099,
+            "nombre": "NUTELLA",
+            "precio": 5
+          },
+          {
+            "id": 1754784048264,
+            "nombre": "NUEZ",
+            "precio": 5
+          }
+        ],
+        "jarabes": [
+          {
+            "id": 1754784061299,
+            "nombre": "CHOCOLATE",
+            "precio": 5
+          }
+        ],
+        "total": 65
+      },
+      {
+        "productoNombre": "PAY DE MANGO",
+        "cantidad": 1,
+        "toppings": [],
+        "jarabes": [],
+        "total": 45
+      }
+    ],
+    "subtotal": 110,
+    "costoDomicilio": 30,
+    "total": 140,
+    "metodoPago": "Efectivo"
+  },
+  {
+    "id": 1755059729748,
+    "fecha": "2025-08-13T04:35:29.748Z",
+    "clienteId": 1755054124136,
+    "clienteNombre": "MORTEX",
+    "items": [
+      {
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "id": 1755059676151,
+            "nombre": "PAY DE QUESO ",
+            "precio": 20
+          }
+        ],
+        "jarabes": [],
+        "total": 70
+      }
+    ],
+    "subtotal": 70,
+    "costoDomicilio": 30,
+    "total": 100,
+    "metodoPago": "Efectivo"
+  },
+  {
+    "id": 1755101444698,
+    "fecha": "2025-08-13T16:10:44.698Z",
+    "clienteId": 1755054124136,
+    "clienteNombre": "MORTEX",
+    "items": [
+      {
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "nombre": "NUEZ"
+          }
+        ],
+        "jarabes": [],
+        "nota": "B5",
+        "total": 55
+      }
+    ],
+    "subtotal": 55,
+    "costoDomicilio": 0,
+    "total": 55,
+    "metodoPago": "Efectivo",
+    "vendedorId": 1755098829660,
+    "vendedorUsername": "ERICK"
+  },
+  {
+    "id": 1755102446666,
+    "fecha": "2025-08-13T16:27:26.666Z",
+    "clienteId": 1755052582588,
+    "clienteNombre": "ERICK",
+    "items": [
+      {
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "nombre": "NUEZ"
+          }
+        ],
+        "jarabes": [],
+        "nota": "BASE 4",
+        "total": 55
+      }
+    ],
+    "subtotal": 55,
+    "costoDomicilio": 30,
+    "total": 85,
+    "metodoPago": "Efectivo",
+    "vendedorId": 1755098829660,
+    "vendedorUsername": "ERICK"
+  },
+  {
+    "id": 1755105886316,
+    "fecha": "2025-08-13T17:24:46.316Z",
+    "clienteId": 1755052582588,
+    "clienteNombre": "ERICK",
+    "items": [
+      {
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "nombre": "NUTELLA"
+          },
+          {
+            "nombre": "CHISPAS DE COLORES"
+          }
+        ],
+        "jarabes": [],
+        "nota": "BASE 4",
+        "total": 60
+      }
+    ],
+    "subtotal": 60,
+    "costoDomicilio": 30,
+    "total": 90,
+    "metodoPago": "Efectivo",
+    "vendedorId": 1755098829660,
+    "vendedorUsername": "ERICK"
+  },
+  {
+    "id": 1755106411337,
+    "fecha": "2025-08-13T17:33:31.337Z",
+    "clienteId": null,
+    "clienteNombre": "Público General",
+    "items": [
+      {
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "nombre": "NUTELLA"
+          },
+          {
+            "nombre": "NUEZ"
+          }
+        ],
+        "jarabes": [
+          {
+            "nombre": "CHOCOLATE"
+          }
+        ],
+        "nota": "X7",
+        "total": 65
+      }
+    ],
+    "subtotal": 65,
+    "costoDomicilio": 20,
+    "total": 85,
+    "metodoPago": "Efectivo",
+    "vendedorId": 1755098829660,
+    "vendedorUsername": "ERICK"
+  },
+  {
+    "id": 1755117006239,
+    "fecha": "2025-08-13T20:30:06.239Z",
+    "clienteId": 1755052582588,
+    "clienteNombre": "ERICK",
+    "items": [
+      {
+        "productoNombre": "FRESAS CON CREMA",
+        "cantidad": 1,
+        "toppings": [
+          {
+            "nombre": "NUTELLA"
+          },
+          {
+            "nombre": "NUEZ"
+          }
+        ],
+        "jarabes": [],
+        "nota": "base 4",
+        "total": 60
+      }
+    ],
+    "subtotal": 60,
+    "costoDomicilio": 30,
+    "total": 90,
+    "metodoPago": "Efectivo",
+    "vendedorId": 1755098829660,
+    "vendedorUsername": "ERICK"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "username": "admin",
+    "password": "$2b$10$9zWeL3.UWjNl6wcus3.RZ.7Pztf.k4Y.e7igugNEYLqMNkR4Vxys6",
+    "role": "admin"
+  },
+  {
+    "id": 2,
+    "username": "vendedor",
+    "password": "$2b$10$wT0BI8.PzP89xV/j.rF.I.N.Sg3uYv.A7/N2a2m8K0U5x0g6hZ/aS",
+    "role": "seller"
+  },
+  {
+    "id": 1755098829660,
+    "username": "ERICK",
+    "password": "$2b$10$C5E7eMNUEjZdvryoHc4WXeAFQd5JGhHjTLb2NA1yHQ4/utfxHkuCK",
+    "role": "admin"
+  },
+  {
+    "id": 1755101815810,
+    "username": "YAKY",
+    "password": "$2b$10$/M5cIt2eS180FrT9xovRf.VcIMFh0X6RgECVuJKVtFRWNY5UDJa0K",
+    "role": "seller"
+  },
+  {
+    "id": 1755101826601,
+    "username": "FANY",
+    "password": "$2b$10$GpSie69PBr2pT3TmpulPJefQV5TkFdToo.2sB0jMnsct5EOJ7/wbe",
+    "role": "seller"
+  }
+]

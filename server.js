@@ -78,31 +78,26 @@ app.post('/auth/login', async (req, res) => {
 app.use('/api', verificarToken);
 
 // --- RUTAS DE API ---
-// Productos (Solo Admin)
 app.get('/api/productos', async (req, res) => res.json(await Producto.find()));
 app.post('/api/productos', esAdmin, async (req, res) => res.status(201).json(await Producto.create(req.body)));
 app.put('/api/productos/:id', esAdmin, async (req, res) => res.json(await Producto.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 app.delete('/api/productos/:id', esAdmin, async (req, res) => { await Producto.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// Toppings (Solo Admin)
 app.get('/api/toppings', async (req, res) => res.json(await Topping.find()));
 app.post('/api/toppings', esAdmin, async (req, res) => res.status(201).json(await Topping.create(req.body)));
 app.put('/api/toppings/:id', esAdmin, async (req, res) => res.json(await Topping.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 app.delete('/api/toppings/:id', esAdmin, async (req, res) => { await Topping.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// Jarabes (Solo Admin)
 app.get('/api/jarabes', async (req, res) => res.json(await Jarabe.find()));
 app.post('/api/jarabes', esAdmin, async (req, res) => res.status(201).json(await Jarabe.create(req.body)));
 app.put('/api/jarabes/:id', esAdmin, async (req, res) => res.json(await Jarabe.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 app.delete('/api/jarabes/:id', esAdmin, async (req, res) => { await Jarabe.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// Clientes (Solo Admin)
 app.get('/api/clientes', async (req, res) => res.json(await Cliente.find()));
 app.post('/api/clientes', esAdmin, async (req, res) => res.status(201).json(await Cliente.create(req.body)));
 app.put('/api/clientes/:id', esAdmin, async (req, res) => res.json(await Cliente.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 app.delete('/api/clientes/:id', esAdmin, async (req, res) => { await Cliente.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// Ventas (Abierto a todos los usuarios logueados, excepto DELETE)
 app.post('/api/ventas', async (req, res) => {
     let nuevaVentaData = req.body;
     nuevaVentaData.vendedorId = req.user.id;
@@ -113,7 +108,16 @@ app.post('/api/ventas', async (req, res) => {
 app.get('/api/ventas', async (req, res) => res.json(await Venta.find()));
 app.delete('/api/ventas/:id', esAdmin, async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// Usuarios (Solo Admin)
+app.get('/api/ventas/:id', async (req, res) => {
+    try {
+        const venta = await Venta.findById(req.params.id);
+        if (!venta) return res.status(404).json({ error: 'Venta no encontrada' });
+        res.json(venta);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al buscar la venta' });
+    }
+});
+
 app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find().select('-password')));
 app.post('/api/usuarios', esAdmin, async (req, res) => {
     const { username, password, role } = req.body;

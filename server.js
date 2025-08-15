@@ -1,4 +1,4 @@
-// server.js - Versión Final, Completa y Verificada
+// server.js - Versión Final, Corregida y Verificada
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -32,6 +32,7 @@ const createSchema = (definition) => new mongoose.Schema(definition, {
         }
     }
 });
+
 const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number }));
 const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number }));
 const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number }));
@@ -77,24 +78,32 @@ app.post('/auth/login', async (req, res) => {
 // --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
-// --- FUNCIÓN GENÉRICA PARA CREAR RUTAS CRUD ---
-function crearRutasCRUD(modelo, nombre, esProtegido = false) {
-    const router = express.Router();
-    const middlewares = esProtegido ? [esAdmin] : [];
-    router.get('/', async (req, res) => res.json(await modelo.find()));
-    router.post('/', ...middlewares, async (req, res) => res.status(201).json(await modelo.create(req.body)));
-    router.put('/:id', ...middlewares, async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-    router.delete('/:id', ...middlewares, async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
-    app.use(`/api/${nombre}`, router);
-}
+// --- RUTAS DE API ---
+// Productos (Solo Admin)
+app.get('/api/productos', async (req, res) => res.json(await Producto.find()));
+app.post('/api/productos', esAdmin, async (req, res) => res.status(201).json(await Producto.create(req.body)));
+app.put('/api/productos/:id', esAdmin, async (req, res) => res.json(await Producto.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+app.delete('/api/productos/:id', esAdmin, async (req, res) => { await Producto.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// --- CREACIÓN DE RUTAS DE API ---
-crearRutasCRUD(Producto, 'productos', true);
-crearRutasCRUD(Topping, 'toppings', true);
-crearRutasCRUD(Jarabe, 'jarabes', true);
-crearRutasCRUD(Cliente, 'clientes', true);
+// Toppings (Solo Admin)
+app.get('/api/toppings', async (req, res) => res.json(await Topping.find()));
+app.post('/api/toppings', esAdmin, async (req, res) => res.status(201).json(await Topping.create(req.body)));
+app.put('/api/toppings/:id', esAdmin, async (req, res) => res.json(await Topping.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+app.delete('/api/toppings/:id', esAdmin, async (req, res) => { await Topping.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// --- RUTAS ESPECÍFICAS ---
+// Jarabes (Solo Admin)
+app.get('/api/jarabes', async (req, res) => res.json(await Jarabe.find()));
+app.post('/api/jarabes', esAdmin, async (req, res) => res.status(201).json(await Jarabe.create(req.body)));
+app.put('/api/jarabes/:id', esAdmin, async (req, res) => res.json(await Jarabe.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+app.delete('/api/jarabes/:id', esAdmin, async (req, res) => { await Jarabe.findByIdAndDelete(req.params.id); res.status(204).send(); });
+
+// Clientes (Solo Admin)
+app.get('/api/clientes', async (req, res) => res.json(await Cliente.find()));
+app.post('/api/clientes', esAdmin, async (req, res) => res.status(201).json(await Cliente.create(req.body)));
+app.put('/api/clientes/:id', esAdmin, async (req, res) => res.json(await Cliente.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+app.delete('/api/clientes/:id', esAdmin, async (req, res) => { await Cliente.findByIdAndDelete(req.params.id); res.status(204).send(); });
+
+// Ventas (Abierto a todos los usuarios logueados, excepto DELETE)
 app.post('/api/ventas', async (req, res) => {
     let nuevaVentaData = req.body;
     nuevaVentaData.vendedorId = req.user.id;
@@ -105,9 +114,8 @@ app.post('/api/ventas', async (req, res) => {
 app.get('/api/ventas', async (req, res) => res.json(await Venta.find()));
 app.delete('/api/ventas/:id', esAdmin, async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// --- RUTAS DE GESTIÓN DE USUARIOS (LAS QUE FALTABAN) ---
+// Usuarios (Solo Admin)
 app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find().select('-password')));
-
 app.post('/api/usuarios', esAdmin, async (req, res) => {
     const { username, password, role } = req.body;
     if (!username || !password || !role) return res.status(400).json({ error: 'Usuario, contraseña y rol son requeridos.' });
@@ -116,7 +124,6 @@ app.post('/api/usuarios', esAdmin, async (req, res) => {
     const nuevoUsuario = await Usuario.create({ username, password: hashedPassword, role });
     res.status(201).json({id: nuevoUsuario._id, username: nuevoUsuario.username, role: nuevoUsuario.role});
 });
-
 app.put('/api/usuarios/:id', esAdmin, async (req, res) => {
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: 'Se requiere una nueva contraseña.' });
@@ -125,7 +132,6 @@ app.put('/api/usuarios/:id', esAdmin, async (req, res) => {
     if (!usuarioActualizado) return res.status(404).json({error: 'Usuario no encontrado'});
     res.json({ message: 'Contraseña actualizada' });
 });
-
 app.delete('/api/usuarios/:id', esAdmin, async (req, res) => {
     if (req.params.id === req.user.id) return res.status(403).json({ error: 'No puedes eliminarte a ti mismo.' });
     await Usuario.findByIdAndDelete(req.params.id);

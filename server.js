@@ -1,4 +1,4 @@
-// server.js - Versión Final, Corregida y Verificada
+// server.js - Versión Final, Explícita y Corregida
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -32,7 +32,6 @@ const createSchema = (definition) => new mongoose.Schema(definition, {
         }
     }
 });
-
 const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number }));
 const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number }));
 const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number }));
@@ -137,7 +136,6 @@ app.delete('/api/usuarios/:id', esAdmin, async (req, res) => {
     await Usuario.findByIdAndDelete(req.params.id);
     res.status(204).send();
 });
-
 
 // --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
 app.get('*', (req, res) => {

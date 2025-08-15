@@ -19,9 +19,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color-dark); -webkit-font-smoothing: antialiased; }
-    
     .app-wrapper { display: flex; min-height: 100vh; }
-    
     .sidebar { width: 250px; background-color: var(--card-background); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 1.5rem 1rem; transition: transform 0.3s ease; }
     .sidebar-header { text-align: center; margin-bottom: 2rem; font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
     .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
@@ -31,16 +29,13 @@
     .nav-link svg { width: 20px; height: 20px; stroke-width: 2; }
     #logout-button { margin-top: auto; background-color: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); font-weight: 500; display: flex; align-items: center; gap: 0.75rem; justify-content: center; width: 100%; }
     #logout-button:hover { background-color: var(--danger-color); color: white; }
-
     .main-content { flex: 1; display: flex; flex-direction: column; }
     .main-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--card-background); border-bottom: 1px solid var(--border-color); }
     .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
-    
     main { padding: 2rem; overflow-y: auto; }
     section { display: none; }
     section.active { display: block; animation: fadeIn 0.4s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
     .card { background-color: var(--card-background); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow); }
     .card-header { margin-bottom: 1.5rem; }
     .card-header h2 { font-size: 1.25rem; font-weight: 600; border: none; padding: 0; }
@@ -54,41 +49,40 @@
     button[type="submit"], #btnAgregarVenta, #btnRegistrarVenta { background-color: var(--primary-color); color: white; }
     .btn-eliminar-item, .btn-eliminar-venta { background-color: var(--danger-color); color: white; }
     .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; }
-    
     #listaVentaActual li { flex-direction: column; align-items: stretch; }
     #listaVentaActual .item-info { width: 100%; display: flex; justify-content: space-between; align-items: center; }
     #listaVentaActual .item-nota { font-size: 0.8em; color: #555; margin-top: 4px; padding-left: 10px; border-left: 2px solid #eee; width: calc(100% - 12px); }
-
     #opcion-domicilio { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; }
     #opcion-domicilio > div { display: flex; align-items: center; gap: 0.5rem; }
     #opcion-domicilio input[type="checkbox"] { width: auto; margin: 0; }
     #opcion-domicilio input[type="number"] { width: 100px; margin: 0; padding: 0.5rem; }
-    
     .table-container { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
     .action-btn { background: none; border: none; cursor: pointer; padding: 0.25rem; }
     .action-btn svg { width: 20px; height: 20px; color: var(--text-color-light); }
     .action-btn:hover svg { color: var(--primary-color); }
-    
     #login-container { max-width: 400px; margin: 15vh auto; background: white; box-shadow: var(--shadow); border-radius: 12px; }
     #login-error { color: var(--danger-color); min-height: 1.2em; font-size: 0.9em; }
-
     .collapsible-wrapper { margin-bottom: 1rem; }
     .collapsible { width: 100%; text-align: left; font-weight: 500; background-color: #f1f5f9; border: 1px solid var(--border-color); border-radius: 8px; }
     .content-collapsible { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; }
     .options-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem; }
     .option-btn { padding: 0.5rem 1rem; font-weight: 500; background-color: #f8fafc; border: 1px solid var(--border-color); }
     .option-btn.selected { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
-    
     #btnGenerarReporte { background-color: var(--info-color); color: white; }
     #btnGenerarPDF { background-color: #E53E3E; color: white; }
     #btnEnviarWhatsapp { background-color: #25D366; color: white; }
-    
     #historial-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
     .chart-container { position: relative; height: 350px; }
     #totalPeriodoHistorial { font-weight: bold; font-size: 1.3em; text-align: center; margin-top: 1.5rem; padding: 1rem; background-color: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 8px; }
-    
+    #filtros-historial { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end; }
+    #filtros-historial label { margin-bottom: 0.25rem; font-size: 0.9em; }
+    #botones-periodo { display: flex; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+    #botones-periodo button { flex: 1; border: none; border-radius: 0; background-color: var(--card-background); color: var(--text-color-light); padding: 0.75rem; }
+    #botones-periodo button:not(:last-child) { border-right: 1px solid var(--border-color); }
+    #botones-periodo button.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+
     @media (max-width: 992px) {
       .menu-toggle { display: block; }
       .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transform: translateX(-100%); }
@@ -260,6 +254,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // --- REFERENCIAS A ELEMENTOS DEL DOM ---
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
       const loginForm = document.getElementById('login-form');
@@ -277,6 +272,7 @@
       let miGraficaDeVentas, miGraficaDeProductos;
       const COSTO_DOMICILIO_PREDET = 30.00; 
 
+      // --- LÓGICA DE AUTENTICACIÓN Y NAVEGACIÓN MÓVIL ---
       menuToggle.addEventListener('click', () => nav.classList.toggle('nav-open'));
       
       function showApp() {

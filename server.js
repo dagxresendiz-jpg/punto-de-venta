@@ -1,4 +1,4 @@
-// server.js - Versión Final, Completa y Corregida
+// server.js - Versión con ruta para reimpresión de tickets
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -6,44 +6,22 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
-// --- CONFIGURACIÓN ---
+// ... (Configuración, Conexión a DB, y Modelos se mantienen igual)
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = 'tu_secreto_super_secreto_y_largo_y_diferente';
 const MONGO_URI = process.env.MONGO_URI;
-
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-
-// --- CONEXIÓN A LA BASE DE DATOS ---
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('Conexión a MongoDB Atlas exitosa.'))
-  .catch(err => console.error('Error al conectar a MongoDB:', err));
-
-// --- MODELOS DE DATOS ---
-const createSchema = (definition) => new mongoose.Schema(definition, { 
-    timestamps: true, 
-    versionKey: false,
-    toJSON: {
-        transform: function (doc, ret) {
-            ret.id = ret._id;
-            delete ret._id;
-        }
-    }
-});
+mongoose.connect(MONGO_URI).then(() => console.log('Conexión a MongoDB Atlas exitosa.')).catch(err => console.error('Error al conectar a MongoDB:', err));
+const createSchema = (definition) => new mongoose.Schema(definition, { timestamps: true, versionKey: false, toJSON: { transform: function (doc, ret) { ret.id = ret._id; delete ret._id; } }});
 const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number }));
 const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number }));
 const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number }));
 const Cliente = mongoose.model('Cliente', createSchema({ nombre: String, telefono: String, direccion: String }));
 const Usuario = mongoose.model('Usuario', createSchema({ username: { type: String, unique: true, required: true }, password: { type: String, required: true }, role: { type: String, required: true }}));
-const Venta = mongoose.model('Venta', createSchema({
-    fecha: Date, clienteId: String, clienteNombre: String, items: Array,
-    subtotal: Number, costoDomicilio: Number, total: Number, metodoPago: String,
-    vendedorId: String, vendedorUsername: String
-}));
-
-// --- MIDDLEWARES DE SEGURIDAD ---
+const Venta = mongoose.model('Venta', createSchema({ fecha: Date, clienteId: String, clienteNombre: String, items: Array, subtotal: Number, costoDomicilio: Number, total: Number, metodoPago: String, vendedorId: String, vendedorUsername: String }));
 function verificarToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -60,8 +38,6 @@ function esAdmin(req, res, next) {
     }
     next();
 }
-
-// --- RUTAS DE AUTENTICACIÓN (PÚBLICAS) ---
 app.post('/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -73,36 +49,27 @@ app.post('/auth/login', async (req, res) => {
         res.json({ message: 'Login exitoso', token });
     } catch (error) { res.status(500).send('Error en el servidor'); }
 });
-
-// --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
 // --- RUTAS DE API ---
-// Productos (Solo Admin)
 app.get('/api/productos', async (req, res) => res.json(await Producto.find()));
 app.post('/api/productos', esAdmin, async (req, res) => res.status(201).json(await Producto.create(req.body)));
 app.put('/api/productos/:id', esAdmin, async (req, res) => res.json(await Producto.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 app.delete('/api/productos/:id', esAdmin, async (req, res) => { await Producto.findByIdAndDelete(req.params.id); res.status(204).send(); });
-
-// Toppings (Solo Admin)
 app.get('/api/toppings', async (req, res) => res.json(await Topping.find()));
 app.post('/api/toppings', esAdmin, async (req, res) => res.status(201).json(await Topping.create(req.body)));
 app.put('/api/toppings/:id', esAdmin, async (req, res) => res.json(await Topping.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 app.delete('/api/toppings/:id', esAdmin, async (req, res) => { await Topping.findByIdAndDelete(req.params.id); res.status(204).send(); });
-
-// Jarabes (Solo Admin)
 app.get('/api/jarabes', async (req, res) => res.json(await Jarabe.find()));
 app.post('/api/jarabes', esAdmin, async (req, res) => res.status(201).json(await Jarabe.create(req.body)));
 app.put('/api/jarabes/:id', esAdmin, async (req, res) => res.json(await Jarabe.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 app.delete('/api/jarabes/:id', esAdmin, async (req, res) => { await Jarabe.findByIdAndDelete(req.params.id); res.status(204).send(); });
-
-// Clientes (Solo Admin)
 app.get('/api/clientes', async (req, res) => res.json(await Cliente.find()));
 app.post('/api/clientes', esAdmin, async (req, res) => res.status(201).json(await Cliente.create(req.body)));
 app.put('/api/clientes/:id', esAdmin, async (req, res) => res.json(await Cliente.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 app.delete('/api/clientes/:id', esAdmin, async (req, res) => { await Cliente.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// Ventas
+// --- RUTAS DE VENTAS (CON LA NUEVA RUTA GET POR ID) ---
 app.post('/api/ventas', async (req, res) => {
     let nuevaVentaData = req.body;
     nuevaVentaData.vendedorId = req.user.id;
@@ -113,21 +80,18 @@ app.post('/api/ventas', async (req, res) => {
 app.get('/api/ventas', async (req, res) => res.json(await Venta.find()));
 app.delete('/api/ventas/:id', esAdmin, async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// --- NUEVA RUTA PARA OBTENER UNA VENTA INDIVIDUAL ---
+// NUEVA RUTA PARA REIMPRIMIR
 app.get('/api/ventas/:id', async (req, res) => {
     try {
         const venta = await Venta.findById(req.params.id);
-        if (!venta) {
-            return res.status(404).json({ error: 'Venta no encontrada' });
-        }
+        if (!venta) return res.status(404).json({ error: 'Venta no encontrada' });
         res.json(venta);
     } catch (error) {
         res.status(500).json({ error: 'Error al buscar la venta' });
     }
 });
 
-
-// Usuarios (Solo Admin)
+// --- RUTAS DE USUARIOS ---
 app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find().select('-password')));
 app.post('/api/usuarios', esAdmin, async (req, res) => {
     const { username, password, role } = req.body;
@@ -151,8 +115,7 @@ app.delete('/api/usuarios/:id', esAdmin, async (req, res) => {
     res.status(204).send();
 });
 
-
-// --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
+// --- RUTA "CATCH-ALL" ---
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

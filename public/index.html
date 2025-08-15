@@ -11,7 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ... (Todos los estilos se mantienen igual) ... */
+    /* ... (Todos los estilos se mantienen igual que en la versión anterior) ... */
     :root {
       --primary-color: #4f46e5; --primary-hover: #4338ca; --danger-color: #ef4444; --danger-hover: #dc2626;
       --success-color: #22c55e; --info-color: #38bdf8; --background-color: #f8fafc; --card-background: #ffffff;
@@ -261,7 +261,6 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // --- REFERENCIAS A ELEMENTOS DEL DOM ---
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
       const loginForm = document.getElementById('login-form');
@@ -279,7 +278,6 @@
       let miGraficaDeVentas, miGraficaDeProductos;
       const COSTO_DOMICILIO_PREDET = 30.00; 
 
-      // --- LÓGICA DE AUTENTICACIÓN Y NAVEGACIÓN MÓVIL ---
       menuToggle.addEventListener('click', () => nav.classList.toggle('nav-open'));
       
       function showApp() {

@@ -1,4 +1,4 @@
-// server.js - Versión Final y Completa (con reimpresión)
+// server.js - Versión Final Estable (con reimpresión)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');

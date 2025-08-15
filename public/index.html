@@ -11,6 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* ... (Todos los estilos se mantienen igual que en la versión anterior) ... */
     :root {
       --primary-color: #4f46e5; --primary-hover: #4338ca; --danger-color: #ef4444; --danger-hover: #dc2626;
       --success-color: #22c55e; --info-color: #38bdf8; --background-color: #f8fafc; --card-background: #ffffff;
@@ -76,13 +77,6 @@
     #historial-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
     .chart-container { position: relative; height: 350px; }
     #totalPeriodoHistorial { font-weight: bold; font-size: 1.3em; text-align: center; margin-top: 1.5rem; padding: 1rem; background-color: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 8px; }
-    #filtros-historial { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end; }
-    #filtros-historial label { margin-bottom: 0.25rem; font-size: 0.9em; }
-    #botones-periodo { display: flex; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
-    #botones-periodo button { flex: 1; border: none; border-radius: 0; background-color: var(--card-background); color: var(--text-color-light); padding: 0.75rem; }
-    #botones-periodo button:not(:last-child) { border-right: 1px solid var(--border-color); }
-    #botones-periodo button.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
-
     @media (max-width: 992px) {
       .menu-toggle { display: block; }
       .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transform: translateX(-100%); }

@@ -1,4 +1,4 @@
-// server.js - Versión Final Estable (con reimpresión)
+// server.js - Versión Estable y Funcional (pre-Fase 1)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -108,16 +108,6 @@ app.post('/api/ventas', async (req, res) => {
 app.get('/api/ventas', async (req, res) => res.json(await Venta.find()));
 app.delete('/api/ventas/:id', esAdmin, async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-app.get('/api/ventas/:id', async (req, res) => {
-    try {
-        const venta = await Venta.findById(req.params.id);
-        if (!venta) return res.status(404).json({ error: 'Venta no encontrada' });
-        res.json(venta);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al buscar la venta' });
-    }
-});
-
 app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find().select('-password')));
 app.post('/api/usuarios', esAdmin, async (req, res) => {
     const { username, password, role } = req.body;
@@ -140,6 +130,7 @@ app.delete('/api/usuarios/:id', esAdmin, async (req, res) => {
     await Usuario.findByIdAndDelete(req.params.id);
     res.status(204).send();
 });
+
 
 // --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
 app.get('*', (req, res) => {

@@ -11,7 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ... (Todos los estilos CSS se mantienen igual, con una pequeña adición) ... */
+    /* ... (Todos los estilos CSS se mantienen igual) ... */
     :root {
       --primary-color: #4f46e5; --primary-hover: #4338ca; --danger-color: #ef4444; --danger-hover: #dc2626;
       --success-color: #22c55e; --info-color: #38bdf8; --background-color: #f8fafc; --card-background: #ffffff;
@@ -28,12 +28,9 @@
     .nav-link:hover { background-color: var(--background-color); color: var(--primary-color); }
     .nav-link.active-link { background-color: var(--primary-color); color: white; }
     .nav-link svg { width: 20px; height: 20px; stroke-width: 2; }
-    
-    /* CAMBIO 1: Estilos para el contenedor del botón de logout y el botón mismo */
     .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); }
     #logout-button { width: 100%; justify-content: center; background-color: var(--danger-color); color: white; border: none; font-weight: 500; }
     #logout-button:hover { background-color: var(--danger-hover); }
-    
     .main-content { flex: 1; display: flex; flex-direction: column; }
     .main-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--card-background); border-bottom: 1px solid var(--border-color); }
     .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
@@ -50,7 +47,7 @@
     form label { display: block; margin-bottom: 0.5rem; font-weight: 500; text-align: left; color: var(--text-color-dark); }
     form input, form select { display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s, border-color 0.2s; }
     form input:focus, form select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px #c7d2fe; outline: none; }
-    form select:disabled { background-color: #e2e8f0; cursor: not-allowed; } /* Estilo para el select deshabilitado */
+    form select:disabled { background-color: #e2e8f0; cursor: not-allowed; }
     button { cursor: pointer; border-radius: 8px; border: none; padding: 0.75rem 1.25rem; font-weight: 600; transition: all 0.2s; }
     button[type="submit"], #btnAgregarVenta, #btnRegistrarVenta { background-color: var(--primary-color); color: white; }
     button[type="submit"]:hover, #btnAgregarVenta:hover, #btnRegistrarVenta:hover { background-color: var(--primary-hover); }
@@ -115,7 +112,6 @@
         <a class="nav-link" data-seccion="gestion-usuarios" id="btn-usuarios"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962c.57-1.023.994-2.131 1.253-3.284C13.437 11.08 14 9.61 14 8c0-1.61-.563-3.08-1.5-4.216m-4.5 14.15a9.083 9.083 0 01-1.253-3.284C6.563 13.08 6 11.61 6 10c0-1.61.563-3.08 1.5-4.216m0 0a5.012 5.012 0 011.5 0c.828 1.136 1.5 2.606 1.5 4.216 0 1.61-.563-3.08-1.5 4.216m0 0l-2.25 2.25a5.012 5.012 0 01-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 00-1.5 0l-2.25 2.25a5.012 5.012 0 00-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 01-1.5 0l-2.25 2.25" /></svg><span>Usuarios</span></a>
         <a class="nav-link" data-seccion="historial-ventas"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 1.5m1-1.5l1-1.5m0 0l1 1.5m-2-1.5v-6.375c0-1.125.9-2.025 2-2.025h.5c1.1 0 2 .9 2 2.025v6.375m-4.5-3.375V8.25" /></svg><span>Historial</span></a>
       </div>
-      <!-- CAMBIO 1: Botón "Cerrar Sesión" movido aquí abajo -->
       <div class="sidebar-footer">
         <button id="logout-button">Cerrar Sesión</button>
       </div>
@@ -126,7 +122,6 @@
         <button class="menu-toggle" id="menu-toggle">&#9776;</button>
         <div class="user-info">
           <span id="welcome-user"></span>
-          <!-- CAMBIO 1: Botón "Cerrar Sesión" ELIMINADO de aquí -->
         </div>
       </header>
       <main>
@@ -271,6 +266,7 @@
       const btnUsuarios = document.getElementById('btn-usuarios');
       const nav = document.querySelector('nav');
       const menuToggle = document.getElementById('menu-toggle');
+      const mainContent = document.querySelector('.main-content'); // Referencia para el CAMBIO 3
       
       const { jsPDF } = window.jspdf;
       let ventaActual = [];
@@ -546,7 +542,6 @@
         
         ventaActual.push({ productoNombre, cantidad, toppings, jarabes, nota, total: totalItem });
         
-        // CAMBIO 2: Si es el primer producto, deshabilitar el selector de cliente.
         if (ventaActual.length > 0) {
             document.getElementById('ventaCliente').disabled = true;
         }
@@ -587,7 +582,6 @@
           btnEliminar.className = 'btn-eliminar-item';
           btnEliminar.onclick = () => { 
             ventaActual.splice(index, 1); 
-            // CAMBIO 2: Si se eliminan todos los productos, reactivar el selector de cliente
             if (ventaActual.length === 0) {
               document.getElementById('ventaCliente').disabled = false;
             }
@@ -617,10 +611,7 @@
         ventaActual = [];
         document.getElementById('listaVentaActual').innerHTML = '';
         document.getElementById('formVenta').reset();
-        
-        // CAMBIO 2: Reactivar el selector de cliente para la siguiente venta.
         document.getElementById('ventaCliente').disabled = false;
-        
         document.getElementById('checkDomicilio').checked = false;
         document.getElementById('costoDomicilio').style.display = 'none';
         document.querySelectorAll('.option-btn.selected').forEach(btn => btn.classList.remove('selected'));
@@ -836,6 +827,17 @@
             e.preventDefault();
             mostrarSeccion(b.dataset.seccion);
         }));
+
+        // CAMBIO 3: Cierra el menú lateral si se hace clic fuera de él en modo móvil.
+        mainContent.addEventListener('click', (e) => {
+          if (nav.classList.contains('nav-open')) {
+            // Se asegura de que el clic no fue en el propio botón de menú
+            if (!e.target.closest('#menu-toggle')) {
+              nav.classList.remove('nav-open');
+            }
+          }
+        });
+
         document.getElementById('formProducto').addEventListener('submit', (e) => guardarItem(e, 'Producto'));
         document.getElementById('formTopping').addEventListener('submit', (e) => guardarItem(e, 'Topping'));
         document.getElementById('formJarabe').addEventListener('submit', (e) => guardarItem(e, 'Jarabe'));

@@ -601,7 +601,6 @@
         const clienteSelect = document.getElementById('ventaCliente');
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
         const subtotal = ventaActual.reduce((a, i) => a + i.total, 0);
-        // CAMBIO 13: La lógica de creación del objeto se corrige aquí para que SIEMPRE envíe el estatus.
         const ventaCompleta = { 
           id: Date.now(), 
           fecha: new Date().toISOString(), 

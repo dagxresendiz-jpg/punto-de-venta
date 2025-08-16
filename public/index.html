@@ -266,7 +266,7 @@
       const btnUsuarios = document.getElementById('btn-usuarios');
       const nav = document.querySelector('nav');
       const menuToggle = document.getElementById('menu-toggle');
-      const mainContent = document.querySelector('.main-content'); // Referencia para el CAMBIO 3
+      const mainContent = document.querySelector('.main-content');
       
       const { jsPDF } = window.jspdf;
       let ventaActual = [];
@@ -337,7 +337,10 @@
         setupCollapsibles(); 
         const token = localStorage.getItem('token');
         const payload = JSON.parse(atob(token.split('.')[1]));
-        const seccionInicial = payload.role === 'admin' ? 'historial-ventas' : 'registrar-venta';
+        
+        // CAMBIO 4: Se elimina la lógica condicional. Todos los usuarios inician en 'registrar-venta'.
+        const seccionInicial = 'registrar-venta';
+        
         mostrarSeccion(seccionInicial);
       }
 
@@ -828,10 +831,8 @@
             mostrarSeccion(b.dataset.seccion);
         }));
 
-        // CAMBIO 3: Cierra el menú lateral si se hace clic fuera de él en modo móvil.
         mainContent.addEventListener('click', (e) => {
           if (nav.classList.contains('nav-open')) {
-            // Se asegura de que el clic no fue en el propio botón de menú
             if (!e.target.closest('#menu-toggle')) {
               nav.classList.remove('nav-open');
             }

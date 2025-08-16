@@ -13,8 +13,9 @@
   <style>
     :root {
       --primary-color: #4f46e5; --primary-hover: #4338ca; --danger-color: #ef4444; --danger-hover: #dc2626;
-      --success-color: #22c55e; --info-color: #38bdf8; --background-color: #f8fafc; --card-background: #ffffff;
-      --text-color-dark: #1e293b; --text-color-light: #64748b; --border-color: #e2e8f0;
+      --success-color: #22c55e; --success-hover: #16a34a; --info-color: #38bdf8; --info-hover: #0ea5e9;
+      --background-color: #f8fafc; --card-background: #ffffff; --text-color-dark: #1e293b; 
+      --text-color-light: #64748b; --border-color: #e2e8f0;
       --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -48,8 +49,8 @@
     form input:focus, form select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px #c7d2fe; outline: none; }
     form select:disabled { background-color: #e2e8f0; cursor: not-allowed; }
     button { cursor: pointer; border-radius: 8px; border: none; padding: 0.75rem 1.25rem; font-weight: 600; transition: all 0.2s; }
-    button[type="submit"], #btnAgregarVenta, #btnRegistrarVenta { background-color: var(--primary-color); color: white; }
-    button[type="submit"]:hover, #btnAgregarVenta:hover, #btnRegistrarVenta:hover { background-color: var(--primary-hover); }
+    button[type="submit"], #btnAgregarVenta { background-color: var(--primary-color); color: white; }
+    button[type="submit"]:hover, #btnAgregarVenta:hover { background-color: var(--primary-hover); }
     .btn-eliminar-item, .btn-eliminar-venta { background-color: var(--danger-color); color: white; }
     .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; }
     #listaVentaActual { margin-bottom: 1rem; }
@@ -86,7 +87,17 @@
     #botones-periodo button:hover { background-color: #e2e8f0; }
     #botones-periodo button.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
     #resumen-ventas { white-space: pre-wrap; word-break: break-word; }
-    
+    #botones-finalizar-venta { display: flex; gap: 1rem; }
+    #botones-finalizar-venta button { flex: 1; }
+    #btnRegistrarPagado { background-color: var(--success-color); color: white; }
+    #btnRegistrarPagado:hover { background-color: var(--success-hover); }
+    #btnRegistrarPendiente { background-color: var(--info-color); color: white; }
+    #btnRegistrarPendiente:hover { background-color: var(--info-hover); }
+    .status-badge { padding: 0.2em 0.6em; border-radius: 12px; font-size: 0.8em; font-weight: 600; color: white; }
+    .status-pagado { background-color: #16a34a; }
+    .status-pendiente { background-color: #f59e0b; }
+    .full-width-card { grid-column: 1 / -1; }
+
     @media (max-width: 992px) {
       .menu-toggle { display: block; }
       .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transform: translateX(-100%); }
@@ -167,7 +178,10 @@
                         <select id="metodoPago">
                             <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
                         </select>
-                        <button id="btnRegistrarVenta">Registrar Venta Completa</button>
+                        <div id="botones-finalizar-venta" style="margin-top: 1rem;">
+                            <button id="btnRegistrarPendiente">Guardar Pendiente</button>
+                            <button id="btnRegistrarPagado">Cobrar y Finalizar</button>
+                        </div>
                     </div>
                     <div class="card">
                         <div class="card-header"><h3>Ticket</h3></div>
@@ -229,6 +243,14 @@
                     </div>
                 </div>
                 <div>
+                    <label for="filtroEstatus">Filtrar por Estatus</label>
+                    <select id="filtroEstatus">
+                        <option value="">Todos</option>
+                        <option value="Pagado">Pagado</option>
+                        <option value="Pendiente de Pago">Pendiente de Pago</option>
+                    </select>
+                </div>
+                <div>
                     <label for="filtroCliente">Filtrar por Cliente</label>
                     <select id="filtroCliente"></select>
                 </div>
@@ -253,11 +275,20 @@
                 <pre id="resumen-ventas"></pre>
                 <button id="btnGenerarReporte">Generar Reporte PDF</button>
             </div>
-            <div class="card">
+            <div class="card full-width-card">
                 <h3>Detalle de Ventas</h3>
                 <div style="overflow-x:auto;">
                     <table>
-                        <thead><tr><th>ID Venta</th><th>Vendedor</th><th>Cliente</th><th>Total</th><th>Fecha</th><th></th></tr></thead>
+                        <thead><tr>
+                          <th>ID Venta</th>
+                          <th>Vendedor</th>
+                          <th>Cliente</th>
+                          <th>Total</th>
+                          <th>Método de Pago</th>
+                          <th>Estatus</th>
+                          <th>Fecha</th>
+                          <th></th>
+                        </tr></thead>
                         <tbody id="tablaVentasBody"></tbody>
                     </table>
                 </div>
@@ -563,20 +594,26 @@
         resetearFormularioItem();
       }
 
-      async function registrarVenta() {
+      async function registrarVenta(estatus) {
         if (ventaActual.length === 0) { alert('Agrega al menos un producto a la venta'); return; }
         const clienteSelect = document.getElementById('ventaCliente');
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
         const subtotal = ventaActual.reduce((a, i) => a + i.total, 0);
         const ventaCompleta = { 
-          id: Date.now(), fecha: new Date().toISOString(), clienteId: clienteSelect.value ? parseInt(clienteSelect.value) : null,
+          id: Date.now(), 
+          fecha: new Date().toISOString(), 
+          clienteId: clienteSelect.value ? parseInt(clienteSelect.value) : null,
           clienteNombre: clienteSelect.value ? clienteSelect.options[clienteSelect.selectedIndex].text : 'Público General',
-          items: ventaActual, subtotal: subtotal, costoDomicilio: costoDomicilio, total: subtotal + costoDomicilio,
-          metodoPago: document.getElementById('metodoPago').value
+          items: ventaActual, 
+          subtotal: subtotal, 
+          costoDomicilio: costoDomicilio, 
+          total: subtotal + costoDomicilio,
+          metodoPago: document.getElementById('metodoPago').value,
+          estatus: estatus
         };
         try {
           const ventaGuardada = await fetchAPI('/api/ventas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ventaCompleta) });
-          alert('Venta registrada con éxito');
+          alert(`Venta guardada como "${estatus}" con éxito`);
           document.getElementById('ticket').textContent = generarTextoTicket(ventaGuardada);
           resetearFormularioCompleto();
         } catch(e) { alert(`Error: ${e.message}`); }
@@ -648,7 +685,8 @@
         texto += `---------------------------\nSubtotal: $${venta.subtotal.toFixed(2)}\n`;
         if (venta.costoDomicilio > 0) texto += `Domicilio: $${venta.costoDomicilio.toFixed(2)}\n`;
         texto += `TOTAL: $${venta.total.toFixed(2)}\n`;
-        texto += `Método de pago: ${venta.metodoPago}\n---------------------------\n¡Gracias por tu compra!`;
+        texto += `Método de pago: ${venta.metodoPago}\n`;
+        texto += `Estatus: ${venta.estatus}\n---------------------------\n¡Gracias por tu compra!`;
         return texto;
       }
       
@@ -718,20 +756,35 @@
           const periodo = document.querySelector('#botones-periodo button.active').dataset.periodo;
           const clienteId = document.getElementById('filtroCliente').value;
           const usuarioId = document.getElementById('filtroUsuario').value;
+          const estatus = document.getElementById('filtroEstatus').value;
+          
           const ahora = new Date();
           let fechaInicio;
           if (periodo === 'mes') { fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1); }
           else if (periodo === 'semana') { fechaInicio = new Date(ahora); fechaInicio.setDate(ahora.getDate() - ahora.getDay() + (ahora.getDay() === 0 ? -6 : 1)); }
           else { fechaInicio = new Date(ahora); }
           fechaInicio.setHours(0, 0, 0, 0);
+
           let ventasFiltradas = todasLasVentas.filter(venta => new Date(venta.fecha) >= fechaInicio);
           if (clienteId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.clienteId == clienteId); }
           if (usuarioId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.vendedorId == usuarioId); }
+          if (estatus) { ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus == estatus); }
+
           const tbody = document.getElementById('tablaVentasBody');
           tbody.innerHTML = '';
           ventasFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${venta.id}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${new Date(venta.fecha).toLocaleString()}</td><td><button class="btn-eliminar-venta" data-id="${venta.id}">X</button></td>`;
+            const estatusClass = venta.estatus === 'Pagado' ? 'status-pagado' : 'status-pendiente';
+            tr.innerHTML = `
+              <td>${venta.id}</td>
+              <td>${venta.vendedorUsername}</td>
+              <td>${venta.clienteNombre}</td>
+              <td>$${venta.total.toFixed(2)}</td>
+              <td>${venta.metodoPago || 'N/A'}</td>
+              <td><span class="status-badge ${estatusClass}">${venta.estatus || 'N/A'}</span></td>
+              <td>${new Date(venta.fecha).toLocaleString()}</td>
+              <td><button class="btn-eliminar-venta" data-id="${venta.id}">X</button></td>
+            `;
             tbody.appendChild(tr);
           });
           const totalPeriodo = ventasFiltradas.reduce((acc, venta) => acc + venta.total, 0);
@@ -870,6 +923,9 @@
       }
 
       function setupEventListeners() {
+        document.getElementById('btnRegistrarPagado').addEventListener('click', () => registrarVenta('Pagado'));
+        document.getElementById('btnRegistrarPendiente').addEventListener('click', () => registrarVenta('Pendiente de Pago'));
+        document.getElementById('filtroEstatus').addEventListener('change', cargarVentasHistorial);
         document.querySelectorAll('nav a').forEach(b => b.addEventListener('click', (e) => {
             e.preventDefault();
             mostrarSeccion(b.dataset.seccion);
@@ -887,7 +943,6 @@
         document.getElementById('formCliente').addEventListener('submit', (e) => guardarItem(e, 'Cliente'));
         document.getElementById('formUsuario').addEventListener('submit', crearUsuario);
         document.getElementById('btnAgregarVenta').addEventListener('click', agregarAVenta);
-        document.getElementById('btnRegistrarVenta').addEventListener('click', registrarVenta);
         document.getElementById('ventaProducto').addEventListener('change', calcularTotalEnForm);
         document.getElementById('ventaCantidad').addEventListener('input', calcularTotalEnForm);
         document.getElementById('checkDomicilio').addEventListener('change', (e) => {

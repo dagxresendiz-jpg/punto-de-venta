@@ -6,7 +6,7 @@
   <title>Dulces Amigas - Punto de Venta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family/Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -74,12 +74,10 @@
     #btnGenerarPDF:hover { background-color: #C53030; }
     #btnEnviarWhatsapp { background-color: #25D366; color: white; }
     #btnEnviarWhatsapp:hover { background-color: #128C7E; }
+    
+    /* CAMBIO 7: Estilos de Historial ajustados */
     #historial-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
-    .chart-container {
-      position: relative;
-      width: 100%;
-      /* CAMBIO 6: Se elimina la altura fija para permitir que el aspect-ratio funcione */
-    }
+    .chart-container { position: relative; width: 100%; }
     #totalPeriodoHistorial { font-weight: bold; font-size: 1.3em; text-align: center; margin-top: 1.5rem; padding: 1rem; background-color: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 8px; }
     #filtros-historial { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end; }
     #filtros-historial > div { flex: 1 1 200px; }
@@ -99,13 +97,15 @@
       main { padding: 1rem; }
       .card { padding: 1rem; }
       #opcion-domicilio { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-      #historial-layout { grid-template-columns: 1fr; }
+      
+      /* CAMBIO 7: Se elimina el colapso de las gráficas y solo se reduce el espacio entre ellas */
+      #historial-layout { gap: 1rem; }
     }
   </style>
 </head>
 <body>
-
-  <!-- ... (El HTML se mantiene exactamente igual, no hay cambios) ... -->
+  
+  <!-- El HTML se mantiene igual -->
   <div id="login-container" class="card">
     <div class="card-header"><h2 style="text-align: center;">Iniciar Sesión</h2></div>
     <form id="login-form">
@@ -288,7 +288,6 @@
       const nav = document.querySelector('nav');
       const menuToggle = document.getElementById('menu-toggle');
       const mainContent = document.querySelector('.main-content');
-      
       const { jsPDF } = window.jspdf;
       let ventaActual = [];
       let miGraficaDeVentas, miGraficaDeProductos;
@@ -809,9 +808,9 @@
             }, 
             options: { 
                 responsive: true, 
-                // CAMBIO 6: Se gestiona el tamaño con aspect-ratio en vez de altura fija
                 maintainAspectRatio: true, 
-                aspectRatio: 2, // Ancho es 2 veces el alto
+                // CAMBIO 7: Proporción más ancha para ser más compacta verticalmente
+                aspectRatio: 2.5,
                 scales: { y: { beginAtZero: true } } 
             } 
         });
@@ -834,9 +833,9 @@
             }, 
             options: { 
                 responsive: true,
-                // CAMBIO 6: Se gestiona el tamaño con aspect-ratio en vez de altura fija
                 maintainAspectRatio: true,
-                aspectRatio: 1, // La gráfica será cuadrada
+                // CAMBIO 7: Proporción más ancha para ser más compacta verticalmente
+                aspectRatio: 2,
             } 
         });
       }

@@ -93,11 +93,13 @@
     #btnRegistrarPagado:hover { background-color: var(--success-hover); }
     #btnRegistrarPendiente { background-color: var(--info-color); color: white; }
     #btnRegistrarPendiente:hover { background-color: var(--info-hover); }
-    .status-badge { padding: 0.2em 0.6em; border-radius: 12px; font-size: 0.8em; font-weight: 600; color: white; }
+    .status-badge { padding: 0.2em 0.6em; border-radius: 12px; font-size: 0.8em; font-weight: 600; color: white; text-align: center; display: inline-block; }
     .status-pagado { background-color: #16a34a; }
     .status-pendiente { background-color: #f59e0b; }
+    .btn-marcar-pagado { background-color: var(--success-color); color: white; padding: 0.4rem 0.8rem; font-size: 0.8em; margin-right: 0.5rem; }
+    .btn-marcar-pagado:hover { background-color: var(--success-hover); }
     .full-width-card { grid-column: 1 / -1; }
-
+    
     @media (max-width: 992px) {
       .menu-toggle { display: block; }
       .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transform: translateX(-100%); }
@@ -287,7 +289,7 @@
                           <th>Método de Pago</th>
                           <th>Estatus</th>
                           <th>Fecha</th>
-                          <th></th>
+                          <th>Acciones</th>
                         </tr></thead>
                         <tbody id="tablaVentasBody"></tbody>
                     </table>
@@ -750,6 +752,28 @@
           }
       }
 
+      // CAMBIO 11: Nueva función para marcar una venta como pagada
+      async function marcarComoPagado(ventaId) {
+          const metodoPagoFinal = prompt("Por favor, introduce el método de pago final (Efectivo, Tarjeta, Transferencia):", "Efectivo");
+          if (metodoPagoFinal && metodoPagoFinal.trim() !== "") {
+              if (confirm(`¿Marcar esta orden como "Pagado" con el método "${metodoPagoFinal}"?`)) {
+                  try {
+                      await fetchAPI(`/api/ventas/${ventaId}`, {
+                          method: 'PUT',
+                          body: JSON.stringify({
+                              estatus: "Pagado",
+                              metodoPago: metodoPagoFinal.trim()
+                          })
+                      });
+                      alert("¡Venta actualizada a 'Pagado'!");
+                      cargarVentasHistorial(); // Recargar la lista para ver el cambio
+                  } catch (error) {
+                      alert(`Error al actualizar la venta: ${error.message}`);
+                  }
+              }
+          }
+      }
+
       async function cargarVentasHistorial() {
         try {
           let todasLasVentas = await fetchAPI('/api/ventas');
@@ -774,24 +798,37 @@
           tbody.innerHTML = '';
           ventasFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
             const tr = document.createElement('tr');
-            const estatusClass = venta.estatus === 'Pagado' ? 'status-pagado' : 'status-pendiente';
+            
+            // CAMBIO 11: Se corrige el N/A y se añade el botón de Pagar
+            const estatusActual = venta.estatus || 'Pagado'; // Si no hay estatus, se asume Pagado
+            const estatusClass = estatusActual === 'Pagado' ? 'status-pagado' : 'status-pendiente';
+            
+            let accionesHTML = `<button class="btn-eliminar-venta" data-id="${venta.id}">X</button>`;
+            if (estatusActual === 'Pendiente de Pago') {
+                accionesHTML = `<button class="btn-marcar-pagado" data-id="${venta.id}">Marcar como Pagado</button>` + accionesHTML;
+            }
+
             tr.innerHTML = `
               <td>${venta.id}</td>
               <td>${venta.vendedorUsername}</td>
               <td>${venta.clienteNombre}</td>
               <td>$${venta.total.toFixed(2)}</td>
               <td>${venta.metodoPago || 'N/A'}</td>
-              <td><span class="status-badge ${estatusClass}">${venta.estatus || 'N/A'}</span></td>
+              <td><span class="status-badge ${estatusClass}">${estatusActual}</span></td>
               <td>${new Date(venta.fecha).toLocaleString()}</td>
-              <td><button class="btn-eliminar-venta" data-id="${venta.id}">X</button></td>
+              <td>${accionesHTML}</td>
             `;
             tbody.appendChild(tr);
           });
+          
+          // CAMBIO 11: Se adjuntan los event listeners a los nuevos botones después de crear la tabla
+          document.querySelectorAll('.btn-eliminar-venta').forEach(btn => btn.addEventListener('click', () => eliminarVenta(btn.dataset.id)));
+          document.querySelectorAll('.btn-marcar-pagado').forEach(btn => btn.addEventListener('click', () => marcarComoPagado(btn.dataset.id)));
+
           const totalPeriodo = ventasFiltradas.reduce((acc, venta) => acc + venta.total, 0);
           document.getElementById('totalPeriodoHistorial').textContent = `Total del Período Filtrado: $${totalPeriodo.toFixed(2)}`;
           prepararDatosParaGraficas(ventasFiltradas);
           generarResumen(ventasFiltradas);
-          document.querySelectorAll('.btn-eliminar-venta').forEach(btn => btn.addEventListener('click', () => eliminarVenta(btn.dataset.id)));
         } catch (e) { /* Error manejado en fetchAPI */ }
       }
       

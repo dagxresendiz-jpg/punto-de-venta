@@ -6,7 +6,7 @@
   <title>Dulces Amigas - Punto de Venta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family/Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -75,57 +75,21 @@
     #btnEnviarWhatsapp { background-color: #25D366; color: white; }
     #btnEnviarWhatsapp:hover { background-color: #128C7E; }
     #historial-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
-    .chart-container { position: relative; height: 300px; /* CAMBIO 5: Altura de gráficas reducida */ }
-    #totalPeriodoHistorial { font-weight: bold; font-size: 1.3em; text-align: center; margin-top: 1.5rem; padding: 1rem; background-color: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 8px; }
-
-    /* CAMBIO 5: Mejoras en la sección de Historial */
-    #filtros-historial {
-      display: flex;
-      flex-wrap: wrap; /* Permite que los elementos se apilen en pantallas pequeñas */
-      gap: 1.5rem;
-      align-items: flex-end; /* Alinea los elementos por la base */
-    }
-    #filtros-historial > div {
-      flex: 1 1 200px; /* Permite que los elementos crezcan y se encojan con un tamaño base */
-    }
-    #filtros-historial label {
-      font-size: 0.9em;
-      margin-bottom: 0.5rem;
-      color: var(--text-color-dark);
-      display: block;
-    }
-    #historial-ventas select {
+    .chart-container {
+      position: relative;
       width: 100%;
-      padding: 0.75rem;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      background-color: white;
-      transition: box-shadow 0.2s, border-color 0.2s;
+      /* CAMBIO 6: Se elimina la altura fija para permitir que el aspect-ratio funcione */
     }
-    #historial-ventas select:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px #c7d2fe;
-      outline: none;
-    }
-    #botones-periodo {
-      display: flex;
-      gap: 0.5rem;
-    }
-    #botones-periodo button {
-      background-color: var(--card-background);
-      color: var(--text-color-light);
-      border: 1px solid var(--border-color);
-      font-weight: 500;
-      padding: 0.75rem 1rem;
-    }
-    #botones-periodo button:hover {
-      background-color: #e2e8f0;
-    }
-    #botones-periodo button.active {
-      background-color: var(--primary-color);
-      color: white;
-      border-color: var(--primary-color);
-    }
+    #totalPeriodoHistorial { font-weight: bold; font-size: 1.3em; text-align: center; margin-top: 1.5rem; padding: 1rem; background-color: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 8px; }
+    #filtros-historial { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end; }
+    #filtros-historial > div { flex: 1 1 200px; }
+    #filtros-historial label { font-size: 0.9em; margin-bottom: 0.5rem; color: var(--text-color-dark); display: block; }
+    #historial-ventas select { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: white; transition: box-shadow 0.2s, border-color 0.2s; }
+    #historial-ventas select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px #c7d2fe; outline: none; }
+    #botones-periodo { display: flex; gap: 0.5rem; }
+    #botones-periodo button { background-color: var(--card-background); color: var(--text-color-light); border: 1px solid var(--border-color); font-weight: 500; padding: 0.75rem 1rem; }
+    #botones-periodo button:hover { background-color: #e2e8f0; }
+    #botones-periodo button.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
     
     @media (max-width: 992px) {
       .menu-toggle { display: block; }
@@ -141,6 +105,7 @@
 </head>
 <body>
 
+  <!-- ... (El HTML se mantiene exactamente igual, no hay cambios) ... -->
   <div id="login-container" class="card">
     <div class="card-header"><h2 style="text-align: center;">Iniciar Sesión</h2></div>
     <form id="login-form">
@@ -150,7 +115,6 @@
       <p id="login-error"></p>
     </form>
   </div>
-
   <div id="app-wrapper" style="display:none;">
     <nav class="sidebar">
       <div class="sidebar-header">Dulces Amigas</div>
@@ -165,7 +129,6 @@
         <button id="logout-button">Cerrar Sesión</button>
       </div>
     </nav>
-
     <div class="main-content">
       <header class="main-header">
         <button class="menu-toggle" id="menu-toggle">&#9776;</button>
@@ -174,7 +137,6 @@
         </div>
       </header>
       <main>
-        <!-- ... (El resto de tu HTML de las secciones se mantiene exactamente igual) ... -->
         <section id="registrar-venta">
             <div class="grid-container">
                 <div class="card">
@@ -313,7 +275,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // --- REFERENCIAS A ELEMENTOS DEL DOM ---
+      // ... (El script se mantiene igual hasta las funciones de las gráficas)
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
       const loginForm = document.getElementById('login-form');
@@ -332,7 +294,6 @@
       let miGraficaDeVentas, miGraficaDeProductos;
       const COSTO_DOMICILIO_PREDET = 30.00; 
 
-      // --- LÓGICA DE AUTENTICACIÓN Y NAVEGACIÓN MÓVIL ---
       menuToggle.addEventListener('click', () => nav.classList.toggle('nav-open'));
       
       function showApp() {
@@ -834,14 +795,50 @@
         if (miGraficaDeVentas) { miGraficaDeVentas.destroy(); }
         const ctx = document.getElementById('graficaVentas')?.getContext('2d');
         if (!ctx) return;
-        miGraficaDeVentas = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: `Ventas Totales`, data, backgroundColor: 'rgba(79, 70, 229, 0.5)', borderColor: 'rgba(79, 70, 229, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+        miGraficaDeVentas = new Chart(ctx, { 
+            type: 'bar', 
+            data: { 
+                labels, 
+                datasets: [{ 
+                    label: `Ventas Totales`, 
+                    data, 
+                    backgroundColor: 'rgba(79, 70, 229, 0.5)', 
+                    borderColor: 'rgba(79, 70, 229, 1)', 
+                    borderWidth: 1 
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                // CAMBIO 6: Se gestiona el tamaño con aspect-ratio en vez de altura fija
+                maintainAspectRatio: true, 
+                aspectRatio: 2, // Ancho es 2 veces el alto
+                scales: { y: { beginAtZero: true } } 
+            } 
+        });
       }
 
       function actualizarGraficaCircular(labels, data) {
         if (miGraficaDeProductos) { miGraficaDeProductos.destroy(); }
         const ctx = document.getElementById('graficaProductos')?.getContext('2d');
         if (!ctx) return;
-        miGraficaDeProductos = new Chart(ctx, { type: 'doughnut', data: { labels, datasets: [{ label: 'Productos Vendidos', data, backgroundColor: ['#4f46e5', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'], hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        miGraficaDeProductos = new Chart(ctx, { 
+            type: 'doughnut', 
+            data: { 
+                labels, 
+                datasets: [{ 
+                    label: 'Productos Vendidos', 
+                    data, 
+                    backgroundColor: ['#4f46e5', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'], 
+                    hoverOffset: 4 
+                }] 
+            }, 
+            options: { 
+                responsive: true,
+                // CAMBIO 6: Se gestiona el tamaño con aspect-ratio en vez de altura fija
+                maintainAspectRatio: true,
+                aspectRatio: 1, // La gráfica será cuadrada
+            } 
+        });
       }
 
       function generarResumen(ventas) {
@@ -886,7 +883,6 @@
             e.preventDefault();
             mostrarSeccion(b.dataset.seccion);
         }));
-
         mainContent.addEventListener('click', (e) => {
           if (nav.classList.contains('nav-open')) {
             if (!e.target.closest('#menu-toggle')) {
@@ -894,7 +890,6 @@
             }
           }
         });
-
         document.getElementById('formProducto').addEventListener('submit', (e) => guardarItem(e, 'Producto'));
         document.getElementById('formTopping').addEventListener('submit', (e) => guardarItem(e, 'Topping'));
         document.getElementById('formJarabe').addEventListener('submit', (e) => guardarItem(e, 'Jarabe'));

@@ -752,7 +752,6 @@
           }
       }
 
-      // CAMBIO 11: Nueva función para marcar una venta como pagada
       async function marcarComoPagado(ventaId) {
           const metodoPagoFinal = prompt("Por favor, introduce el método de pago final (Efectivo, Tarjeta, Transferencia):", "Efectivo");
           if (metodoPagoFinal && metodoPagoFinal.trim() !== "") {
@@ -766,7 +765,7 @@
                           })
                       });
                       alert("¡Venta actualizada a 'Pagado'!");
-                      cargarVentasHistorial(); // Recargar la lista para ver el cambio
+                      cargarVentasHistorial();
                   } catch (error) {
                       alert(`Error al actualizar la venta: ${error.message}`);
                   }
@@ -792,15 +791,22 @@
           let ventasFiltradas = todasLasVentas.filter(venta => new Date(venta.fecha) >= fechaInicio);
           if (clienteId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.clienteId == clienteId); }
           if (usuarioId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.vendedorId == usuarioId); }
-          if (estatus) { ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus == estatus); }
+          
+          // CAMBIO 12: Lógica de filtro corregida y robusta
+          if (estatus) {
+            if (estatus === 'Pagado') {
+              ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === 'Pagado' || !venta.estatus);
+            } else {
+              ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus);
+            }
+          }
 
           const tbody = document.getElementById('tablaVentasBody');
           tbody.innerHTML = '';
           ventasFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
             const tr = document.createElement('tr');
             
-            // CAMBIO 11: Se corrige el N/A y se añade el botón de Pagar
-            const estatusActual = venta.estatus || 'Pagado'; // Si no hay estatus, se asume Pagado
+            const estatusActual = venta.estatus || 'Pagado';
             const estatusClass = estatusActual === 'Pagado' ? 'status-pagado' : 'status-pendiente';
             
             let accionesHTML = `<button class="btn-eliminar-venta" data-id="${venta.id}">X</button>`;
@@ -821,7 +827,6 @@
             tbody.appendChild(tr);
           });
           
-          // CAMBIO 11: Se adjuntan los event listeners a los nuevos botones después de crear la tabla
           document.querySelectorAll('.btn-eliminar-venta').forEach(btn => btn.addEventListener('click', () => eliminarVenta(btn.dataset.id)));
           document.querySelectorAll('.btn-marcar-pagado').forEach(btn => btn.addEventListener('click', () => marcarComoPagado(btn.dataset.id)));
 

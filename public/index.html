@@ -11,7 +11,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ... (Todos los estilos CSS se mantienen igual) ... */
     :root {
       --primary-color: #4f46e5; --primary-hover: #4338ca; --danger-color: #ef4444; --danger-hover: #dc2626;
       --success-color: #22c55e; --info-color: #38bdf8; --background-color: #f8fafc; --card-background: #ffffff;
@@ -76,8 +75,58 @@
     #btnEnviarWhatsapp { background-color: #25D366; color: white; }
     #btnEnviarWhatsapp:hover { background-color: #128C7E; }
     #historial-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
-    .chart-container { position: relative; height: 350px; }
+    .chart-container { position: relative; height: 300px; /* CAMBIO 5: Altura de gráficas reducida */ }
     #totalPeriodoHistorial { font-weight: bold; font-size: 1.3em; text-align: center; margin-top: 1.5rem; padding: 1rem; background-color: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 8px; }
+
+    /* CAMBIO 5: Mejoras en la sección de Historial */
+    #filtros-historial {
+      display: flex;
+      flex-wrap: wrap; /* Permite que los elementos se apilen en pantallas pequeñas */
+      gap: 1.5rem;
+      align-items: flex-end; /* Alinea los elementos por la base */
+    }
+    #filtros-historial > div {
+      flex: 1 1 200px; /* Permite que los elementos crezcan y se encojan con un tamaño base */
+    }
+    #filtros-historial label {
+      font-size: 0.9em;
+      margin-bottom: 0.5rem;
+      color: var(--text-color-dark);
+      display: block;
+    }
+    #historial-ventas select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: white;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    #historial-ventas select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px #c7d2fe;
+      outline: none;
+    }
+    #botones-periodo {
+      display: flex;
+      gap: 0.5rem;
+    }
+    #botones-periodo button {
+      background-color: var(--card-background);
+      color: var(--text-color-light);
+      border: 1px solid var(--border-color);
+      font-weight: 500;
+      padding: 0.75rem 1rem;
+    }
+    #botones-periodo button:hover {
+      background-color: #e2e8f0;
+    }
+    #botones-periodo button.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
     @media (max-width: 992px) {
       .menu-toggle { display: block; }
       .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transform: translateX(-100%); }
@@ -215,11 +264,21 @@
             <div class="card-header"><h2>Historial de Ventas</h2></div>
             <div id="filtros-historial">
                 <div>
-                    <label>Período:</label>
-                    <div id="botones-periodo"><button data-periodo="dia" class="active">Hoy</button><button data-periodo="semana">Semana</button><button data-periodo="mes">Mes</button></div>
+                    <label>Período</label>
+                    <div id="botones-periodo">
+                        <button data-periodo="dia" class="active">Hoy</button>
+                        <button data-periodo="semana">Semana</button>
+                        <button data-periodo="mes">Mes</button>
+                    </div>
                 </div>
-                <div><label for="filtroCliente">Filtrar por Cliente:</label><select id="filtroCliente"></select></div>
-                <div id="filtro-usuario-container"><label for="filtroUsuario">Filtrar por Vendedor:</label><select id="filtroUsuario"></select></div>
+                <div>
+                    <label for="filtroCliente">Filtrar por Cliente</label>
+                    <select id="filtroCliente"></select>
+                </div>
+                <div id="filtro-usuario-container">
+                    <label for="filtroUsuario">Filtrar por Vendedor</label>
+                    <select id="filtroUsuario"></select>
+                </div>
             </div>
           </div>
           <div id="historial-layout">
@@ -337,10 +396,7 @@
         setupCollapsibles(); 
         const token = localStorage.getItem('token');
         const payload = JSON.parse(atob(token.split('.')[1]));
-        
-        // CAMBIO 4: Se elimina la lógica condicional. Todos los usuarios inician en 'registrar-venta'.
         const seccionInicial = 'registrar-venta';
-        
         mostrarSeccion(seccionInicial);
       }
 

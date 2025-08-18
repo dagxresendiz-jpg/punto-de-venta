@@ -794,7 +794,7 @@
           if (usuarioId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.vendedorId == usuarioId); }
           
           if (estatus) {
-            ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus);
+              ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus);
           }
 
           const tbody = document.getElementById('tablaVentasBody');
@@ -802,7 +802,7 @@
           ventasFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
             const tr = document.createElement('tr');
             
-            const estatusActual = venta.estatus || 'N/A'; // Las ventas viejas se quedan como N/A
+            const estatusActual = venta.estatus || 'N/A';
             let estatusClass = 'status-na';
             if(estatusActual === 'Pagado') estatusClass = 'status-pagado';
             if(estatusActual === 'Pendiente de Pago') estatusClass = 'status-pendiente';

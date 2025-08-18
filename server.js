@@ -40,7 +40,9 @@ const Usuario = mongoose.model('Usuario', createSchema({ username: { type: Strin
 const Venta = mongoose.model('Venta', createSchema({
     fecha: Date, clienteId: String, clienteNombre: String, items: Array,
     subtotal: Number, costoDomicilio: Number, total: Number, metodoPago: String,
-    vendedorId: String, vendedorUsername: String
+    vendedorId: String, vendedorUsername: String,
+    // --- CAMBIO CLAVE --- Se añade el campo estatus al modelo de la base de datos
+    estatus: String 
 }));
 
 // --- MIDDLEWARES DE SEGURIDAD ---
@@ -104,13 +106,37 @@ app.delete('/api/clientes/:id', esAdmin, async (req, res) => { await Cliente.fin
 
 // Ventas (Abierto a todos los usuarios logueados, excepto DELETE)
 app.post('/api/ventas', async (req, res) => {
+    // --- CAMBIO CLAVE --- Ahora el backend recibe y usa el 'estatus' enviado desde el frontend
     let nuevaVentaData = req.body;
     nuevaVentaData.vendedorId = req.user.id;
     nuevaVentaData.vendedorUsername = req.user.username;
+    // La variable 'estatus' ya viene dentro de 'nuevaVentaData' gracias al frontend
     const ventaCreada = await Venta.create(nuevaVentaData);
     res.status(201).json(ventaCreada);
 });
+
 app.get('/api/ventas', async (req, res) => res.json(await Venta.find()));
+
+// --- CAMBIO CLAVE --- Se añade la ruta PUT para actualizar el estatus de una venta pendiente
+app.put('/api/ventas/:id', async (req, res) => {
+    try {
+        const { estatus, metodoPago } = req.body;
+        const ventaId = req.params.id;
+
+        const datosActualizar = {};
+        if (estatus) datosActualizar.estatus = estatus;
+        if (metodoPago) datosActualizar.metodoPago = metodoPago;
+
+        const ventaActualizada = await Venta.findByIdAndUpdate(ventaId, datosActualizar, { new: true });
+        if (!ventaActualizada) {
+            return res.status(404).json({ error: 'Venta no encontrada.' });
+        }
+        res.json(ventaActualizada);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar la venta.' });
+    }
+});
+
 app.delete('/api/ventas/:id', esAdmin, async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
 // Usuarios (Solo Admin)

@@ -96,6 +96,7 @@
     .status-badge { padding: 0.2em 0.6em; border-radius: 12px; font-size: 0.8em; font-weight: 600; color: white; text-align: center; display: inline-block; }
     .status-pagado { background-color: #16a34a; }
     .status-pendiente { background-color: #f59e0b; }
+    .status-na { background-color: var(--text-color-light); }
     .btn-marcar-pagado { background-color: var(--success-color); color: white; padding: 0.4rem 0.8rem; font-size: 0.8em; margin-right: 0.5rem; }
     .btn-marcar-pagado:hover { background-color: var(--success-hover); }
     .full-width-card { grid-column: 1 / -1; }
@@ -793,11 +794,7 @@
           if (usuarioId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.vendedorId == usuarioId); }
           
           if (estatus) {
-            if (estatus === 'Pagado') {
-              ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === 'Pagado' || !venta.estatus);
-            } else {
-              ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus);
-            }
+            ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus);
           }
 
           const tbody = document.getElementById('tablaVentasBody');
@@ -805,8 +802,10 @@
           ventasFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
             const tr = document.createElement('tr');
             
-            const estatusActual = venta.estatus || 'Pagado';
-            const estatusClass = estatusActual === 'Pagado' ? 'status-pagado' : 'status-pendiente';
+            const estatusActual = venta.estatus || 'N/A'; // Las ventas viejas se quedan como N/A
+            let estatusClass = 'status-na';
+            if(estatusActual === 'Pagado') estatusClass = 'status-pagado';
+            if(estatusActual === 'Pendiente de Pago') estatusClass = 'status-pendiente';
             
             let accionesHTML = `<button class="btn-eliminar-venta" data-id="${venta.id}">X</button>`;
             if (estatusActual === 'Pendiente de Pago') {

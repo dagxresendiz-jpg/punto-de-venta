@@ -1,4 +1,4 @@
-// server.js - Versión con Papelera de Reciclaje (Soft Delete)
+// server.js - Versión con Papelera de Reciclaje y Middleware Corregido
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -33,7 +33,6 @@ const createSchema = (definition) => new mongoose.Schema(definition, {
     }
 });
 
-// CAMBIO 15: Se añade 'status' a todos los modelos para la papelera
 const commonFields = { status: { type: String, default: 'activo' } };
 
 const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number, ...commonFields }));
@@ -69,7 +68,7 @@ function esAdmin(req, res, next) {
 app.post('/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const usuario = await Usuario.findOne({ username, status: 'activo' }); // Solo usuarios activos pueden loguearse
+        const usuario = await Usuario.findOne({ username, status: 'activo' });
         if (!usuario) return res.status(401).json({ error: 'Credenciales inválidas' });
         const passwordValida = await bcrypt.compare(password, usuario.password);
         if (!passwordValida) return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -81,36 +80,39 @@ app.post('/auth/login', async (req, res) => {
 // --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
-// --- FUNCIÓN GENÉRICA PARA RUTAS CRUD ---
+// --- FUNCIÓN GENÉRICA PARA RUTAS CRUD (CORREGIDA) ---
 const crearRutasCrud = (modelo, nombre) => {
     const router = express.Router();
     
-    // GET Activos (para las listas principales)
+    // GET Activos (Abierto a usuarios logueados)
     router.get('/', async (req, res) => res.json(await modelo.find({ status: 'activo' })));
     
-    // GET Papelera (solo Admin, para la sección de papelera)
-    router.get('/papelera', esAdmin, async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
+    // Las siguientes rutas requieren ser ADMIN
+    router.use(esAdmin);
+
+    // GET Papelera
+    router.get('/papelera', async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
     
     // POST
-    router.post('/', esAdmin, async (req, res) => res.status(201).json(await modelo.create(req.body)));
+    router.post('/', async (req, res) => res.status(201).json(await modelo.create(req.body)));
     
-    // PUT (Actualización general)
-    router.put('/:id', esAdmin, async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+    // PUT
+    router.put('/:id', async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
     
-    // SOFT DELETE (Mover a papelera)
-    router.delete('/:id', esAdmin, async (req, res) => { 
+    // SOFT DELETE
+    router.delete('/:id', async (req, res) => { 
         await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); 
         res.status(204).send(); 
     });
     
-    // RESTORE (Sacar de papelera)
-    router.put('/:id/restaurar', esAdmin, async (req, res) => {
+    // RESTORE
+    router.put('/:id/restaurar', async (req, res) => {
         await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' });
         res.json({ message: `${nombre} restaurado` });
     });
     
-    // PERMANENT DELETE (Desde papelera)
-    router.delete('/:id/permanente', esAdmin, async (req, res) => {
+    // PERMANENT DELETE
+    router.delete('/:id/permanente', async (req, res) => {
         await modelo.findByIdAndDelete(req.params.id);
         res.status(204).send();
     });
@@ -119,12 +121,12 @@ const crearRutasCrud = (modelo, nombre) => {
 };
 
 // --- RUTAS DE API ---
-app.use('/api/productos', esAdmin, crearRutasCrud(Producto, 'Producto'));
-app.use('/api/toppings', esAdmin, crearRutasCrud(Topping, 'Topping'));
-app.use('/api/jarabes', esAdmin, crearRutasCrud(Jarabe, 'Jarabe'));
-app.use('/api/clientes', esAdmin, crearRutasCrud(Cliente, 'Cliente'));
+app.use('/api/productos', crearRutasCrud(Producto, 'Producto'));
+app.use('/api/toppings', crearRutasCrud(Topping, 'Topping'));
+app.use('/api/jarabes', crearRutasCrud(Jarabe, 'Jarabe'));
+app.use('/api/clientes', crearRutasCrud(Cliente, 'Cliente'));
 
-// Ventas (Lógica especial ya que no todas las rutas son solo para admin)
+// Ventas (Lógica especial)
 app.post('/api/ventas', async (req, res) => {
     let nuevaVentaData = req.body;
     nuevaVentaData.vendedorId = req.user.id;

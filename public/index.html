@@ -49,6 +49,7 @@
     form input:focus, form select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px #c7d2fe; outline: none; }
     form select:disabled { background-color: #e2e8f0; cursor: not-allowed; }
     button { cursor: pointer; border-radius: 8px; border: none; padding: 0.75rem 1.25rem; font-weight: 600; transition: all 0.2s; }
+    button:disabled { background-color: #9ca3af; cursor: not-allowed; }
     button[type="submit"], #btnAgregarVenta { background-color: var(--primary-color); color: white; }
     button[type="submit"]:hover, #btnAgregarVenta:hover { background-color: var(--primary-hover); }
     .btn-eliminar-item, .btn-eliminar-venta { background-color: var(--danger-color); color: white; }
@@ -104,6 +105,8 @@
     .btn-cambiar-estatus { background: none; border: none; padding: 0; margin-left: 0.5rem; cursor: pointer; color: var(--text-color-light); }
     .btn-cambiar-estatus:hover { color: var(--primary-color); }
     .btn-cambiar-estatus svg { width: 16px; height: 16px; }
+    .btn-restaurar { background-color: var(--success-color); color: white; }
+    .btn-eliminar-perm { background-color: var(--danger-color); color: white; }
     .full-width-card { grid-column: 1 / -1; }
     
     @media (max-width: 992px) {
@@ -138,6 +141,7 @@
         <a class="nav-link" data-seccion="gestion-clientes" id="btn-clientes"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-4.663c.278.472.548.972.786 1.503z" /></svg><span>Clientes</span></a>
         <a class="nav-link" data-seccion="gestion-usuarios" id="btn-usuarios"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962c.57-1.023.994-2.131 1.253-3.284C13.437 11.08 14 9.61 14 8c0-1.61-.563-3.08-1.5-4.216m-4.5 14.15a9.083 9.083 0 01-1.253-3.284C6.563 13.08 6 11.61 6 10c0-1.61.563-3.08 1.5-4.216m0 0a5.012 5.012 0 011.5 0c.828 1.136 1.5 2.606 1.5 4.216 0 1.61-.563-3.08-1.5 4.216m0 0l-2.25 2.25a5.012 5.012 0 01-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 00-1.5 0l-2.25 2.25a5.012 5.012 0 00-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 01-1.5 0l-2.25 2.25" /></svg><span>Usuarios</span></a>
         <a class="nav-link" data-seccion="historial-ventas"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 1.5m1-1.5l1-1.5m0 0l1 1.5m-2-1.5v-6.375c0-1.125.9-2.025 2-2.025h.5c1.1 0 2 .9 2 2.025v6.375m-4.5-3.375V8.25" /></svg><span>Historial</span></a>
+        <a class="nav-link" data-seccion="papelera-reciclaje" id="btn-papelera"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.067-2.09 1.02-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg><span>Papelera</span></a>
       </div>
       <div class="sidebar-footer">
         <button id="logout-button">Cerrar Sesión</button>
@@ -303,6 +307,20 @@
             </div>
           </div>
         </section>
+        <section id="papelera-reciclaje">
+            <div class="card">
+                <div class="card-header"><h2>Papelera de Reciclaje</h2></div>
+                <p>Aquí se muestran los elementos eliminados. Puedes restaurarlos o eliminarlos permanentemente.</p>
+            </div>
+            <div class="grid-container">
+                <div class="card"><h3>Productos Eliminados</h3><ul id="papelera-productos"></ul></div>
+                <div class="card"><h3>Toppings Eliminados</h3><ul id="papelera-toppings"></ul></div>
+                <div class="card"><h3>Jarabes Eliminados</h3><ul id="papelera-jarabes"></ul></div>
+                <div class="card"><h3>Clientes Eliminados</h3><ul id="papelera-clientes"></ul></div>
+                <div class="card"><h3>Usuarios Eliminados</h3><ul id="papelera-usuarios"></ul></div>
+                <div class="card full-width-card"><h3>Ventas Eliminadas</h3><ul id="papelera-ventas"></ul></div>
+            </div>
+        </section>
       </main>
     </div>
   </div>
@@ -326,6 +344,7 @@
       let miGraficaDeVentas, miGraficaDeProductos;
       let ventasEnMemoria = [];
       const COSTO_DOMICILIO_PREDET = 30.00; 
+      const btnPapelera = document.getElementById('btn-papelera');
 
       menuToggle.addEventListener('click', () => nav.classList.toggle('nav-open'));
       
@@ -338,6 +357,7 @@
           btnGestion.style.display = esAdmin ? 'flex' : 'none';
           btnClientes.style.display = esAdmin ? 'flex' : 'none';
           btnUsuarios.style.display = esAdmin ? 'flex' : 'none';
+          btnPapelera.style.display = esAdmin ? 'flex' : 'none';
           document.getElementById('filtro-usuario-container').style.display = esAdmin ? 'flex' : 'none';
           appWrapper.style.display = 'flex';
           loginContainer.style.display = 'none';
@@ -408,7 +428,8 @@
             'gestion-completa': () => { cargarProductos(); cargarToppings(); cargarJarabes(); },
             'gestion-clientes': () => cargarClientes(),
             'gestion-usuarios': () => cargarUsuarios(),
-            'historial-ventas': () => { cargarClientesParaFiltro(); cargarUsuariosParaFiltro(); cargarVentasHistorial(); }
+            'historial-ventas': () => { cargarClientesParaFiltro(); cargarUsuariosParaFiltro(); cargarVentasHistorial(); },
+            'papelera-reciclaje': () => cargarPapelera(),
           };
           cargarMap[id]?.();
         }
@@ -490,7 +511,7 @@
       }
 
       async function eliminarItem(id, tipo) {
-        if (confirm(`¿Eliminar este ${tipo.toLowerCase()}?`)) {
+        if (confirm(`¿Mover este ${tipo.toLowerCase()} a la papelera?`)) {
           try {
             await fetchAPI(`/api/${tipo.toLowerCase()}s/${id}`, { method: 'DELETE' });
             await actualizarUIGlobal(tipo);
@@ -499,13 +520,16 @@
       }
       
       async function actualizarUIGlobal(tipo) {
-        const updateMap = {
-          'Producto': [cargarProductos, cargarProductosParaVenta], 'Topping': [cargarToppings, cargarToppingsParaVenta],
-          'Jarabe': [cargarJarabes, cargarJarabesParaVenta], 'Cliente': [cargarClientes, cargarClientesParaVenta, cargarClientesParaFiltro],
-          'Usuario': [cargarUsuarios, cargarUsuariosParaFiltro]
+        const cargaFuncs = {
+          'Producto': [cargarProductos],
+          'Topping': [cargarToppings],
+          'Jarabe': [cargarJarabes],
+          'Cliente': [cargarClientes],
+          'Usuario': [cargarUsuarios],
+          'Venta': [cargarVentasHistorial]
         };
-        const funcionesAActualizar = updateMap[tipo] || [];
-        for (const func of funcionesAActualizar) { await func(); }
+        const funciones = cargaFuncs[tipo] || [];
+        for (const func of funciones) { await func(); }
       }
 
       async function cargarProductos() { try { const data = await fetchAPI('/api/productos'); renderizarLista(data, 'Producto', ['nombre', 'precio']); } catch (e) { renderizarLista([], 'Producto', ['nombre', 'precio']); } }
@@ -604,28 +628,41 @@
       }
 
       async function registrarVenta(estatus) {
-        if (ventaActual.length === 0) { alert('Agrega al menos un producto a la venta'); return; }
-        const clienteSelect = document.getElementById('ventaCliente');
-        const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
-        const subtotal = ventaActual.reduce((a, i) => a + i.total, 0);
-        const ventaCompleta = { 
-          id: Date.now(), 
-          fecha: new Date().toISOString(), 
-          clienteId: clienteSelect.value ? parseInt(clienteSelect.value) : null,
-          clienteNombre: clienteSelect.value ? clienteSelect.options[clienteSelect.selectedIndex].text : 'Público General',
-          items: ventaActual, 
-          subtotal: subtotal, 
-          costoDomicilio: costoDomicilio, 
-          total: subtotal + costoDomicilio,
-          metodoPago: document.getElementById('metodoPago').value,
-          estatus: estatus
-        };
+        const btnPagado = document.getElementById('btnRegistrarPagado');
+        const btnPendiente = document.getElementById('btnRegistrarPendiente');
+        btnPagado.disabled = true;
+        btnPendiente.disabled = true;
+        
         try {
-          const ventaGuardada = await fetchAPI('/api/ventas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ventaCompleta) });
-          alert(`Venta guardada como "${estatus}" con éxito`);
-          document.getElementById('ticket').textContent = generarTextoTicket(ventaGuardada);
-          resetearFormularioCompleto();
-        } catch(e) { alert(`Error: ${e.message}`); }
+            if (ventaActual.length === 0) {
+                alert('Agrega al menos un producto a la venta');
+                return;
+            }
+            const clienteSelect = document.getElementById('ventaCliente');
+            const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
+            const subtotal = ventaActual.reduce((a, i) => a + i.total, 0);
+            const ventaCompleta = { 
+                id: Date.now(), 
+                fecha: new Date().toISOString(), 
+                clienteId: clienteSelect.value ? parseInt(clienteSelect.value) : null,
+                clienteNombre: clienteSelect.value ? clienteSelect.options[clienteSelect.selectedIndex].text : 'Público General',
+                items: ventaActual, 
+                subtotal: subtotal, 
+                costoDomicilio: costoDomicilio, 
+                total: subtotal + costoDomicilio,
+                metodoPago: document.getElementById('metodoPago').value,
+                estatus: estatus
+            };
+            const ventaGuardada = await fetchAPI('/api/ventas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ventaCompleta) });
+            alert(`Venta guardada como "${estatus}" con éxito`);
+            document.getElementById('ticket').textContent = generarTextoTicket(ventaGuardada);
+            resetearFormularioCompleto();
+        } catch (e) {
+            alert(`Error: ${e.message}`);
+        } finally {
+            btnPagado.disabled = false;
+            btnPendiente.disabled = false;
+        }
       }
 
       function mostrarVentaActual() {
@@ -702,29 +739,8 @@
       async function cargarUsuarios() {
           try {
               const usuarios = await fetchAPI('/api/usuarios');
-              const lista = document.getElementById('listaUsuarios');
-              if(!lista) return;
-              lista.innerHTML = '';
-              usuarios.forEach(user => {
-                  const li = document.createElement('li');
-                  const texto = document.createElement('span');
-                  texto.textContent = `${user.username} - Rol: ${user.role}`;
-                  const divBotones = document.createElement('div');
-                  const btnCambiarPass = document.createElement('button');
-                  btnCambiarPass.textContent = 'Cambiar Contraseña';
-                  btnCambiarPass.onclick = () => cambiarPasswordUsuario(user.id, user.username);
-                  const btnEliminar = document.createElement('button');
-                  btnEliminar.textContent = 'Eliminar';
-                  btnEliminar.className = 'btn-eliminar-item';
-                  if (user.id === 1) { btnEliminar.disabled = true; btnEliminar.title = "No se puede eliminar al admin principal"; }
-                  btnEliminar.onclick = () => eliminarUsuario(user.id);
-                  divBotones.appendChild(btnCambiarPass);
-                  divBotones.appendChild(btnEliminar);
-                  li.appendChild(texto);
-                  li.appendChild(divBotones);
-                  lista.appendChild(li);
-              });
-          } catch (e) { /* Error manejado en fetchAPI */ }
+              renderizarLista(usuarios, 'Usuario', ['username', 'role']);
+          } catch (e) { renderizarLista([], 'Usuario', ['username', 'role']); }
       }
 
       async function crearUsuario(e) {
@@ -751,12 +767,12 @@
       }
 
       async function eliminarUsuario(id) {
-          if (confirm('¿Estás seguro de que quieres eliminar a este usuario?')) {
-              try {
-                  await fetchAPI(`/api/usuarios/${id}`, { method: 'DELETE' });
-                  await cargarUsuarios();
-              } catch (error) { alert(`Error: ${error.message}`); }
-          }
+        if (confirm(`¿Mover este usuario a la papelera?`)) {
+          try {
+            await fetchAPI(`/api/usuarios/${id}`, { method: 'DELETE' });
+            await cargarUsuarios();
+          } catch (err) { alert(`Error: ${err.message}`); }
+        }
       }
 
       async function marcarComoPagado(ventaId) {
@@ -780,7 +796,6 @@
           }
       }
       
-      // CAMBIO 16: Nueva función para cambiar el estatus manualmente
       async function cambiarEstatus(ventaId, estatusActual) {
         const nuevoEstatus = estatusActual === 'Pagado' ? 'Pendiente de Pago' : 'Pagado';
         if (confirm(`¿Deseas cambiar el estatus de esta venta a "${nuevoEstatus}"?`)) {
@@ -869,7 +884,7 @@
             tbody.appendChild(tr);
           });
           
-          document.querySelectorAll('.btn-eliminar-venta').forEach(btn => btn.addEventListener('click', () => eliminarVenta(btn.dataset.id)));
+          document.querySelectorAll('.btn-eliminar-venta').forEach(btn => btn.addEventListener('click', () => eliminarItem(btn.dataset.id, 'Venta')));
           document.querySelectorAll('.btn-marcar-pagado').forEach(btn => btn.addEventListener('click', () => marcarComoPagado(btn.dataset.id)));
           document.querySelectorAll('.btn-reimprimir').forEach(btn => btn.addEventListener('click', () => reimprimirTicket(btn.dataset.id)));
           document.querySelectorAll('.btn-cambiar-estatus').forEach(btn => btn.addEventListener('click', () => cambiarEstatus(btn.dataset.id, btn.dataset.estatus)));
@@ -900,7 +915,7 @@
       }
       
       async function eliminarVenta(id) {
-        if (confirm('¿Deseas eliminar esta venta completa?')) {
+        if (confirm('¿Mover esta venta a la papelera?')) {
           await fetchAPI(`/api/ventas/${id}`, { method: 'DELETE' });
           cargarVentasHistorial();
         }

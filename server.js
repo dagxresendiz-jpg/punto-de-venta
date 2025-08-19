@@ -1,4 +1,4 @@
-// server.js - Versión Final, Explícita y Corregida
+// server.js - Versión con Papelera de Reciclaje (Soft Delete)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -32,17 +32,19 @@ const createSchema = (definition) => new mongoose.Schema(definition, {
         }
     }
 });
-const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number }));
-const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number }));
-const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number }));
-const Cliente = mongoose.model('Cliente', createSchema({ nombre: String, telefono: String, direccion: String }));
-const Usuario = mongoose.model('Usuario', createSchema({ username: { type: String, unique: true, required: true }, password: { type: String, required: true }, role: { type: String, required: true }}));
+
+// CAMBIO 15: Se añade 'status' a todos los modelos para la papelera
+const commonFields = { status: { type: String, default: 'activo' } };
+
+const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number, ...commonFields }));
+const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number, ...commonFields }));
+const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number, ...commonFields }));
+const Cliente = mongoose.model('Cliente', createSchema({ nombre: String, telefono: String, direccion: String, ...commonFields }));
+const Usuario = mongoose.model('Usuario', createSchema({ username: { type: String, unique: true, required: true }, password: { type: String, required: true }, role: { type: String, required: true }, ...commonFields }));
 const Venta = mongoose.model('Venta', createSchema({
     fecha: Date, clienteId: String, clienteNombre: String, items: Array,
     subtotal: Number, costoDomicilio: Number, total: Number, metodoPago: String,
-    vendedorId: String, vendedorUsername: String,
-    // --- CAMBIO CLAVE --- Se añade el campo estatus al modelo de la base de datos
-    estatus: String 
+    vendedorId: String, vendedorUsername: String, estatus: String, ...commonFields
 }));
 
 // --- MIDDLEWARES DE SEGURIDAD ---
@@ -67,7 +69,7 @@ function esAdmin(req, res, next) {
 app.post('/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const usuario = await Usuario.findOne({ username });
+        const usuario = await Usuario.findOne({ username, status: 'activo' }); // Solo usuarios activos pueden loguearse
         if (!usuario) return res.status(401).json({ error: 'Credenciales inválidas' });
         const passwordValida = await bcrypt.compare(password, usuario.password);
         if (!passwordValida) return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -79,68 +81,73 @@ app.post('/auth/login', async (req, res) => {
 // --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
+// --- FUNCIÓN GENÉRICA PARA RUTAS CRUD ---
+const crearRutasCrud = (modelo, nombre) => {
+    const router = express.Router();
+    
+    // GET Activos (para las listas principales)
+    router.get('/', async (req, res) => res.json(await modelo.find({ status: 'activo' })));
+    
+    // GET Papelera (solo Admin, para la sección de papelera)
+    router.get('/papelera', esAdmin, async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
+    
+    // POST
+    router.post('/', esAdmin, async (req, res) => res.status(201).json(await modelo.create(req.body)));
+    
+    // PUT (Actualización general)
+    router.put('/:id', esAdmin, async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+    
+    // SOFT DELETE (Mover a papelera)
+    router.delete('/:id', esAdmin, async (req, res) => { 
+        await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); 
+        res.status(204).send(); 
+    });
+    
+    // RESTORE (Sacar de papelera)
+    router.put('/:id/restaurar', esAdmin, async (req, res) => {
+        await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' });
+        res.json({ message: `${nombre} restaurado` });
+    });
+    
+    // PERMANENT DELETE (Desde papelera)
+    router.delete('/:id/permanente', esAdmin, async (req, res) => {
+        await modelo.findByIdAndDelete(req.params.id);
+        res.status(204).send();
+    });
+    
+    return router;
+};
+
 // --- RUTAS DE API ---
-// Productos (Solo Admin)
-app.get('/api/productos', async (req, res) => res.json(await Producto.find()));
-app.post('/api/productos', esAdmin, async (req, res) => res.status(201).json(await Producto.create(req.body)));
-app.put('/api/productos/:id', esAdmin, async (req, res) => res.json(await Producto.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-app.delete('/api/productos/:id', esAdmin, async (req, res) => { await Producto.findByIdAndDelete(req.params.id); res.status(204).send(); });
+app.use('/api/productos', esAdmin, crearRutasCrud(Producto, 'Producto'));
+app.use('/api/toppings', esAdmin, crearRutasCrud(Topping, 'Topping'));
+app.use('/api/jarabes', esAdmin, crearRutasCrud(Jarabe, 'Jarabe'));
+app.use('/api/clientes', esAdmin, crearRutasCrud(Cliente, 'Cliente'));
 
-// Toppings (Solo Admin)
-app.get('/api/toppings', async (req, res) => res.json(await Topping.find()));
-app.post('/api/toppings', esAdmin, async (req, res) => res.status(201).json(await Topping.create(req.body)));
-app.put('/api/toppings/:id', esAdmin, async (req, res) => res.json(await Topping.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-app.delete('/api/toppings/:id', esAdmin, async (req, res) => { await Topping.findByIdAndDelete(req.params.id); res.status(204).send(); });
-
-// Jarabes (Solo Admin)
-app.get('/api/jarabes', async (req, res) => res.json(await Jarabe.find()));
-app.post('/api/jarabes', esAdmin, async (req, res) => res.status(201).json(await Jarabe.create(req.body)));
-app.put('/api/jarabes/:id', esAdmin, async (req, res) => res.json(await Jarabe.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-app.delete('/api/jarabes/:id', esAdmin, async (req, res) => { await Jarabe.findByIdAndDelete(req.params.id); res.status(204).send(); });
-
-// Clientes (Solo Admin)
-app.get('/api/clientes', async (req, res) => res.json(await Cliente.find()));
-app.post('/api/clientes', esAdmin, async (req, res) => res.status(201).json(await Cliente.create(req.body)));
-app.put('/api/clientes/:id', esAdmin, async (req, res) => res.json(await Cliente.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-app.delete('/api/clientes/:id', esAdmin, async (req, res) => { await Cliente.findByIdAndDelete(req.params.id); res.status(204).send(); });
-
-// Ventas (Abierto a todos los usuarios logueados, excepto DELETE)
+// Ventas (Lógica especial ya que no todas las rutas son solo para admin)
 app.post('/api/ventas', async (req, res) => {
-    // --- CAMBIO CLAVE --- Ahora el backend recibe y usa el 'estatus' enviado desde el frontend
     let nuevaVentaData = req.body;
     nuevaVentaData.vendedorId = req.user.id;
     nuevaVentaData.vendedorUsername = req.user.username;
-    // La variable 'estatus' ya viene dentro de 'nuevaVentaData' gracias al frontend
     const ventaCreada = await Venta.create(nuevaVentaData);
     res.status(201).json(ventaCreada);
 });
-
-app.get('/api/ventas', async (req, res) => res.json(await Venta.find()));
-
-// --- CAMBIO CLAVE --- Se añade la ruta PUT para actualizar el estatus de una venta pendiente
+app.get('/api/ventas', async (req, res) => res.json(await Venta.find({ status: 'activo' })));
+app.get('/api/ventas/papelera', esAdmin, async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
 app.put('/api/ventas/:id', async (req, res) => {
-    try {
-        const { estatus, metodoPago } = req.body;
-        const ventaId = req.params.id;
-
-        const datosActualizar = {};
-        if (estatus) datosActualizar.estatus = estatus;
-        if (metodoPago) datosActualizar.metodoPago = metodoPago;
-
-        const ventaActualizada = await Venta.findByIdAndUpdate(ventaId, datosActualizar, { new: true });
-        if (!ventaActualizada) {
-            return res.status(404).json({ error: 'Venta no encontrada.' });
-        }
-        res.json(ventaActualizada);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al actualizar la venta.' });
-    }
+    const { estatus, metodoPago } = req.body;
+    const datosActualizar = {};
+    if (estatus) datosActualizar.estatus = estatus;
+    if (metodoPago) datosActualizar.metodoPago = metodoPago;
+    res.json(await Venta.findByIdAndUpdate(req.params.id, datosActualizar, { new: true }));
 });
+app.delete('/api/ventas/:id', esAdmin, async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
+app.put('/api/ventas/:id/restaurar', esAdmin, async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Venta restaurada' }); });
+app.delete('/api/ventas/:id/permanente', esAdmin, async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-app.delete('/api/ventas/:id', esAdmin, async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
-
-// Usuarios (Solo Admin)
-app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find().select('-password')));
+// Usuarios (Lógica especial)
+app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find({ status: 'activo' }).select('-password')));
+app.get('/api/usuarios/papelera', esAdmin, async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
 app.post('/api/usuarios', esAdmin, async (req, res) => {
     const { username, password, role } = req.body;
     if (!username || !password || !role) return res.status(400).json({ error: 'Usuario, contraseña y rol son requeridos.' });
@@ -157,11 +164,13 @@ app.put('/api/usuarios/:id', esAdmin, async (req, res) => {
     if (!usuarioActualizado) return res.status(404).json({error: 'Usuario no encontrado'});
     res.json({ message: 'Contraseña actualizada' });
 });
+app.put('/api/usuarios/:id/restaurar', esAdmin, async (req, res) => { await Usuario.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Usuario restaurado' }); });
 app.delete('/api/usuarios/:id', esAdmin, async (req, res) => {
     if (req.params.id === req.user.id) return res.status(403).json({ error: 'No puedes eliminarte a ti mismo.' });
-    await Usuario.findByIdAndDelete(req.params.id);
+    await Usuario.findByIdAndUpdate(req.params.id, { status: 'eliminado' });
     res.status(204).send();
 });
+app.delete('/api/usuarios/:id/permanente', esAdmin, async (req, res) => { await Usuario.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
 // --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
 app.get('*', (req, res) => {

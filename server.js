@@ -1,4 +1,4 @@
-// server.js - Versión con Papelera de Reciclaje y Middleware Corregido
+// server.js - Versión con Sistema de Permisos y Edición de Usuarios
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -35,11 +35,25 @@ const createSchema = (definition) => new mongoose.Schema(definition, {
 
 const commonFields = { status: { type: String, default: 'activo' } };
 
+// CAMBIO 16: Se añade el campo 'permissions' al modelo de Usuario
+const userPermissions = {
+    gestion: { type: Boolean, default: false },
+    clientes: { type: Boolean, default: false },
+    historial: { type: Boolean, default: false },
+    papelera: { type: Boolean, default: false },
+};
+
 const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Cliente = mongoose.model('Cliente', createSchema({ nombre: String, telefono: String, direccion: String, ...commonFields }));
-const Usuario = mongoose.model('Usuario', createSchema({ username: { type: String, unique: true, required: true }, password: { type: String, required: true }, role: { type: String, required: true }, ...commonFields }));
+const Usuario = mongoose.model('Usuario', createSchema({ 
+    username: { type: String, unique: true, required: true }, 
+    password: { type: String, required: true }, 
+    role: { type: String, required: true }, 
+    permissions: createSchema(userPermissions),
+    ...commonFields 
+}));
 const Venta = mongoose.model('Venta', createSchema({
     fecha: Date, clienteId: String, clienteNombre: String, items: Array,
     subtotal: Number, costoDomicilio: Number, total: Number, metodoPago: String,
@@ -72,7 +86,8 @@ app.post('/auth/login', async (req, res) => {
         if (!usuario) return res.status(401).json({ error: 'Credenciales inválidas' });
         const passwordValida = await bcrypt.compare(password, usuario.password);
         if (!passwordValida) return res.status(401).json({ error: 'Credenciales inválidas' });
-        const token = jwt.sign({ id: usuario._id, username: usuario.username, role: usuario.role }, JWT_SECRET, { expiresIn: '8h' });
+        // CAMBIO 16: Se incluyen los permisos en el token
+        const token = jwt.sign({ id: usuario._id, username: usuario.username, role: usuario.role, permissions: usuario.permissions }, JWT_SECRET, { expiresIn: '8h' });
         res.json({ message: 'Login exitoso', token });
     } catch (error) { res.status(500).send('Error en el servidor'); }
 });
@@ -80,43 +95,17 @@ app.post('/auth/login', async (req, res) => {
 // --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
-// --- FUNCIÓN GENÉRICA PARA RUTAS CRUD (CORREGIDA) ---
+// --- FUNCIÓN GENÉRICA PARA RUTAS CRUD ---
 const crearRutasCrud = (modelo, nombre) => {
     const router = express.Router();
-    
-    // GET Activos (Abierto a usuarios logueados)
     router.get('/', async (req, res) => res.json(await modelo.find({ status: 'activo' })));
-    
-    // Las siguientes rutas requieren ser ADMIN
     router.use(esAdmin);
-
-    // GET Papelera
     router.get('/papelera', async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
-    
-    // POST
     router.post('/', async (req, res) => res.status(201).json(await modelo.create(req.body)));
-    
-    // PUT
     router.put('/:id', async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-    
-    // SOFT DELETE
-    router.delete('/:id', async (req, res) => { 
-        await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); 
-        res.status(204).send(); 
-    });
-    
-    // RESTORE
-    router.put('/:id/restaurar', async (req, res) => {
-        await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' });
-        res.json({ message: `${nombre} restaurado` });
-    });
-    
-    // PERMANENT DELETE
-    router.delete('/:id/permanente', async (req, res) => {
-        await modelo.findByIdAndDelete(req.params.id);
-        res.status(204).send();
-    });
-    
+    router.delete('/:id', async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
+    router.put('/:id/restaurar', async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
+    router.delete('/:id/permanente', async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
     return router;
 };
 
@@ -151,20 +140,23 @@ app.delete('/api/ventas/:id/permanente', esAdmin, async (req, res) => { await Ve
 app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find({ status: 'activo' }).select('-password')));
 app.get('/api/usuarios/papelera', esAdmin, async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
 app.post('/api/usuarios', esAdmin, async (req, res) => {
-    const { username, password, role } = req.body;
+    const { username, password, role, permissions } = req.body;
     if (!username || !password || !role) return res.status(400).json({ error: 'Usuario, contraseña y rol son requeridos.' });
     if (await Usuario.findOne({ username })) return res.status(409).json({ error: 'El nombre de usuario ya existe.' });
     const hashedPassword = await bcrypt.hash(password, 10);
-    const nuevoUsuario = await Usuario.create({ username, password: hashedPassword, role });
-    res.status(201).json({id: nuevoUsuario._id, username: nuevoUsuario.username, role: nuevoUsuario.role});
+    const nuevoUsuario = await Usuario.create({ username, password: hashedPassword, role, permissions });
+    res.status(201).json({id: nuevoUsuario._id, username: nuevoUsuario.username, role: nuevoUsuario.role, permissions: nuevoUsuario.permissions});
 });
+// CAMBIO 16: Se crea una ruta PUT completa para editar usuarios
 app.put('/api/usuarios/:id', esAdmin, async (req, res) => {
-    const { password } = req.body;
-    if (!password) return res.status(400).json({ error: 'Se requiere una nueva contraseña.' });
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const usuarioActualizado = await Usuario.findByIdAndUpdate(req.params.id, { password: hashedPassword });
+    const { username, role, permissions, password } = req.body;
+    let datosActualizar = { username, role, permissions };
+    if (password) {
+        datosActualizar.password = await bcrypt.hash(password, 10);
+    }
+    const usuarioActualizado = await Usuario.findByIdAndUpdate(req.params.id, datosActualizar, { new: true }).select('-password');
     if (!usuarioActualizado) return res.status(404).json({error: 'Usuario no encontrado'});
-    res.json({ message: 'Contraseña actualizada' });
+    res.json(usuarioActualizado);
 });
 app.put('/api/usuarios/:id/restaurar', esAdmin, async (req, res) => { await Usuario.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Usuario restaurado' }); });
 app.delete('/api/usuarios/:id', esAdmin, async (req, res) => {

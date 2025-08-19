@@ -108,6 +108,9 @@
     .btn-restaurar { background-color: var(--success-color); color: white; }
     .btn-eliminar-perm { background-color: var(--danger-color); color: white; }
     .full-width-card { grid-column: 1 / -1; }
+    #permisos-container { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    #permisos-container label { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+    #permisos-container input[type="checkbox"] { width: auto; margin: 0; }
     
     @media (max-width: 992px) {
       .menu-toggle { display: block; }
@@ -140,7 +143,7 @@
         <a class="nav-link" data-seccion="gestion-completa" id="btn-gestion"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg><span>Gestión</span></a>
         <a class="nav-link" data-seccion="gestion-clientes" id="btn-clientes"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-4.663c.278.472.548.972.786 1.503z" /></svg><span>Clientes</span></a>
         <a class="nav-link" data-seccion="gestion-usuarios" id="btn-usuarios"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962c.57-1.023.994-2.131 1.253-3.284C13.437 11.08 14 9.61 14 8c0-1.61-.563-3.08-1.5-4.216m-4.5 14.15a9.083 9.083 0 01-1.253-3.284C6.563 13.08 6 11.61 6 10c0-1.61.563-3.08 1.5-4.216m0 0a5.012 5.012 0 011.5 0c.828 1.136 1.5 2.606 1.5 4.216 0 1.61-.563-3.08-1.5 4.216m0 0l-2.25 2.25a5.012 5.012 0 01-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 00-1.5 0l-2.25 2.25a5.012 5.012 0 00-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 01-1.5 0l-2.25 2.25" /></svg><span>Usuarios</span></a>
-        <a class="nav-link" data-seccion="historial-ventas"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 1.5m1-1.5l1-1.5m0 0l1 1.5m-2-1.5v-6.375c0-1.125.9-2.025 2-2.025h.5c1.1 0 2 .9 2 2.025v6.375m-4.5-3.375V8.25" /></svg><span>Historial</span></a>
+        <a class="nav-link" data-seccion="historial-ventas" id="btn-historial"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 1.5m1-1.5l1-1.5m0 0l1 1.5m-2-1.5v-6.375c0-1.125.9-2.025 2-2.025h.5c1.1 0 2 .9 2 2.025v6.375m-4.5-3.375V8.25" /></svg><span>Historial</span></a>
         <a class="nav-link" data-seccion="papelera-reciclaje" id="btn-papelera"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.067-2.09 1.02-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg><span>Papelera</span></a>
       </div>
       <div class="sidebar-footer">
@@ -236,8 +239,25 @@
         <section id="gestion-usuarios">
           <div class="card">
             <div class="card-header"><h2>Gestión de Usuarios</h2></div>
-            <h3>Crear Nuevo Usuario</h3>
-            <form id="formUsuario"><input type="text" id="usernameUsuario" placeholder="Nombre de usuario" required /><input type="password" id="passwordUsuario" placeholder="Contraseña" required /><select id="roleUsuario" required><option value="">-- Seleccionar Rol --</option><option value="seller">Vendedor</option><option value="admin">Administrador</option></select><button type="submit">Crear Usuario</button></form>
+            <form id="formUsuario">
+              <input type="hidden" id="idUsuario" />
+              <input type="text" id="usernameUsuario" placeholder="Nombre de usuario" required />
+              <input type="password" id="passwordUsuario" placeholder="Contraseña (dejar en blanco para no cambiar)" />
+              <select id="roleUsuario" required>
+                  <option value="">-- Seleccionar Rol --</option>
+                  <option value="seller">Vendedor</option>
+                  <option value="admin">Administrador</option>
+              </select>
+              <div id="permisos-container">
+                  <h3>Permisos de Vendedor</h3>
+                  <label><input type="checkbox" name="permisos" value="gestion"> Acceso a Gestión de Inventario</label>
+                  <label><input type="checkbox" name="permisos" value="clientes"> Acceso a Clientes</label>
+                  <label><input type="checkbox" name="permisos" value="historial"> Acceso a Historial</label>
+                  <label><input type="checkbox" name="permisos" value="papelera"> Acceso a Papelera</label>
+              </div>
+              <button type="submit">Guardar Usuario</button>
+              <button type="button" id="btnLimpiarFormUsuario" style="background-color: #f1f5f9;">Limpiar</button>
+            </form>
             <h3>Usuarios Existentes</h3>
             <ul id="listaUsuarios"></ul>
           </div>
@@ -318,7 +338,22 @@
                 <div class="card"><h3>Jarabes Eliminados</h3><ul id="papelera-jarabes"></ul></div>
                 <div class="card"><h3>Clientes Eliminados</h3><ul id="papelera-clientes"></ul></div>
                 <div class="card"><h3>Usuarios Eliminados</h3><ul id="papelera-usuarios"></ul></div>
-                <div class="card full-width-card"><h3>Ventas Eliminadas</h3><ul id="papelera-ventas"></ul></div>
+                <div class="card full-width-card">
+                    <h3>Ventas Eliminadas</h3>
+                    <div style="overflow-x:auto;">
+                        <table id="papelera-ventas-tabla">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="papelera-ventas"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
       </main>
@@ -327,24 +362,27 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      let ventaActual = [];
+      let miGraficaDeVentas, miGraficaDeProductos;
+      let ventasEnMemoria = [];
+      let procesandoVenta = false;
+      const COSTO_DOMICILIO_PREDET = 30.00;
+      
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
       const loginForm = document.getElementById('login-form');
       const logoutButton = document.getElementById('logout-button');
       const welcomeUserSpan = document.getElementById('welcome-user');
       const loginError = document.getElementById('login-error');
-      const btnGestion = document.getElementById('btn-gestion');
-      const btnClientes = document.getElementById('btn-clientes');
-      const btnUsuarios = document.getElementById('btn-usuarios');
       const nav = document.querySelector('nav');
       const menuToggle = document.getElementById('menu-toggle');
       const mainContent = document.querySelector('.main-content');
       const { jsPDF } = window.jspdf;
-      let ventaActual = [];
-      let miGraficaDeVentas, miGraficaDeProductos;
-      let ventasEnMemoria = [];
-      let procesandoVenta = false; // Flag para evitar doble clic
-      const COSTO_DOMICILIO_PREDET = 30.00; 
+      
+      const btnGestion = document.getElementById('btn-gestion');
+      const btnClientes = document.getElementById('btn-clientes');
+      const btnUsuarios = document.getElementById('btn-usuarios');
+      const btnHistorial = document.getElementById('btn-historial');
       const btnPapelera = document.getElementById('btn-papelera');
 
       menuToggle.addEventListener('click', () => nav.classList.toggle('nav-open'));
@@ -354,16 +392,21 @@
           const token = localStorage.getItem('token');
           const payload = JSON.parse(atob(token.split('.')[1]));
           welcomeUserSpan.textContent = `Bienvenido, ${payload.username} (${payload.role})`;
+          
           const esAdmin = payload.role === 'admin';
-          btnGestion.style.display = esAdmin ? 'flex' : 'none';
-          btnClientes.style.display = esAdmin ? 'flex' : 'none';
+          const permisos = payload.permissions || {};
+
+          btnGestion.style.display = (esAdmin || permisos.gestion) ? 'flex' : 'none';
+          btnClientes.style.display = (esAdmin || permisos.clientes) ? 'flex' : 'none';
+          btnHistorial.style.display = (esAdmin || permisos.historial) ? 'flex' : 'none';
+          btnPapelera.style.display = (esAdmin || permisos.papelera) ? 'flex' : 'none';
           btnUsuarios.style.display = esAdmin ? 'flex' : 'none';
-          btnPapelera.style.display = esAdmin ? 'flex' : 'none';
           document.getElementById('filtro-usuario-container').style.display = esAdmin ? 'flex' : 'none';
+
           appWrapper.style.display = 'flex';
           loginContainer.style.display = 'none';
           initApp();
-        } catch (e) { showLogin(); }
+        } catch (e) { console.error("Error en showApp:", e); showLogin(); }
       }
       
       function showLogin() {
@@ -409,8 +452,6 @@
       function initApp() {
         setupEventListeners();
         setupCollapsibles(); 
-        const token = localStorage.getItem('token');
-        const payload = JSON.parse(atob(token.split('.')[1]));
         const seccionInicial = 'registrar-venta';
         mostrarSeccion(seccionInicial);
       }
@@ -471,12 +512,16 @@
           const btnEditar = document.createElement('button');
           btnEditar.textContent = 'Editar';
           btnEditar.onclick = () => {
-            document.getElementById(`id${tipo}`).value = item.id;
-            document.getElementById(`nombre${tipo}`).value = item.nombre;
-            if (tipo === 'Cliente') {
-              document.getElementById(`tel${tipo}`).value = item.telefono || '';
-              document.getElementById(`dir${tipo}`).value = item.direccion || '';
-            } else { document.getElementById(`precio${tipo}`).value = item.precio; }
+              if(tipo === 'Usuario') {
+                  cargarUsuarioEnForm(item);
+              } else {
+                  document.getElementById(`id${tipo}`).value = item.id;
+                  document.getElementById(`nombre${tipo}`).value = item.nombre;
+                  if (tipo === 'Cliente') {
+                    document.getElementById(`tel${tipo}`).value = item.telefono || '';
+                    document.getElementById(`dir${tipo}`).value = item.direccion || '';
+                  } else { document.getElementById(`precio${tipo}`).value = item.precio; }
+              }
           };
           const btnEliminar = document.createElement('button');
           btnEliminar.textContent = 'Eliminar';
@@ -498,7 +543,19 @@
         if (tipo === 'Cliente') {
             body = { nombre: document.getElementById(`nombre${tipo}`).value, telefono: document.getElementById(`tel${tipo}`).value, direccion: document.getElementById(`dir${tipo}`).value };
             if (!body.nombre) { alert('El nombre del cliente es obligatorio.'); return; }
-        } else {
+        } else if (tipo === 'Usuario') {
+            const username = document.getElementById('usernameUsuario').value;
+            const password = document.getElementById('passwordUsuario').value;
+            const role = document.getElementById('roleUsuario').value;
+            const permissions = {};
+            document.querySelectorAll('#permisos-container input[type="checkbox"]').forEach(cb => {
+                permissions[cb.value] = cb.checked;
+            });
+            body = { username, role, permissions };
+            if (password) body.password = password;
+            if(!username || !role) { alert("Nombre de usuario y rol son obligatorios."); return; }
+        }
+        else {
             body = { nombre: document.getElementById(`nombre${tipo}`).value, precio: parseFloat(document.getElementById(`precio${tipo}`).value) };
             if (!body.nombre || isNaN(body.precio)) { alert('Completa los datos'); return; }
         }
@@ -507,6 +564,7 @@
         try {
           await fetchAPI(url, { method: metodo, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
           form.reset();
+          if(tipo === 'Usuario') limpiarFormularioUsuario();
           await actualizarUIGlobal(tipo);
         } catch (err) { alert(`Error: ${err.message}`); }
       }
@@ -627,7 +685,7 @@
       }
 
       async function registrarVenta(estatus) {
-        if (procesandoVenta) return; // Previene doble clic
+        if (procesandoVenta) return; 
         procesandoVenta = true;
         const btnPagado = document.getElementById('btnRegistrarPagado');
         const btnPendiente = document.getElementById('btnRegistrarPendiente');
@@ -661,7 +719,7 @@
         } catch (e) {
             alert(`Error: ${e.message}`);
         } finally {
-            procesandoVenta = false; // Restablece la bandera
+            procesandoVenta = false;
             btnPagado.disabled = false;
             btnPendiente.disabled = false;
         }
@@ -738,6 +796,8 @@
         return texto;
       }
       
+            // ... (Código anterior del script)...
+
       async function cargarUsuarios() {
           try {
               const usuarios = await fetchAPI('/api/usuarios');
@@ -745,35 +805,78 @@
           } catch (e) { renderizarLista([], 'Usuario', ['username', 'role']); }
       }
 
-      async function crearUsuario(e) {
-          e.preventDefault();
-          const form = e.target;
-          const username = document.getElementById('usernameUsuario').value;
-          const password = document.getElementById('passwordUsuario').value;
-          const role = document.getElementById('roleUsuario').value;
-          try {
-              await fetchAPI('/api/usuarios', { method: 'POST', body: JSON.stringify({ username, password, role }) });
-              form.reset();
-              await cargarUsuarios();
-          } catch (error) { alert(`Error: ${error.message}`); }
+      function limpiarFormularioUsuario() {
+          document.getElementById('formUsuario').reset();
+          document.getElementById('idUsuario').value = '';
+          const permisosCheckboxes = document.querySelectorAll('#permisos-container input[type="checkbox"]');
+          permisosCheckboxes.forEach(cb => {
+              cb.checked = false;
+              cb.disabled = false;
+          });
+          document.getElementById('permisos-container').style.display = 'block';
+          document.getElementById('passwordUsuario').setAttribute('placeholder', 'Contraseña');
+          document.getElementById('formUsuario').querySelector('button[type="submit"]').textContent = 'Crear Usuario';
       }
-      
-      async function cambiarPasswordUsuario(id, username) {
-          const nuevaPassword = prompt(`Introduce la NUEVA contraseña para el usuario "${username}":`);
-          if (nuevaPassword && nuevaPassword.trim() !== '') {
-              try {
-                  await fetchAPI(`/api/usuarios/${id}`, { method: 'PUT', body: JSON.stringify({ password: nuevaPassword }) });
-                  alert('Contraseña actualizada con éxito.');
-              } catch (error) { alert(`Error: ${error.message}`); }
+
+      function cargarUsuarioEnForm(usuario) {
+          limpiarFormularioUsuario();
+          document.getElementById('idUsuario').value = usuario.id;
+          document.getElementById('usernameUsuario').value = usuario.username;
+          document.getElementById('roleUsuario').value = usuario.role;
+          document.getElementById('passwordUsuario').setAttribute('placeholder', 'Dejar en blanco para no cambiar');
+          document.getElementById('formUsuario').querySelector('button[type="submit"]').textContent = 'Actualizar Usuario';
+          
+          const permisosContainer = document.getElementById('permisos-container');
+          const permisosCheckboxes = permisosContainer.querySelectorAll('input[type="checkbox"]');
+          
+          if (usuario.role === 'admin') {
+              permisosContainer.style.display = 'none';
+          } else {
+              permisosContainer.style.display = 'block';
+              if (usuario.permissions) {
+                  permisosCheckboxes.forEach(cb => {
+                      cb.checked = usuario.permissions[cb.value] || false;
+                  });
+              }
           }
       }
 
-      async function eliminarUsuario(id) {
-        if (confirm(`¿Mover este usuario a la papelera?`)) {
-          try {
-            await fetchAPI(`/api/usuarios/${id}`, { method: 'DELETE' });
+      async function guardarUsuario(e) {
+        e.preventDefault();
+        const id = document.getElementById('idUsuario').value;
+        const username = document.getElementById('usernameUsuario').value;
+        const password = document.getElementById('passwordUsuario').value;
+        const role = document.getElementById('roleUsuario').value;
+        
+        const permissions = {};
+        document.querySelectorAll('#permisos-container input[type="checkbox"]').forEach(cb => {
+            permissions[cb.value] = cb.checked;
+        });
+
+        if (!username || !role) {
+            alert('Nombre de usuario y rol son obligatorios.');
+            return;
+        }
+        if (!id && !password) {
+            alert('La contraseña es obligatoria para nuevos usuarios.');
+            return;
+        }
+
+        const body = { username, role, permissions };
+        if (password) {
+            body.password = password;
+        }
+
+        const metodo = id ? 'PUT' : 'POST';
+        const url = id ? `/api/usuarios/${id}` : '/api/usuarios';
+
+        try {
+            await fetchAPI(url, { method: metodo, body: JSON.stringify(body) });
+            alert(`Usuario ${id ? 'actualizado' : 'creado'} con éxito.`);
+            limpiarFormularioUsuario();
             await cargarUsuarios();
-          } catch (err) { alert(`Error: ${err.message}`); }
+        } catch(err) {
+            alert(`Error: ${err.message}`);
         }
       }
 
@@ -919,13 +1022,6 @@
           data.forEach(c => select.innerHTML += `<option value="${c.id}">${c.nombre}</option>`);
         } catch (e) { /* Error manejado en fetchAPI */ }
       }
-      
-      async function eliminarVenta(id) {
-        if (confirm('¿Mover esta venta a la papelera?')) {
-          await fetchAPI(`/api/ventas/${id}`, { method: 'DELETE' });
-          cargarVentasHistorial();
-        }
-      }
 
       async function cargarPapelera() {
         try {
@@ -939,7 +1035,7 @@
             renderizarPapelera(jarabes, 'Jarabe');
             renderizarPapelera(clientes, 'Cliente');
             renderizarPapelera(usuarios, 'Usuario');
-            renderizarPapelera(ventas, 'Venta');
+            renderizarPapeleraVentas(ventas);
         } catch (error) {
             alert("Error al cargar la papelera: " + error.message);
         }
@@ -952,7 +1048,7 @@
         items.forEach(item => {
           const li = document.createElement('li');
           const texto = document.createElement('span');
-          texto.textContent = item.nombre || item.clienteNombre || item.username || `Venta ID: ${item.id}`;
+          texto.textContent = item.nombre || item.username;
           
           const divBotones = document.createElement('div');
           const btnRestaurar = document.createElement('button');
@@ -971,6 +1067,24 @@
           li.appendChild(divBotones);
           lista.appendChild(li);
         });
+      }
+
+      function renderizarPapeleraVentas(items) {
+          const tbody = document.getElementById('papelera-ventas');
+          tbody.innerHTML = '';
+          items.forEach(item => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                  <td>${item.clienteNombre || 'N/A'}</td>
+                  <td>${new Date(item.fecha).toLocaleString()}</td>
+                  <td>$${item.total.toFixed(2)}</td>
+                  <td>
+                      <button class="btn-restaurar" onclick="restaurarItem('${item.id}', 'Venta')">Restaurar</button>
+                      <button class="btn-eliminar-perm" onclick="eliminarPermanentemente('${item.id}', 'Venta')">Eliminar Permanente</button>
+                  </td>
+              `;
+              tbody.appendChild(tr);
+          });
       }
 
       async function restaurarItem(id, tipo) {
@@ -1014,22 +1128,8 @@
         if (!ctx) return;
         miGraficaDeVentas = new Chart(ctx, { 
             type: 'bar', 
-            data: { 
-                labels, 
-                datasets: [{ 
-                    label: `Ventas Totales`, 
-                    data, 
-                    backgroundColor: 'rgba(79, 70, 229, 0.5)', 
-                    borderColor: 'rgba(79, 70, 229, 1)', 
-                    borderWidth: 1 
-                }] 
-            }, 
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: true, 
-                aspectRatio: 2,
-                scales: { y: { beginAtZero: true } } 
-            } 
+            data: { labels, datasets: [{ label: `Ventas Totales`, data, backgroundColor: 'rgba(79, 70, 229, 0.5)', borderColor: 'rgba(79, 70, 229, 1)', borderWidth: 1 }] }, 
+            options: { responsive: true, maintainAspectRatio: true, aspectRatio: 2, scales: { y: { beginAtZero: true } } } 
         });
       }
 
@@ -1039,20 +1139,8 @@
         if (!ctx) return;
         miGraficaDeProductos = new Chart(ctx, { 
             type: 'doughnut', 
-            data: { 
-                labels, 
-                datasets: [{ 
-                    label: 'Productos Vendidos', 
-                    data, 
-                    backgroundColor: ['#4f46e5', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'], 
-                    hoverOffset: 4 
-                }] 
-            }, 
-            options: { 
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 1.5,
-            } 
+            data: { labels, datasets: [{ label: 'Productos Vendidos', data, backgroundColor: ['#4f46e5', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'], hoverOffset: 4 }] }, 
+            options: { responsive: true, maintainAspectRatio: true, aspectRatio: 1.5, } 
         });
       }
 
@@ -1112,7 +1200,18 @@
         document.getElementById('formTopping').addEventListener('submit', (e) => guardarItem(e, 'Topping'));
         document.getElementById('formJarabe').addEventListener('submit', (e) => guardarItem(e, 'Jarabe'));
         document.getElementById('formCliente').addEventListener('submit', (e) => guardarItem(e, 'Cliente'));
-        document.getElementById('formUsuario').addEventListener('submit', crearUsuario);
+        document.getElementById('formUsuario').addEventListener('submit', (e) => guardarUsuario(e));
+        document.getElementById('roleUsuario').addEventListener('change', () => {
+          const permisosContainer = document.getElementById('permisos-container');
+          const permisosCheckboxes = permisosContainer.querySelectorAll('input[type="checkbox"]');
+          if(document.getElementById('roleUsuario').value === 'admin') {
+              permisosContainer.style.display = 'none';
+          } else {
+              permisosContainer.style.display = 'block';
+              permisosCheckboxes.forEach(cb => cb.disabled = false);
+          }
+        });
+        document.getElementById('btnLimpiarFormUsuario').addEventListener('click', limpiarFormularioUsuario);
         document.getElementById('btnAgregarVenta').addEventListener('click', agregarAVenta);
         document.getElementById('ventaProducto').addEventListener('change', calcularTotalEnForm);
         document.getElementById('ventaCantidad').addEventListener('input', calcularTotalEnForm);

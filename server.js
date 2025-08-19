@@ -1,4 +1,4 @@
-// server.js - Versión con Sistema de Permisos y Edición de Usuarios
+// server.js - Versión con Papelera de Reciclaje y Middleware Corregido
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -35,7 +35,6 @@ const createSchema = (definition) => new mongoose.Schema(definition, {
 
 const commonFields = { status: { type: String, default: 'activo' } };
 
-// CAMBIO 16: Se añade el campo 'permissions' al modelo de Usuario
 const userPermissions = {
     gestion: { type: Boolean, default: false },
     clientes: { type: Boolean, default: false },
@@ -86,7 +85,6 @@ app.post('/auth/login', async (req, res) => {
         if (!usuario) return res.status(401).json({ error: 'Credenciales inválidas' });
         const passwordValida = await bcrypt.compare(password, usuario.password);
         if (!passwordValida) return res.status(401).json({ error: 'Credenciales inválidas' });
-        // CAMBIO 16: Se incluyen los permisos en el token
         const token = jwt.sign({ id: usuario._id, username: usuario.username, role: usuario.role, permissions: usuario.permissions }, JWT_SECRET, { expiresIn: '8h' });
         res.json({ message: 'Login exitoso', token });
     } catch (error) { res.status(500).send('Error en el servidor'); }
@@ -95,17 +93,21 @@ app.post('/auth/login', async (req, res) => {
 // --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
-// --- FUNCIÓN GENÉRICA PARA RUTAS CRUD ---
+// --- FUNCIÓN GENÉRICA PARA RUTAS CRUD (CORREGIDA) ---
 const crearRutasCrud = (modelo, nombre) => {
     const router = express.Router();
+    
+    // GET Activos (Abierto a usuarios logueados)
     router.get('/', async (req, res) => res.json(await modelo.find({ status: 'activo' })));
-    router.use(esAdmin);
-    router.get('/papelera', async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
-    router.post('/', async (req, res) => res.status(201).json(await modelo.create(req.body)));
-    router.put('/:id', async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-    router.delete('/:id', async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
-    router.put('/:id/restaurar', async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
-    router.delete('/:id/permanente', async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
+    
+    // Las siguientes rutas requieren ser ADMIN
+    router.get('/papelera', esAdmin, async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
+    router.post('/', esAdmin, async (req, res) => res.status(201).json(await modelo.create(req.body)));
+    router.put('/:id', esAdmin, async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+    router.delete('/:id', esAdmin, async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
+    router.put('/:id/restaurar', esAdmin, async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
+    router.delete('/:id/permanente', esAdmin, async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
+    
     return router;
 };
 
@@ -147,7 +149,6 @@ app.post('/api/usuarios', esAdmin, async (req, res) => {
     const nuevoUsuario = await Usuario.create({ username, password: hashedPassword, role, permissions });
     res.status(201).json({id: nuevoUsuario._id, username: nuevoUsuario.username, role: nuevoUsuario.role, permissions: nuevoUsuario.permissions});
 });
-// CAMBIO 16: Se crea una ruta PUT completa para editar usuarios
 app.put('/api/usuarios/:id', esAdmin, async (req, res) => {
     const { username, role, permissions, password } = req.body;
     let datosActualizar = { username, role, permissions };

@@ -19,18 +19,25 @@
       --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
       --form-control-bg: #ffffff;
       --collapsible-bg: #f1f5f9;
+      --table-header-bg: #f8fafc;
+      --secondary-button-bg: #f1f5f9;
+      --secondary-button-text: #1e293b;
+      --secondary-button-hover-bg: #e2e8f0;
     }
     
-    /* CAMBIO 17: Definición de colores para el Modo Oscuro */
     body.dark-mode {
       --background-color: #1e293b;
       --card-background: #334155;
-      --text-color-dark: #f8fafc;
+      --text-color-dark: #f1f5f9;
       --text-color-light: #94a3b8;
       --border-color: #475569;
       --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
       --form-control-bg: #475569;
       --collapsible-bg: #475569;
+      --table-header-bg: #1e293b;
+      --secondary-button-bg: #475569;
+      --secondary-button-text: #f1f5f9;
+      --secondary-button-hover-bg: #525f75;
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -61,12 +68,15 @@
     .card h3:first-child { margin-top: 0; }
     form label { display: block; margin-bottom: 0.5rem; font-weight: 500; text-align: left; color: var(--text-color-dark); }
     form input, form select { background-color: var(--form-control-bg); color: var(--text-color-dark); display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s, border-color 0.2s; }
+    form input::placeholder { color: var(--text-color-light); opacity: 0.8; }
     form input:focus, form select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px #c7d2fe; outline: none; }
     form select:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
     button { cursor: pointer; border-radius: 8px; border: none; padding: 0.75rem 1.25rem; font-weight: 600; transition: all 0.2s; }
     button:disabled { background-color: #9ca3af; cursor: not-allowed; }
     button[type="submit"], #btnAgregarVenta { background-color: var(--primary-color); color: white; }
     button[type="submit"]:hover, #btnAgregarVenta:hover { background-color: var(--primary-hover); }
+    .btn-secondary { background-color: var(--secondary-button-bg); color: var(--secondary-button-text); }
+    .btn-secondary:hover { background-color: var(--secondary-button-hover-bg); }
     .btn-eliminar-item, .btn-eliminar-venta { background-color: var(--danger-color); color: white; }
     .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; }
     #listaVentaActual { margin-bottom: 1rem; }
@@ -77,8 +87,11 @@
     #opcion-domicilio input[type="number"] { width: 100px; margin: 0; padding: 0.5rem; }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
-    th { background-color: var(--background-color); font-weight: 600; color: var(--text-color-light); }
-    #login-container { max-width: 400px; margin: 15vh auto; background: white; box-shadow: var(--shadow); border-radius: 12px; }
+    th { background-color: var(--table-header-bg); font-weight: 600; color: var(--text-color-light); }
+    #login-container { max-width: 400px; margin: 15vh auto; background: var(--card-background); box-shadow: var(--shadow); border-radius: 12px; }
+    .password-wrapper { position: relative; }
+    #toggle-password { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-color-light); }
+    #toggle-password svg { width: 20px; height: 20px; }
     .collapsible { background-color: var(--collapsible-bg); }
     .collapsible-wrapper { margin-bottom: 1rem; }
     .collapsible { width: 100%; text-align: left; font-weight: 500; border: 1px solid var(--border-color); border-radius: 8px; }
@@ -96,11 +109,9 @@
     #filtros-historial { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end; }
     #filtros-historial > div { flex: 1 1 200px; }
     #filtros-historial label { font-size: 0.9em; margin-bottom: 0.5rem; color: var(--text-color-dark); display: block; }
-    #historial-ventas select { width: 100%; padding: 0.75rem; }
     #botones-periodo { display: flex; gap: 0.5rem; }
     #botones-periodo button { background-color: var(--card-background); color: var(--text-color-light); border: 1px solid var(--border-color); font-weight: 500; padding: 0.75rem 1rem; }
-    #botones-periodo button:hover { background-color: #e2e8f0; }
-    body.dark-mode #botones-periodo button:hover { background-color: #475569; }
+    #botones-periodo button:hover { background-color: var(--secondary-button-hover-bg); }
     #botones-periodo button.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
     #resumen-ventas { white-space: pre-wrap; word-break: break-word; }
     #botones-finalizar-venta { display: flex; gap: 1rem; }
@@ -126,8 +137,6 @@
     #permisos-container { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
     #permisos-container label { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
     #permisos-container input[type="checkbox"] { width: auto; margin: 0; }
-    
-    /* CAMBIO 17: Estilos para el interruptor de Modo Oscuro */
     .theme-toggle-container { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; margin-bottom: 0.5rem; }
     .theme-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
     .theme-switch input { opacity: 0; width: 0; height: 0; }
@@ -153,7 +162,15 @@
     <div class="card-header"><h2 style="text-align: center;">Iniciar Sesión</h2></div>
     <form id="login-form">
       <div><label for="username">Usuario</label><input type="text" id="username" required></div>
-      <div><label for="password">Contraseña</label><input type="password" id="password" required></div>
+      <div class="password-wrapper">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" required>
+        <span id="toggle-password">
+            <!-- CAMBIO 18: Icono para ver/ocultar contraseña -->
+            <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            <svg id="eye-closed" style="display: none;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
+        </span>
+      </div>
       <button type="submit" style="width:100%;">Entrar</button>
       <p id="login-error"></p>
     </form>
@@ -171,7 +188,6 @@
         <a class="nav-link" data-seccion="papelera-reciclaje" id="btn-papelera"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.067-2.09 1.02-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg><span>Papelera</span></a>
       </div>
       <div class="sidebar-footer">
-        <!-- CAMBIO 17: Se añade el interruptor de Modo Oscuro -->
         <div class="theme-toggle-container">
             <span>Modo Oscuro</span>
             <label class="theme-switch" for="theme-switch">
@@ -246,17 +262,17 @@
             <div class="card">
               <div class="card-header"><h2>Gestión de Inventario</h2></div>
               <h3>Productos</h3>
-              <form id="formProducto"><input type="hidden" id="idProducto" /><input type="text" id="nombreProducto" placeholder="Nombre producto" required /><input type="number" step="0.01" id="precioProducto" placeholder="Precio" required /><button type="submit">Guardar Producto</button><button type="button" onclick="this.form.reset()" style="background-color: #f1f5f9;">Limpiar</button></form>
+              <form id="formProducto"><input type="hidden" id="idProducto" /><input type="text" id="nombreProducto" placeholder="Nombre producto" required /><input type="number" step="0.01" id="precioProducto" placeholder="Precio" required /><button type="submit">Guardar Producto</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
               <ul id="listaProductos"></ul>
             </div>
             <div class="card">
               <h3>Toppings</h3>
-              <form id="formTopping"><input type="hidden" id="idTopping" /><input type="text" id="nombreTopping" placeholder="Nombre topping" required /><input type="number" step="0.01" id="precioTopping" placeholder="Precio" required /><button type="submit">Guardar Topping</button><button type="button" onclick="this.form.reset()" style="background-color: #f1f5f9;">Limpiar</button></form>
+              <form id="formTopping"><input type="hidden" id="idTopping" /><input type="text" id="nombreTopping" placeholder="Nombre topping" required /><input type="number" step="0.01" id="precioTopping" placeholder="Precio" required /><button type="submit">Guardar Topping</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
               <ul id="listaToppings"></ul>
             </div>
             <div class="card">
               <h3>Jarabes</h3>
-              <form id="formJarabe"><input type="hidden" id="idJarabe" /><input type="text" id="nombreJarabe" placeholder="Nombre jarabe" required /><input type="number" step="0.01" id="precioJarabe" placeholder="Precio" required /><button type="submit">Guardar Jarabe</button><button type="button" onclick="this.form.reset()" style="background-color: #f1f5f9;">Limpiar</button></form>
+              <form id="formJarabe"><input type="hidden" id="idJarabe" /><input type="text" id="nombreJarabe" placeholder="Nombre jarabe" required /><input type="number" step="0.01" id="precioJarabe" placeholder="Precio" required /><button type="submit">Guardar Jarabe</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
               <ul id="listaJarabes"></ul>
             </div>
           </div>
@@ -264,7 +280,7 @@
         <section id="gestion-clientes">
           <div class="card">
             <div class="card-header"><h2>Gestión de Clientes</h2></div>
-            <form id="formCliente"><input type="hidden" id="idCliente" /><input type="text" id="nombreCliente" placeholder="Nombre del cliente" required /><input type="text" id="telCliente" placeholder="Teléfono (opcional)" /><input type="text" id="dirCliente" placeholder="Dirección (opcional)" /><button type="submit">Guardar Cliente</button><button type="button" onclick="this.form.reset()" style="background-color: #f1f5f9;">Limpiar</button></form>
+            <form id="formCliente"><input type="hidden" id="idCliente" /><input type="text" id="nombreCliente" placeholder="Nombre del cliente" required /><input type="text" id="telCliente" placeholder="Teléfono (opcional)" /><input type="text" id="dirCliente" placeholder="Dirección (opcional)" /><button type="submit">Guardar Cliente</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
             <ul id="listaClientes"></ul>
           </div>
         </section>
@@ -288,7 +304,7 @@
                   <label><input type="checkbox" name="permisos" value="papelera"> Acceso a Papelera</label>
               </div>
               <button type="submit">Guardar Usuario</button>
-              <button type="button" id="btnLimpiarFormUsuario" style="background-color: #f1f5f9;">Limpiar</button>
+              <button type="button" id="btnLimpiarFormUsuario" class="btn-secondary">Limpiar</button>
             </form>
             <h3>Usuarios Existentes</h3>
             <ul id="listaUsuarios"></ul>

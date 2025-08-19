@@ -343,6 +343,7 @@
       let ventaActual = [];
       let miGraficaDeVentas, miGraficaDeProductos;
       let ventasEnMemoria = [];
+      let procesandoVenta = false; // Flag para evitar doble clic
       const COSTO_DOMICILIO_PREDET = 30.00; 
       const btnPapelera = document.getElementById('btn-papelera');
 
@@ -537,7 +538,10 @@
       async function cargarJarabes() { try { const data = await fetchAPI('/api/jarabes'); renderizarLista(data, 'Jarabe', ['nombre', 'precio']); } catch (e) { renderizarLista([], 'Jarabe', ['nombre', 'precio']); } }
       async function cargarClientes() { try { const data = await fetchAPI('/api/clientes'); renderizarLista(data, 'Cliente', ['nombre', 'telefono']); } catch (e) { renderizarLista([], 'Cliente', ['nombre', 'telefono']); } }
       async function cargarOpcionesParaVenta() { 
-          await Promise.all([ cargarProductosParaVenta(), cargarToppingsParaVenta(), cargarJarabesParaVenta(), cargarClientesParaVenta() ]);
+          await Promise.all([ cargarDataParaSelector('/api/productos', 'ventaProducto', 'id', item => `${item.nombre} - $${item.precio.toFixed(2)}`), 
+                              cargarDataParaSelector('/api/clientes', 'ventaCliente', 'id', 'nombre'),
+                              cargarDataParaBotones('/api/toppings', 'toppings-container'),
+                              cargarDataParaBotones('/api/jarabes', 'jarabes-container') ]);
           setupCollapsibles();
       }
       
@@ -576,11 +580,6 @@
               });
           } catch(e) { /* Error manejado en fetchAPI */ }
       }
-      
-      async function cargarProductosParaVenta() { await cargarDataParaSelector('/api/productos', 'ventaProducto', 'id', item => `${item.nombre} - $${item.precio.toFixed(2)}`); }
-      async function cargarClientesParaVenta() { await cargarDataParaSelector('/api/clientes', 'ventaCliente', 'id', 'nombre'); }
-      async function cargarToppingsParaVenta() { await cargarDataParaBotones('/api/toppings', 'toppings-container'); }
-      async function cargarJarabesParaVenta() { await cargarDataParaBotones('/api/jarabes', 'jarabes-container'); }
       
       function calcularTotalEnForm() {
         let totalItemFormulario = 0;
@@ -628,6 +627,8 @@
       }
 
       async function registrarVenta(estatus) {
+        if (procesandoVenta) return; // Previene doble clic
+        procesandoVenta = true;
         const btnPagado = document.getElementById('btnRegistrarPagado');
         const btnPendiente = document.getElementById('btnRegistrarPendiente');
         btnPagado.disabled = true;
@@ -660,6 +661,7 @@
         } catch (e) {
             alert(`Error: ${e.message}`);
         } finally {
+            procesandoVenta = false; // Restablece la bandera
             btnPagado.disabled = false;
             btnPendiente.disabled = false;
         }
@@ -797,6 +799,10 @@
       }
       
       async function cambiarEstatus(ventaId, estatusActual) {
+        if (!estatusActual || estatusActual === "N/A") {
+          alert("No se puede cambiar el estatus de un registro antiguo.");
+          return;
+        }
         const nuevoEstatus = estatusActual === 'Pagado' ? 'Pendiente de Pago' : 'Pagado';
         if (confirm(`¿Deseas cambiar el estatus de esta venta a "${nuevoEstatus}"?`)) {
           try {
@@ -918,6 +924,70 @@
         if (confirm('¿Mover esta venta a la papelera?')) {
           await fetchAPI(`/api/ventas/${id}`, { method: 'DELETE' });
           cargarVentasHistorial();
+        }
+      }
+
+      async function cargarPapelera() {
+        try {
+            const [productos, toppings, jarabes, clientes, usuarios, ventas] = await Promise.all([
+                fetchAPI('/api/productos/papelera'), fetchAPI('/api/toppings/papelera'),
+                fetchAPI('/api/jarabes/papelera'), fetchAPI('/api/clientes/papelera'),
+                fetchAPI('/api/usuarios/papelera'), fetchAPI('/api/ventas/papelera'),
+            ]);
+            renderizarPapelera(productos, 'Producto');
+            renderizarPapelera(toppings, 'Topping');
+            renderizarPapelera(jarabes, 'Jarabe');
+            renderizarPapelera(clientes, 'Cliente');
+            renderizarPapelera(usuarios, 'Usuario');
+            renderizarPapelera(ventas, 'Venta');
+        } catch (error) {
+            alert("Error al cargar la papelera: " + error.message);
+        }
+      }
+
+      function renderizarPapelera(items, tipo) {
+        const lista = document.getElementById(`papelera-${tipo.toLowerCase()}s`);
+        if(!lista) return;
+        lista.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          const texto = document.createElement('span');
+          texto.textContent = item.nombre || item.clienteNombre || item.username || `Venta ID: ${item.id}`;
+          
+          const divBotones = document.createElement('div');
+          const btnRestaurar = document.createElement('button');
+          btnRestaurar.textContent = 'Restaurar';
+          btnRestaurar.className = 'btn-restaurar';
+          btnRestaurar.onclick = () => restaurarItem(item.id, tipo);
+
+          const btnEliminarPerm = document.createElement('button');
+          btnEliminarPerm.textContent = 'Eliminar Permanente';
+          btnEliminarPerm.className = 'btn-eliminar-perm';
+          btnEliminarPerm.onclick = () => eliminarPermanentemente(item.id, tipo);
+
+          divBotones.appendChild(btnRestaurar);
+          divBotones.appendChild(btnEliminarPerm);
+          li.appendChild(texto);
+          li.appendChild(divBotones);
+          lista.appendChild(li);
+        });
+      }
+
+      async function restaurarItem(id, tipo) {
+        if (confirm(`¿Restaurar este ${tipo.toLowerCase()}? Volverá a la lista principal.`)) {
+          try {
+            await fetchAPI(`/api/${tipo.toLowerCase()}s/${id}/restaurar`, { method: 'PUT' });
+            cargarPapelera();
+          } catch (err) { alert(`Error: ${err.message}`); }
+        }
+      }
+
+      async function eliminarPermanentemente(id, tipo) {
+        if (confirm(`¡ADVERTENCIA! Esta acción es irreversible. ¿Eliminar permanentemente este ${tipo.toLowerCase()}?`)) {
+          try {
+            await fetchAPI(`/api/${tipo.toLowerCase()}s/${id}/permanente`, { method: 'DELETE' });
+            cargarPapelera();
+          } catch (err) { alert(`Error: ${err.message}`); }
         }
       }
 

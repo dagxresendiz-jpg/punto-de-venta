@@ -1,4 +1,4 @@
-// server.js - Versión con Papelera de Reciclaje y Middleware Corregido
+// server.js - Versión con Permisos y Papelera Corregidos
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -34,7 +34,6 @@ const createSchema = (definition) => new mongoose.Schema(definition, {
 });
 
 const commonFields = { status: { type: String, default: 'activo' } };
-
 const userPermissions = {
     gestion: { type: Boolean, default: false },
     clientes: { type: Boolean, default: false },
@@ -76,6 +75,14 @@ function esAdmin(req, res, next) {
     }
     next();
 }
+// CAMBIO 17: Middleware de permisos mejorado
+const tienePermiso = (seccion) => (req, res, next) => {
+    if (req.user.role === 'admin' || (req.user.permissions && req.user.permissions[seccion])) {
+        next();
+    } else {
+        return res.status(403).json({ error: `Acceso denegado. Se requiere permiso para la sección '${seccion}'.` });
+    }
+};
 
 // --- RUTAS DE AUTENTICACIÓN (PÚBLICAS) ---
 app.post('/auth/login', async (req, res) => {
@@ -93,29 +100,24 @@ app.post('/auth/login', async (req, res) => {
 // --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
-// --- FUNCIÓN GENÉRICA PARA RUTAS CRUD (CORREGIDA) ---
-const crearRutasCrud = (modelo, nombre) => {
+// --- RUTAS CRUD GENÉRICAS (CORREGIDAS) ---
+const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
-    
-    // GET Activos (Abierto a usuarios logueados)
-    router.get('/', async (req, res) => res.json(await modelo.find({ status: 'activo' })));
-    
-    // Las siguientes rutas requieren ser ADMIN
+    router.get('/', tienePermiso(permiso), async (req, res) => res.json(await modelo.find({ status: 'activo' })));
     router.get('/papelera', esAdmin, async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
     router.post('/', esAdmin, async (req, res) => res.status(201).json(await modelo.create(req.body)));
     router.put('/:id', esAdmin, async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
     router.delete('/:id', esAdmin, async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
     router.put('/:id/restaurar', esAdmin, async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
     router.delete('/:id/permanente', esAdmin, async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
-    
     return router;
 };
 
 // --- RUTAS DE API ---
-app.use('/api/productos', crearRutasCrud(Producto, 'Producto'));
-app.use('/api/toppings', crearRutasCrud(Topping, 'Topping'));
-app.use('/api/jarabes', crearRutasCrud(Jarabe, 'Jarabe'));
-app.use('/api/clientes', crearRutasCrud(Cliente, 'Cliente'));
+app.use('/api/productos', crearRutasCrud(Producto, 'Producto', 'gestion'));
+app.use('/api/toppings', crearRutasCrud(Topping, 'Topping', 'gestion'));
+app.use('/api/jarabes', crearRutasCrud(Jarabe, 'Jarabe', 'gestion'));
+app.use('/api/clientes', crearRutasCrud(Cliente, 'Cliente', 'clientes'));
 
 // Ventas (Lógica especial)
 app.post('/api/ventas', async (req, res) => {
@@ -125,8 +127,8 @@ app.post('/api/ventas', async (req, res) => {
     const ventaCreada = await Venta.create(nuevaVentaData);
     res.status(201).json(ventaCreada);
 });
-app.get('/api/ventas', async (req, res) => res.json(await Venta.find({ status: 'activo' })));
-app.get('/api/ventas/papelera', esAdmin, async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
+app.get('/api/ventas', tienePermiso('historial'), async (req, res) => res.json(await Venta.find({ status: 'activo' })));
+app.get('/api/ventas/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
 app.put('/api/ventas/:id', async (req, res) => {
     const { estatus, metodoPago } = req.body;
     const datosActualizar = {};
@@ -138,7 +140,7 @@ app.delete('/api/ventas/:id', esAdmin, async (req, res) => { await Venta.findByI
 app.put('/api/ventas/:id/restaurar', esAdmin, async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Venta restaurada' }); });
 app.delete('/api/ventas/:id/permanente', esAdmin, async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// Usuarios (Lógica especial)
+// Usuarios (Solo Admin)
 app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find({ status: 'activo' }).select('-password')));
 app.get('/api/usuarios/papelera', esAdmin, async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
 app.post('/api/usuarios', esAdmin, async (req, res) => {

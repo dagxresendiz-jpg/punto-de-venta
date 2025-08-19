@@ -796,8 +796,6 @@
         return texto;
       }
       
-            // ... (Código anterior del script)...
-
       async function cargarUsuarios() {
           try {
               const usuarios = await fetchAPI('/api/usuarios');
@@ -808,12 +806,13 @@
       function limpiarFormularioUsuario() {
           document.getElementById('formUsuario').reset();
           document.getElementById('idUsuario').value = '';
-          const permisosCheckboxes = document.querySelectorAll('#permisos-container input[type="checkbox"]');
+          const permisosContainer = document.getElementById('permisos-container');
+          const permisosCheckboxes = permisosContainer.querySelectorAll('input[type="checkbox"]');
           permisosCheckboxes.forEach(cb => {
               cb.checked = false;
               cb.disabled = false;
           });
-          document.getElementById('permisos-container').style.display = 'block';
+          permisosContainer.style.display = 'block';
           document.getElementById('passwordUsuario').setAttribute('placeholder', 'Contraseña');
           document.getElementById('formUsuario').querySelector('button[type="submit"]').textContent = 'Crear Usuario';
       }
@@ -1079,12 +1078,14 @@
                   <td>${new Date(item.fecha).toLocaleString()}</td>
                   <td>$${item.total.toFixed(2)}</td>
                   <td>
-                      <button class="btn-restaurar" onclick="restaurarItem('${item.id}', 'Venta')">Restaurar</button>
-                      <button class="btn-eliminar-perm" onclick="eliminarPermanentemente('${item.id}', 'Venta')">Eliminar Permanente</button>
+                      <button class="btn-restaurar" data-id="${item.id}" data-tipo="Venta">Restaurar</button>
+                      <button class="btn-eliminar-perm" data-id="${item.id}" data-tipo="Venta">Eliminar Permanente</button>
                   </td>
               `;
               tbody.appendChild(tr);
           });
+          tbody.querySelectorAll('.btn-restaurar').forEach(btn => btn.addEventListener('click', (e) => restaurarItem(e.target.dataset.id, e.target.dataset.tipo)));
+          tbody.querySelectorAll('.btn-eliminar-perm').forEach(btn => btn.addEventListener('click', (e) => eliminarPermanentemente(e.target.dataset.id, e.target.dataset.tipo)));
       }
 
       async function restaurarItem(id, tipo) {
@@ -1203,12 +1204,10 @@
         document.getElementById('formUsuario').addEventListener('submit', (e) => guardarUsuario(e));
         document.getElementById('roleUsuario').addEventListener('change', () => {
           const permisosContainer = document.getElementById('permisos-container');
-          const permisosCheckboxes = permisosContainer.querySelectorAll('input[type="checkbox"]');
           if(document.getElementById('roleUsuario').value === 'admin') {
               permisosContainer.style.display = 'none';
           } else {
               permisosContainer.style.display = 'block';
-              permisosCheckboxes.forEach(cb => cb.disabled = false);
           }
         });
         document.getElementById('btnLimpiarFormUsuario').addEventListener('click', limpiarFormularioUsuario);

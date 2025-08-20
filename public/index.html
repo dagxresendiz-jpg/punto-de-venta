@@ -14,7 +14,7 @@
     :root {
       --primary-color: #4f46e5; --primary-hover: #4338ca; --danger-color: #ef4444; --danger-hover: #dc2626;
       --success-color: #22c55e; --success-hover: #16a34a; --info-color: #38bdf8; --info-hover: #0ea5e9;
-      --accent-color: #FF85A2; /* CAMBIO 18: Nuevo color rosa pastel */
+      --accent-color: #FF85A2;
       --background-color: #f8fafc; --card-background: #ffffff; --text-color-dark: #1e293b; 
       --text-color-light: #64748b; --border-color: #e2e8f0;
       --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -209,19 +209,211 @@
         </div>
       </header>
       <main>
-        <section id="registrar-venta"><!-- (Contenido de la sección sin cambios) --></section>
-        <section id="gestion-completa"><!-- (Contenido de la sección sin cambios) --></section>
-        <section id="gestion-clientes"><!-- (Contenido de la sección sin cambios) --></section>
-        <section id="gestion-usuarios"><!-- (Contenido de la sección sin cambios) --></section>
-        <section id="historial-ventas"><!-- (Contenido de la sección sin cambios) --></section>
-        <section id="papelera-reciclaje"><!-- (Contenido de la sección sin cambios) --></section>
+        <section id="registrar-venta">
+            <div class="grid-container">
+                <div class="card">
+                    <div class="card-header"><h2>Registrar Venta</h2></div>
+                    <form id="formVenta" onsubmit="return false;">
+                        <label for="ventaCliente">Cliente:</label> <select id="ventaCliente"></select>
+                        <label for="ventaProducto">Producto:</label> <select id="ventaProducto" required></select>
+                        <label for="ventaCantidad">Cantidad:</label> <input type="number" id="ventaCantidad" min="1" value="1" required />
+                        <div class="collapsible-wrapper">
+                            <button type="button" class="collapsible">Seleccionar Toppings</button>
+                            <div class="content-collapsible"><div class="options-grid" id="toppings-container"></div></div>
+                        </div>
+                        <div class="collapsible-wrapper">
+                            <button type="button" class="collapsible">Seleccionar Jarabes</button>
+                            <div class="content-collapsible"><div class="options-grid" id="jarabes-container"></div></div>
+                        </div>
+                        <div id="opcion-domicilio">
+                            <div><input type="checkbox" id="checkDomicilio"><label for="checkDomicilio">Servicio a domicilio</label></div>
+                            <input type="number" id="costoDomicilio" step="0.01" placeholder="Costo" style="display: none;">
+                        </div>
+                        <label for="ventaNota">Nota para este producto (opcional):</label>
+                        <input type="text" id="ventaNota" placeholder="Ej: Sin nuez, extra chocolate, etc." />
+                        <button id="btnAgregarVenta" type="button">Agregar a Venta Actual</button>
+                    </form>
+                </div>
+                <div>
+                    <div class="card">
+                        <div class="card-header"><h3>Venta Actual</h3></div>
+                        <ul id="listaVentaActual"></ul>
+                        <div id="totalVenta" style="font-weight:600; font-size: 1.2rem; margin-top: 1rem; text-align: right;">Total venta actual: $0.00</div>
+                        <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
+                        <label for="metodoPago">Método de Pago:</label>
+                        <select id="metodoPago">
+                            <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
+                        </select>
+                        <div id="botones-finalizar-venta" style="margin-top: 1rem;">
+                            <button id="btnRegistrarPendiente">Guardar Pendiente</button>
+                            <button id="btnRegistrarPagado">Cobrar y Finalizar</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3>Ticket</h3></div>
+                        <pre id="ticket"></pre>
+                        <div style="display:flex; gap: 1rem; margin-top: 1rem;">
+                            <button id="btnGenerarPDF" style="flex:1;">Generar PDF</button>
+                            <button id="btnEnviarWhatsapp" style="flex:1;">Enviar WhatsApp</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="gestion-completa">
+          <div class="grid-container">
+            <div class="card">
+              <div class="card-header"><h2>Gestión de Inventario</h2></div>
+              <h3>Productos</h3>
+              <form id="formProducto"><input type="hidden" id="idProducto" /><input type="text" id="nombreProducto" placeholder="Nombre producto" required /><input type="number" step="0.01" id="precioProducto" placeholder="Precio" required /><button type="submit">Guardar Producto</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
+              <ul id="listaProductos"></ul>
+            </div>
+            <div class="card">
+              <h3>Toppings</h3>
+              <form id="formTopping"><input type="hidden" id="idTopping" /><input type="text" id="nombreTopping" placeholder="Nombre topping" required /><input type="number" step="0.01" id="precioTopping" placeholder="Precio" required /><button type="submit">Guardar Topping</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
+              <ul id="listaToppings"></ul>
+            </div>
+            <div class="card">
+              <h3>Jarabes</h3>
+              <form id="formJarabe"><input type="hidden" id="idJarabe" /><input type="text" id="nombreJarabe" placeholder="Nombre jarabe" required /><input type="number" step="0.01" id="precioJarabe" placeholder="Precio" required /><button type="submit">Guardar Jarabe</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
+              <ul id="listaJarabes"></ul>
+            </div>
+          </div>
+        </section>
+        <section id="gestion-clientes">
+          <div class="card">
+            <div class="card-header"><h2>Gestión de Clientes</h2></div>
+            <form id="formCliente"><input type="hidden" id="idCliente" /><input type="text" id="nombreCliente" placeholder="Nombre del cliente" required /><input type="text" id="telCliente" placeholder="Teléfono (opcional)" /><input type="text" id="dirCliente" placeholder="Dirección (opcional)" /><button type="submit">Guardar Cliente</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
+            <ul id="listaClientes"></ul>
+          </div>
+        </section>
+        <section id="gestion-usuarios">
+          <div class="card">
+            <div class="card-header"><h2>Gestión de Usuarios</h2></div>
+            <form id="formUsuario">
+              <input type="hidden" id="idUsuario" />
+              <input type="text" id="usernameUsuario" placeholder="Nombre de usuario" required />
+              <input type="password" id="passwordUsuario" placeholder="Contraseña (dejar en blanco para no cambiar)" />
+              <select id="roleUsuario" required>
+                  <option value="">-- Seleccionar Rol --</option>
+                  <option value="seller">Vendedor</option>
+                  <option value="admin">Administrador</option>
+              </select>
+              <div id="permisos-container">
+                  <h3>Permisos de Vendedor</h3>
+                  <label><input type="checkbox" name="permisos" value="gestion"> Acceso a Gestión de Inventario</label>
+                  <label><input type="checkbox" name="permisos" value="clientes"> Acceso a Clientes</label>
+                  <label><input type="checkbox" name="permisos" value="historial"> Acceso a Historial</label>
+                  <label><input type="checkbox" name="permisos" value="papelera"> Acceso a Papelera</label>
+              </div>
+              <button type="submit">Guardar Usuario</button>
+              <button type="button" id="btnLimpiarFormUsuario" class="btn-secondary">Limpiar</button>
+            </form>
+            <h3>Usuarios Existentes</h3>
+            <ul id="listaUsuarios"></ul>
+          </div>
+        </section>
+        <section id="historial-ventas">
+          <div class="card">
+            <div class="card-header"><h2>Historial de Ventas</h2></div>
+            <div id="filtros-historial">
+                <div>
+                    <label>Período</label>
+                    <div id="botones-periodo">
+                        <button data-periodo="dia" class="active">Hoy</button>
+                        <button data-periodo="semana">Semana</button>
+                        <button data-periodo="mes">Mes</button>
+                    </div>
+                </div>
+                <div>
+                    <label for="filtroEstatus">Filtrar por Estatus</label>
+                    <select id="filtroEstatus">
+                        <option value="">Todos</option>
+                        <option value="Pagado">Pagado</option>
+                        <option value="Pendiente de Pago">Pendiente de Pago</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="filtroCliente">Filtrar por Cliente</label>
+                    <select id="filtroCliente"></select>
+                </div>
+                <div id="filtro-usuario-container">
+                    <label for="filtroUsuario">Filtrar por Vendedor</label>
+                    <select id="filtroUsuario"></select>
+                </div>
+            </div>
+          </div>
+          <div class="grid-container">
+            <div class="card">
+                <h3>Ventas por Día</h3>
+                <div class="chart-container"><canvas id="graficaVentas"></canvas></div>
+            </div>
+            <div class="card">
+                <h3>Productos Más Vendidos</h3>
+                <div class="chart-container"><canvas id="graficaProductos"></canvas></div>
+            </div>
+            <div class="card" id="resumen-container">
+                <h3>Resumen de Ventas del Período</h3>
+                <div id="totalPeriodoHistorial"></div>
+                <pre id="resumen-ventas"></pre>
+                <button id="btnGenerarReporte">Generar Reporte PDF</button>
+            </div>
+            <div class="card full-width-card">
+                <h3>Detalle de Ventas</h3>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead><tr>
+                          <th>ID Venta</th>
+                          <th>Vendedor</th>
+                          <th>Cliente</th>
+                          <th>Total</th>
+                          <th>Método de Pago</th>
+                          <th>Estatus</th>
+                          <th>Fecha</th>
+                          <th>Acciones</th>
+                        </tr></thead>
+                        <tbody id="tablaVentasBody"></tbody>
+                    </table>
+                </div>
+            </div>
+          </div>
+        </section>
+        <section id="papelera-reciclaje">
+            <div class="card">
+                <div class="card-header"><h2>Papelera de Reciclaje</h2></div>
+                <p>Aquí se muestran los elementos eliminados. Puedes restaurarlos o eliminarlos permanentemente.</p>
+            </div>
+            <div class="grid-container">
+                <div class="card"><h3>Productos Eliminados</h3><ul id="papelera-productos"></ul></div>
+                <div class="card"><h3>Toppings Eliminados</h3><ul id="papelera-toppings"></ul></div>
+                <div class="card"><h3>Jarabes Eliminados</h3><ul id="papelera-jarabes"></ul></div>
+                <div class="card"><h3>Clientes Eliminados</h3><ul id="papelera-clientes"></ul></div>
+                <div class="card"><h3>Usuarios Eliminados</h3><ul id="papelera-usuarios"></ul></div>
+                <div class="card full-width-card">
+                    <h3>Ventas Eliminadas</h3>
+                    <div style="overflow-x:auto;">
+                        <table id="papelera-ventas-tabla">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="papelera-ventas"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
       </main>
     </div>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-        let ventaActual = [];
+      let ventaActual = [];
       let miGraficaDeVentas, miGraficaDeProductos;
       let ventasEnMemoria = [];
       let procesandoVenta = false;
@@ -244,8 +436,11 @@
       const btnHistorial = document.getElementById('btn-historial');
       const btnPapelera = document.getElementById('btn-papelera');
       const themeSwitch = document.getElementById('theme-switch');
+      const togglePassword = document.getElementById('toggle-password');
+      const passwordInput = document.getElementById('password');
+      const eyeOpen = document.getElementById('eye-open');
+      const eyeClosed = document.getElementById('eye-closed');
 
-      // CAMBIO 17: Lógica para aplicar el tema al cargar la página
       function applyTheme(theme) {
           if (theme === 'dark') {
               document.body.classList.add('dark-mode');
@@ -264,7 +459,6 @@
       } else {
           applyTheme('light');
       }
-      // Fin del cambio 17
 
       menuToggle.addEventListener('click', () => nav.classList.toggle('nav-open'));
       
@@ -300,7 +494,7 @@
         e.preventDefault();
         loginError.textContent = '';
         const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+        const password = passwordInput.value;
         try {
             const response = await fetch('/auth/login', {
                 method: 'POST',
@@ -1060,6 +1254,12 @@
               nav.classList.remove('nav-open');
             }
           }
+        });
+        togglePassword.addEventListener('click', () => {
+          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          passwordInput.setAttribute('type', type);
+          eyeOpen.style.display = type === 'password' ? 'block' : 'none';
+          eyeClosed.style.display = type === 'text' ? 'block' : 'none';
         });
         document.getElementById('formProducto').addEventListener('submit', (e) => guardarItem(e, 'Producto'));
         document.getElementById('formTopping').addEventListener('submit', (e) => guardarItem(e, 'Topping'));

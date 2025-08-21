@@ -1,4 +1,4 @@
-// server.js - Versión con Permisos y Papelera Corregidos
+// server.js - Versión con Edición de Ventas y Permisos Mejorados
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -75,13 +75,17 @@ function esAdmin(req, res, next) {
     }
     next();
 }
-// CAMBIO 17: Middleware de permisos mejorado
 const tienePermiso = (seccion) => (req, res, next) => {
-    if (req.user.role === 'admin' || (req.user.permissions && req.user.permissions[seccion])) {
-        next();
-    } else {
-        return res.status(403).json({ error: `Acceso denegado. Se requiere permiso para la sección '${seccion}'.` });
+    if (req.user.role === 'admin' && req.user.username === 'superadmin') { // Superadmin siempre tiene acceso
+        return next();
     }
+    if (req.user.role === 'admin' && req.user.permissions && req.user.permissions[seccion]) {
+        return next();
+    }
+    if (req.user.role === 'seller' && req.user.permissions && req.user.permissions[seccion]) {
+        return next();
+    }
+    return res.status(403).json({ error: `Acceso denegado. Se requiere permiso para la sección '${seccion}'.` });
 };
 
 // --- RUTAS DE AUTENTICACIÓN (PÚBLICAS) ---
@@ -100,16 +104,16 @@ app.post('/auth/login', async (req, res) => {
 // --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
-// --- RUTAS CRUD GENÉRICAS (CORREGIDAS) ---
+// --- RUTAS CRUD GENÉRICAS ---
 const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
     router.get('/', tienePermiso(permiso), async (req, res) => res.json(await modelo.find({ status: 'activo' })));
-    router.get('/papelera', esAdmin, async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
-    router.post('/', esAdmin, async (req, res) => res.status(201).json(await modelo.create(req.body)));
-    router.put('/:id', esAdmin, async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-    router.delete('/:id', esAdmin, async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
-    router.put('/:id/restaurar', esAdmin, async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
-    router.delete('/:id/permanente', esAdmin, async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
+    router.get('/papelera', esAdmin, tienePermiso('papelera'), async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
+    router.post('/', esAdmin, tienePermiso(permiso), async (req, res) => res.status(201).json(await modelo.create(req.body)));
+    router.put('/:id', esAdmin, tienePermiso(permiso), async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+    router.delete('/:id', esAdmin, tienePermiso(permiso), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
+    router.put('/:id/restaurar', esAdmin, tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
+    router.delete('/:id/permanente', esAdmin, tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
     return router;
 };
 
@@ -119,7 +123,7 @@ app.use('/api/toppings', crearRutasCrud(Topping, 'Topping', 'gestion'));
 app.use('/api/jarabes', crearRutasCrud(Jarabe, 'Jarabe', 'gestion'));
 app.use('/api/clientes', crearRutasCrud(Cliente, 'Cliente', 'clientes'));
 
-// Ventas (Lógica especial)
+// Ventas
 app.post('/api/ventas', async (req, res) => {
     let nuevaVentaData = req.body;
     nuevaVentaData.vendedorId = req.user.id;
@@ -130,11 +134,7 @@ app.post('/api/ventas', async (req, res) => {
 app.get('/api/ventas', tienePermiso('historial'), async (req, res) => res.json(await Venta.find({ status: 'activo' })));
 app.get('/api/ventas/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
 app.put('/api/ventas/:id', async (req, res) => {
-    const { estatus, metodoPago } = req.body;
-    const datosActualizar = {};
-    if (estatus) datosActualizar.estatus = estatus;
-    if (metodoPago) datosActualizar.metodoPago = metodoPago;
-    res.json(await Venta.findByIdAndUpdate(req.params.id, datosActualizar, { new: true }));
+    res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true }));
 });
 app.delete('/api/ventas/:id', esAdmin, async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
 app.put('/api/ventas/:id/restaurar', esAdmin, async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Venta restaurada' }); });
@@ -148,21 +148,27 @@ app.post('/api/usuarios', esAdmin, async (req, res) => {
     if (!username || !password || !role) return res.status(400).json({ error: 'Usuario, contraseña y rol son requeridos.' });
     if (await Usuario.findOne({ username })) return res.status(409).json({ error: 'El nombre de usuario ya existe.' });
     const hashedPassword = await bcrypt.hash(password, 10);
-    const nuevoUsuario = await Usuario.create({ username, password: hashedPassword, role, permissions });
+    const nuevoUsuario = await Usuario.create({ username, password: hashedPassword, role, permissions: permissions || {} });
     res.status(201).json({id: nuevoUsuario._id, username: nuevoUsuario.username, role: nuevoUsuario.role, permissions: nuevoUsuario.permissions});
 });
 app.put('/api/usuarios/:id', esAdmin, async (req, res) => {
     const { username, role, permissions, password } = req.body;
+    const usuarioAEditar = await Usuario.findById(req.params.id);
+    if (!usuarioAEditar) return res.status(404).json({error: 'Usuario no encontrado'});
+    // Protección del superusuario
+    if (usuarioAEditar.username === 'superadmin') return res.status(403).json({ error: 'No se puede modificar al superusuario.' });
+    
     let datosActualizar = { username, role, permissions };
     if (password) {
         datosActualizar.password = await bcrypt.hash(password, 10);
     }
     const usuarioActualizado = await Usuario.findByIdAndUpdate(req.params.id, datosActualizar, { new: true }).select('-password');
-    if (!usuarioActualizado) return res.status(404).json({error: 'Usuario no encontrado'});
     res.json(usuarioActualizado);
 });
 app.put('/api/usuarios/:id/restaurar', esAdmin, async (req, res) => { await Usuario.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Usuario restaurado' }); });
 app.delete('/api/usuarios/:id', esAdmin, async (req, res) => {
+    const usuarioAEliminar = await Usuario.findById(req.params.id);
+    if (usuarioAEliminar && usuarioAEliminar.username === 'superadmin') return res.status(403).json({ error: 'No se puede eliminar al superusuario.' });
     if (req.params.id === req.user.id) return res.status(403).json({ error: 'No puedes eliminarte a ti mismo.' });
     await Usuario.findByIdAndUpdate(req.params.id, { status: 'eliminado' });
     res.status(204).send();

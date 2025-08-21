@@ -56,7 +56,7 @@
     #logout-button:hover { background-color: var(--danger-hover); }
     .main-content { flex: 1; display: flex; flex-direction: column; }
     .main-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--card-background); border-bottom: 1px solid var(--border-color); }
-    .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+    .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-color-dark); }
     .user-info { display: flex; align-items: center; gap: 1rem; }
     main { padding: 2rem; overflow-y: auto; }
     section { display: none; }
@@ -128,8 +128,8 @@
     .status-na { background-color: var(--text-color-light); }
     .btn-marcar-pagado { background-color: var(--success-color); color: white; padding: 0.4rem 0.8rem; font-size: 0.8em; margin-right: 0.5rem; }
     .btn-marcar-pagado:hover { background-color: var(--success-hover); }
-    .btn-reimprimir { background-color: var(--primary-color); color: white; padding: 0.4rem; font-size: 0.8em; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin-right: 0.5rem; }
-    .btn-reimprimir svg { width: 16px; height: 16px; }
+    .btn-reimprimir, .btn-editar-venta { background-color: var(--primary-color); color: white; padding: 0.4rem; font-size: 0.8em; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin-right: 0.5rem; }
+    .btn-reimprimir svg, .btn-editar-venta svg { width: 16px; height: 16px; }
     .btn-cambiar-estatus { background: none; border: none; padding: 0; margin-left: 0.5rem; cursor: pointer; color: var(--text-color-light); }
     .btn-cambiar-estatus:hover { color: var(--primary-color); }
     .btn-cambiar-estatus svg { width: 16px; height: 16px; }
@@ -887,7 +887,10 @@
           const permisosCheckboxes = permisosContainer.querySelectorAll('input[type="checkbox"]');
           
           if (usuario.role === 'admin') {
-              permisosContainer.style.display = 'none';
+              permisosContainer.style.display = 'block'; // Ahora los admins pueden editarse
+              permisosCheckboxes.forEach(cb => {
+                  cb.checked = (usuario.permissions && usuario.permissions[cb.value]) || false;
+              });
           } else {
               permisosContainer.style.display = 'block';
               if (usuario.permissions) {
@@ -1268,11 +1271,7 @@
         document.getElementById('formUsuario').addEventListener('submit', (e) => guardarUsuario(e));
         document.getElementById('roleUsuario').addEventListener('change', () => {
           const permisosContainer = document.getElementById('permisos-container');
-          if(document.getElementById('roleUsuario').value === 'admin') {
-              permisosContainer.style.display = 'none';
-          } else {
-              permisosContainer.style.display = 'block';
-          }
+          permisosContainer.style.display = 'block'; // Siempre visible ahora
         });
         document.getElementById('btnLimpiarFormUsuario').addEventListener('click', limpiarFormularioUsuario);
         document.getElementById('btnAgregarVenta').addEventListener('click', agregarAVenta);

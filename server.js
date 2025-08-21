@@ -1,4 +1,4 @@
-// server.js - Versión con Permisos y Superusuario Corregidos
+// server.js - Versión con Superusuario y Permisos Corregidos
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -117,11 +117,11 @@ app.post('/auth/login', async (req, res) => {
 // --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
-// --- RUTAS CRUD GENÉRICAS (CORREGIDAS) ---
+// --- RUTAS CRUD (CORREGIDAS PARA PERMISOS GRANULARES) ---
 const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
     
-    router.get('/', async (req, res) => res.json(await modelo.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
+    router.get('/', tienePermiso(permiso), async (req, res) => res.json(await modelo.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
     
     router.get('/papelera', esAdmin, tienePermiso('papelera'), async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
     router.post('/', esAdmin, tienePermiso(permiso), async (req, res) => res.status(201).json(await modelo.create(req.body)));
@@ -129,6 +129,7 @@ const crearRutasCrud = (modelo, nombre, permiso) => {
     router.delete('/:id', esAdmin, tienePermiso(permiso), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
     router.put('/:id/restaurar', esAdmin, tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
     router.delete('/:id/permanente', esAdmin, tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
+    
     return router;
 };
 

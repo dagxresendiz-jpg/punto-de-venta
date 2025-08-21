@@ -214,6 +214,7 @@
                 <div class="card">
                     <div class="card-header"><h2>Registrar Venta</h2></div>
                     <form id="formVenta" onsubmit="return false;">
+                        <input type="hidden" id="idVenta">
                         <label for="ventaCliente">Cliente:</label> <select id="ventaCliente"></select>
                         <label for="ventaProducto">Producto:</label> <select id="ventaProducto" required></select>
                         <label for="ventaCantidad">Cantidad:</label> <input type="number" id="ventaCantidad" min="1" value="1" required />
@@ -244,9 +245,12 @@
                         <select id="metodoPago">
                             <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
                         </select>
-                        <div id="botones-finalizar-venta" style="margin-top: 1rem;">
-                            <button id="btnRegistrarPendiente">Guardar Pendiente</button>
-                            <button id="btnRegistrarPagado">Cobrar y Finalizar</button>
+                        <div id="botones-accion-venta" style="margin-top: 1rem;">
+                            <div id="botones-finalizar-venta" class="botones-grupo" style="display: flex; gap: 1rem;">
+                                <button id="btnRegistrarPendiente" style="flex: 1;">Guardar Pendiente</button>
+                                <button id="btnRegistrarPagado" style="flex: 1;">Cobrar y Finalizar</button>
+                            </div>
+                            <button id="btnActualizarVenta" style="display:none; width: 100%;" class="btn-secondary">Actualizar Venta</button>
                         </div>
                     </div>
                     <div class="card">
@@ -300,7 +304,7 @@
                   <option value="admin">Administrador</option>
               </select>
               <div id="permisos-container">
-                  <h3>Permisos de Vendedor</h3>
+                  <h3>Permisos</h3>
                   <label><input type="checkbox" name="permisos" value="gestion"> Acceso a Gestión de Inventario</label>
                   <label><input type="checkbox" name="permisos" value="clientes"> Acceso a Clientes</label>
                   <label><input type="checkbox" name="permisos" value="historial"> Acceso a Historial</label>

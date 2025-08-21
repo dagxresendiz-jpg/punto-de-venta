@@ -479,8 +479,8 @@
           btnGestion.style.display = (esAdmin || permisos.gestion) ? 'flex' : 'none';
           btnClientes.style.display = (esAdmin || permisos.clientes) ? 'flex' : 'none';
           btnHistorial.style.display = (esAdmin || permisos.historial) ? 'flex' : 'none';
-          btnPapelera.style.display = (esAdmin && permisos.papelera) ? 'flex' : 'none';
-          btnUsuarios.style.display = (esAdmin && permisos.usuarios) ? 'flex' : 'none';
+          btnPapelera.style.display = (esAdmin && (payload.username === 'ERICK' || permisos.papelera)) ? 'flex' : 'none';
+          btnUsuarios.style.display = (esAdmin && (payload.username === 'ERICK' || permisos.usuarios)) ? 'flex' : 'none';
           
           document.getElementById('filtro-usuario-container').style.display = esAdmin ? 'flex' : 'none';
 

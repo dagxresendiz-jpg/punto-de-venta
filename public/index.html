@@ -480,7 +480,7 @@
           btnClientes.style.display = (esAdmin || permisos.clientes) ? 'flex' : 'none';
           btnHistorial.style.display = (esAdmin || permisos.historial) ? 'flex' : 'none';
           btnPapelera.style.display = (esAdmin || permisos.papelera) ? 'flex' : 'none';
-          btnUsuarios.style.display = (esAdmin && (payload.permissions && payload.permissions.usuarios !== false)) ? 'flex' : 'none';
+          btnUsuarios.style.display = esAdmin ? 'flex' : 'none'; // Se muestra a todos los admins
           
           document.getElementById('filtro-usuario-container').style.display = esAdmin ? 'flex' : 'none';
 
@@ -751,7 +751,6 @@
       async function registrarVenta(estatus) {
         if (procesandoVenta) return; 
         procesandoVenta = true;
-        
         const btnPagado = document.getElementById('btnRegistrarPagado');
         const btnPendiente = document.getElementById('btnRegistrarPendiente');
         const btnActualizar = document.getElementById('btnActualizarVenta');
@@ -780,7 +779,7 @@
                 costoDomicilio: costoDomicilio, 
                 total: subtotal + costoDomicilio,
                 metodoPago: document.getElementById('metodoPago').value,
-                estatus: estatus || ventaOriginal.estatus // Mantiene el estatus si se está editando
+                estatus: estatus || ventaOriginal.estatus
             };
             if (!idVentaEditada) {
                 ventaData.id = Date.now();

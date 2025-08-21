@@ -1,4 +1,4 @@
-// server.js - Versión con Edición de Ventas y Permisos Mejorados
+// server.js - Versión con Login Corregido y Protección de Superusuario Real
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -75,27 +75,31 @@ function esAdmin(req, res, next) {
     }
     next();
 }
-const tienePermiso = (seccion) => (req, res, next) => {
-    if (req.user.role === 'admin' && req.user.username === 'superadmin') { // Superadmin siempre tiene acceso
-        return next();
+const tienePermiso = (seccion) => async (req, res, next) => {
+    // Busca al usuario en la DB para obtener los permisos más actualizados
+    const usuario = await Usuario.findById(req.user.id);
+    if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado.' });
+    
+    if (usuario.role === 'admin' || (usuario.permissions && usuario.permissions[seccion])) {
+        next();
+    } else {
+        return res.status(403).json({ error: `Acceso denegado. Se requiere permiso para la sección '${seccion}'.` });
     }
-    if (req.user.role === 'admin' && req.user.permissions && req.user.permissions[seccion]) {
-        return next();
-    }
-    if (req.user.role === 'seller' && req.user.permissions && req.user.permissions[seccion]) {
-        return next();
-    }
-    return res.status(403).json({ error: `Acceso denegado. Se requiere permiso para la sección '${seccion}'.` });
 };
 
 // --- RUTAS DE AUTENTICACIÓN (PÚBLICAS) ---
 app.post('/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const usuario = await Usuario.findOne({ username, status: 'activo' });
+        // --- CAMBIO CRÍTICO ---: Se permite el login a usuarios antiguos sin el campo 'status'
+        const usuario = await Usuario.findOne({ 
+            username,
+            $or: [{ status: 'activo' }, { status: { $exists: false } }] 
+        });
         if (!usuario) return res.status(401).json({ error: 'Credenciales inválidas' });
         const passwordValida = await bcrypt.compare(password, usuario.password);
         if (!passwordValida) return res.status(401).json({ error: 'Credenciales inválidas' });
+        
         const token = jwt.sign({ id: usuario._id, username: usuario.username, role: usuario.role, permissions: usuario.permissions }, JWT_SECRET, { expiresIn: '8h' });
         res.json({ message: 'Login exitoso', token });
     } catch (error) { res.status(500).send('Error en el servidor'); }
@@ -107,7 +111,7 @@ app.use('/api', verificarToken);
 // --- RUTAS CRUD GENÉRICAS ---
 const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
-    router.get('/', tienePermiso(permiso), async (req, res) => res.json(await modelo.find({ status: 'activo' })));
+    router.get('/', tienePermiso(permiso), async (req, res) => res.json(await modelo.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
     router.get('/papelera', esAdmin, tienePermiso('papelera'), async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
     router.post('/', esAdmin, tienePermiso(permiso), async (req, res) => res.status(201).json(await modelo.create(req.body)));
     router.put('/:id', esAdmin, tienePermiso(permiso), async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
@@ -131,7 +135,7 @@ app.post('/api/ventas', async (req, res) => {
     const ventaCreada = await Venta.create(nuevaVentaData);
     res.status(201).json(ventaCreada);
 });
-app.get('/api/ventas', tienePermiso('historial'), async (req, res) => res.json(await Venta.find({ status: 'activo' })));
+app.get('/api/ventas', tienePermiso('historial'), async (req, res) => res.json(await Venta.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
 app.get('/api/ventas/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
 app.put('/api/ventas/:id', async (req, res) => {
     res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true }));
@@ -141,7 +145,7 @@ app.put('/api/ventas/:id/restaurar', esAdmin, async (req, res) => { await Venta.
 app.delete('/api/ventas/:id/permanente', esAdmin, async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
 // Usuarios (Solo Admin)
-app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find({ status: 'activo' }).select('-password')));
+app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] }).select('-password')));
 app.get('/api/usuarios/papelera', esAdmin, async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
 app.post('/api/usuarios', esAdmin, async (req, res) => {
     const { username, password, role, permissions } = req.body;
@@ -153,22 +157,21 @@ app.post('/api/usuarios', esAdmin, async (req, res) => {
 });
 app.put('/api/usuarios/:id', esAdmin, async (req, res) => {
     const { username, role, permissions, password } = req.body;
-    const usuarioAEditar = await Usuario.findById(req.params.id);
-    if (!usuarioAEditar) return res.status(404).json({error: 'Usuario no encontrado'});
-    // Protección del superusuario
-    if (usuarioAEditar.username === 'superadmin') return res.status(403).json({ error: 'No se puede modificar al superusuario.' });
+    const primerAdmin = await Usuario.findOne({ role: 'admin' }).sort({ createdAt: 1 });
+    if (req.params.id === primerAdmin.id.toString()) return res.status(403).json({ error: 'No se puede modificar al superusuario.' });
     
     let datosActualizar = { username, role, permissions };
     if (password) {
         datosActualizar.password = await bcrypt.hash(password, 10);
     }
     const usuarioActualizado = await Usuario.findByIdAndUpdate(req.params.id, datosActualizar, { new: true }).select('-password');
+    if (!usuarioActualizado) return res.status(404).json({error: 'Usuario no encontrado'});
     res.json(usuarioActualizado);
 });
 app.put('/api/usuarios/:id/restaurar', esAdmin, async (req, res) => { await Usuario.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Usuario restaurado' }); });
 app.delete('/api/usuarios/:id', esAdmin, async (req, res) => {
-    const usuarioAEliminar = await Usuario.findById(req.params.id);
-    if (usuarioAEliminar && usuarioAEliminar.username === 'superadmin') return res.status(403).json({ error: 'No se puede eliminar al superusuario.' });
+    const primerAdmin = await Usuario.findOne({ role: 'admin' }).sort({ createdAt: 1 });
+    if (req.params.id === primerAdmin.id.toString()) return res.status(403).json({ error: 'No se puede eliminar al superusuario.' });
     if (req.params.id === req.user.id) return res.status(403).json({ error: 'No puedes eliminarte a ti mismo.' });
     await Usuario.findByIdAndUpdate(req.params.id, { status: 'eliminado' });
     res.status(204).send();

@@ -1,4 +1,4 @@
-// server.js - Versión con Login Corregido y Protección de Superusuario Real
+// server.js - Versión con Permisos de Usuario y Edición de Ventas Corregidos
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -39,6 +39,7 @@ const userPermissions = {
     clientes: { type: Boolean, default: false },
     historial: { type: Boolean, default: false },
     papelera: { type: Boolean, default: false },
+    usuarios: { type: Boolean, default: false } // CAMBIO 18: Nuevo permiso
 };
 
 const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number, ...commonFields }));
@@ -76,22 +77,26 @@ function esAdmin(req, res, next) {
     next();
 }
 const tienePermiso = (seccion) => async (req, res, next) => {
-    // Busca al usuario en la DB para obtener los permisos más actualizados
     const usuario = await Usuario.findById(req.user.id);
     if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado.' });
-    
-    if (usuario.role === 'admin' || (usuario.permissions && usuario.permissions[seccion])) {
-        next();
-    } else {
-        return res.status(403).json({ error: `Acceso denegado. Se requiere permiso para la sección '${seccion}'.` });
+
+    // El primer admin (superusuario) siempre tiene acceso a todo.
+    const primerAdmin = await Usuario.findOne({ role: 'admin' }).sort({ createdAt: 1 });
+    if (usuario.id === primerAdmin.id.toString()) {
+        return next();
     }
+    
+    if (usuario.permissions && usuario.permissions[seccion]) {
+        return next();
+    }
+    
+    return res.status(403).json({ error: `Acceso denegado. Se requiere permiso para la sección '${seccion}'.` });
 };
 
 // --- RUTAS DE AUTENTICACIÓN (PÚBLICAS) ---
 app.post('/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        // --- CAMBIO CRÍTICO ---: Se permite el login a usuarios antiguos sin el campo 'status'
         const usuario = await Usuario.findOne({ 
             username,
             $or: [{ status: 'activo' }, { status: { $exists: false } }] 
@@ -140,14 +145,14 @@ app.get('/api/ventas/papelera', tienePermiso('papelera'), async (req, res) => re
 app.put('/api/ventas/:id', async (req, res) => {
     res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true }));
 });
-app.delete('/api/ventas/:id', esAdmin, async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
-app.put('/api/ventas/:id/restaurar', esAdmin, async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Venta restaurada' }); });
-app.delete('/api/ventas/:id/permanente', esAdmin, async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
+app.delete('/api/ventas/:id', esAdmin, tienePermiso('historial'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
+app.put('/api/ventas/:id/restaurar', esAdmin, tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Venta restaurada' }); });
+app.delete('/api/ventas/:id/permanente', esAdmin, tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
-// Usuarios (Solo Admin)
-app.get('/api/usuarios', esAdmin, async (req, res) => res.json(await Usuario.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] }).select('-password')));
-app.get('/api/usuarios/papelera', esAdmin, async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
-app.post('/api/usuarios', esAdmin, async (req, res) => {
+// Usuarios
+app.get('/api/usuarios', esAdmin, tienePermiso('usuarios'), async (req, res) => res.json(await Usuario.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] }).select('-password')));
+app.get('/api/usuarios/papelera', esAdmin, tienePermiso('papelera'), async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
+app.post('/api/usuarios', esAdmin, tienePermiso('usuarios'), async (req, res) => {
     const { username, password, role, permissions } = req.body;
     if (!username || !password || !role) return res.status(400).json({ error: 'Usuario, contraseña y rol son requeridos.' });
     if (await Usuario.findOne({ username })) return res.status(409).json({ error: 'El nombre de usuario ya existe.' });
@@ -155,9 +160,9 @@ app.post('/api/usuarios', esAdmin, async (req, res) => {
     const nuevoUsuario = await Usuario.create({ username, password: hashedPassword, role, permissions: permissions || {} });
     res.status(201).json({id: nuevoUsuario._id, username: nuevoUsuario.username, role: nuevoUsuario.role, permissions: nuevoUsuario.permissions});
 });
-app.put('/api/usuarios/:id', esAdmin, async (req, res) => {
+app.put('/api/usuarios/:id', esAdmin, tienePermiso('usuarios'), async (req, res) => {
     const { username, role, permissions, password } = req.body;
-    const primerAdmin = await Usuario.findOne({ role: 'admin' }).sort({ createdAt: 1 });
+    const primerAdmin = await Usuario.findOne({}).sort({ createdAt: 1 });
     if (req.params.id === primerAdmin.id.toString()) return res.status(403).json({ error: 'No se puede modificar al superusuario.' });
     
     let datosActualizar = { username, role, permissions };
@@ -168,15 +173,15 @@ app.put('/api/usuarios/:id', esAdmin, async (req, res) => {
     if (!usuarioActualizado) return res.status(404).json({error: 'Usuario no encontrado'});
     res.json(usuarioActualizado);
 });
-app.put('/api/usuarios/:id/restaurar', esAdmin, async (req, res) => { await Usuario.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Usuario restaurado' }); });
-app.delete('/api/usuarios/:id', esAdmin, async (req, res) => {
-    const primerAdmin = await Usuario.findOne({ role: 'admin' }).sort({ createdAt: 1 });
+app.put('/api/usuarios/:id/restaurar', esAdmin, tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Usuario restaurado' }); });
+app.delete('/api/usuarios/:id', esAdmin, tienePermiso('usuarios'), async (req, res) => {
+    const primerAdmin = await Usuario.findOne({}).sort({ createdAt: 1 });
     if (req.params.id === primerAdmin.id.toString()) return res.status(403).json({ error: 'No se puede eliminar al superusuario.' });
     if (req.params.id === req.user.id) return res.status(403).json({ error: 'No puedes eliminarte a ti mismo.' });
     await Usuario.findByIdAndUpdate(req.params.id, { status: 'eliminado' });
     res.status(204).send();
 });
-app.delete('/api/usuarios/:id/permanente', esAdmin, async (req, res) => { await Usuario.findByIdAndDelete(req.params.id); res.status(204).send(); });
+app.delete('/api/usuarios/:id/permanente', esAdmin, tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndDelete(req.params.id); res.status(204).send(); });
 
 // --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
 app.get('*', (req, res) => {

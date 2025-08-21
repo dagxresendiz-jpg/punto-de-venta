@@ -309,6 +309,7 @@
                   <label><input type="checkbox" name="permisos" value="clientes"> Acceso a Clientes</label>
                   <label><input type="checkbox" name="permisos" value="historial"> Acceso a Historial</label>
                   <label><input type="checkbox" name="permisos" value="papelera"> Acceso a Papelera</label>
+                  <label><input type="checkbox" name="permisos" value="usuarios"> Acceso a Gestión de Usuarios</label>
               </div>
               <button type="submit">Guardar Usuario</button>
               <button type="button" id="btnLimpiarFormUsuario" class="btn-secondary">Limpiar</button>
@@ -479,7 +480,8 @@
           btnClientes.style.display = (esAdmin || permisos.clientes) ? 'flex' : 'none';
           btnHistorial.style.display = (esAdmin || permisos.historial) ? 'flex' : 'none';
           btnPapelera.style.display = (esAdmin || permisos.papelera) ? 'flex' : 'none';
-          btnUsuarios.style.display = esAdmin ? 'flex' : 'none';
+          btnUsuarios.style.display = (esAdmin && (payload.username === 'ERICK' || permisos.usuarios)) ? 'flex' : 'none'; // Superadmin o admin con permiso
+          
           document.getElementById('filtro-usuario-container').style.display = esAdmin ? 'flex' : 'none';
 
           appWrapper.style.display = 'flex';
@@ -763,7 +765,6 @@
             const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
             const subtotal = ventaActual.reduce((a, i) => a + i.total, 0);
             const ventaCompleta = { 
-                id: Date.now(), 
                 fecha: new Date().toISOString(), 
                 clienteId: clienteSelect.value ? parseInt(clienteSelect.value) : null,
                 clienteNombre: clienteSelect.value ? clienteSelect.options[clienteSelect.selectedIndex].text : 'Público General',
@@ -774,8 +775,13 @@
                 metodoPago: document.getElementById('metodoPago').value,
                 estatus: estatus
             };
-            const ventaGuardada = await fetchAPI('/api/ventas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ventaCompleta) });
-            alert(`Venta guardada como "${estatus}" con éxito`);
+
+            const idVentaEditada = document.getElementById('idVenta').value;
+            const url = idVentaEditada ? `/api/ventas/${idVentaEditada}` : '/api/ventas';
+            const metodo = idVentaEditada ? 'PUT' : 'POST';
+
+            const ventaGuardada = await fetchAPI(url, { method: metodo, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ventaCompleta) });
+            alert(`Venta ${idVentaEditada ? 'actualizada' : 'guardada como ' + estatus} con éxito`);
             document.getElementById('ticket').textContent = generarTextoTicket(ventaGuardada);
             resetearFormularioCompleto();
         } catch (e) {
@@ -800,8 +806,8 @@
           btnEliminar.className = 'btn-eliminar-item';
           btnEliminar.onclick = () => { 
             ventaActual.splice(index, 1); 
-            if (ventaActual.length === 0) {
-              document.getElementById('ventaCliente').disabled = false;
+            if (ventaActual.length === 0 && !document.getElementById('idVenta').value) {
+                document.getElementById('ventaCliente').disabled = false;
             }
             mostrarVentaActual(); 
           };
@@ -827,9 +833,9 @@
 
       function resetearFormularioCompleto() {
         ventaActual = [];
-        document.getElementById('listaVentaActual').innerHTML = '';
         document.getElementById('formVenta').reset();
         document.getElementById('ventaCliente').disabled = false;
+        document.getElementById('idVenta').value = '';
         document.getElementById('checkDomicilio').checked = false;
         document.getElementById('costoDomicilio').style.display = 'none';
         document.querySelectorAll('.option-btn.selected').forEach(btn => btn.classList.remove('selected'));
@@ -838,7 +844,9 @@
             c.nextElementSibling.style.maxHeight = '0px';
         });
         document.getElementById('metodoPago').value = "Efectivo";
-        actualizarTotalVenta();
+        document.getElementById('botones-finalizar-venta').style.display = 'flex';
+        document.getElementById('btnActualizarVenta').style.display = 'none';
+        mostrarVentaActual();
       }
 
       function generarTextoTicket(venta) {
@@ -890,18 +898,11 @@
           const permisosContainer = document.getElementById('permisos-container');
           const permisosCheckboxes = permisosContainer.querySelectorAll('input[type="checkbox"]');
           
-          if (usuario.role === 'admin') {
-              permisosContainer.style.display = 'block'; // Ahora los admins pueden editarse
+          permisosContainer.style.display = 'block';
+          if (usuario.permissions) {
               permisosCheckboxes.forEach(cb => {
-                  cb.checked = (usuario.permissions && usuario.permissions[cb.value]) || false;
+                  cb.checked = usuario.permissions[cb.value] || false;
               });
-          } else {
-              permisosContainer.style.display = 'block';
-              if (usuario.permissions) {
-                  permisosCheckboxes.forEach(cb => {
-                      cb.checked = usuario.permissions[cb.value] || false;
-                  });
-              }
           }
       }
 
@@ -996,6 +997,25 @@
           }
       }
 
+      function editarVenta(ventaId) {
+        const venta = ventasEnMemoria.find(v => v.id === ventaId);
+        if (venta) {
+          resetearFormularioCompleto();
+          document.getElementById('idVenta').value = venta.id;
+          document.getElementById('ventaCliente').value = venta.clienteId || '';
+          ventaActual = venta.items.map(item => ({...item}));
+          mostrarVentaActual();
+
+          document.getElementById('ventaCliente').disabled = true;
+          document.getElementById('botones-finalizar-venta').style.display = 'none';
+          document.getElementById('btnActualizarVenta').style.display = 'block';
+
+          mostrarSeccion('registrar-venta');
+        } else {
+            alert("No se encontró la venta para editar.");
+        }
+      }
+
       async function cargarVentasHistorial() {
         try {
           ventasEnMemoria = await fetchAPI('/api/ventas');
@@ -1030,6 +1050,9 @@
             if(estatusActual === 'Pendiente de Pago') estatusClass = 'status-pendiente';
             
             let accionesHTML = `
+              <button class="btn-editar-venta" data-id="${venta.id}" title="Editar Venta">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+              </button>
               <button class="btn-reimprimir" data-id="${venta.id}" title="Reimprimir Ticket">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg>
               </button>
@@ -1060,6 +1083,7 @@
           document.querySelectorAll('.btn-eliminar-venta').forEach(btn => btn.addEventListener('click', () => eliminarItem(btn.dataset.id, 'Venta')));
           document.querySelectorAll('.btn-marcar-pagado').forEach(btn => btn.addEventListener('click', () => marcarComoPagado(btn.dataset.id)));
           document.querySelectorAll('.btn-reimprimir').forEach(btn => btn.addEventListener('click', () => reimprimirTicket(btn.dataset.id)));
+          document.querySelectorAll('.btn-editar-venta').forEach(btn => btn.addEventListener('click', () => editarVenta(btn.dataset.id)));
           document.querySelectorAll('.btn-cambiar-estatus').forEach(btn => btn.addEventListener('click', () => cambiarEstatus(btn.dataset.id, btn.dataset.estatus)));
 
           const totalPeriodo = ventasFiltradas.reduce((acc, venta) => acc + venta.total, 0);
@@ -1250,6 +1274,7 @@
       function setupEventListeners() {
         document.getElementById('btnRegistrarPagado').addEventListener('click', () => registrarVenta('Pagado'));
         document.getElementById('btnRegistrarPendiente').addEventListener('click', () => registrarVenta('Pendiente de Pago'));
+        document.getElementById('btnActualizarVenta').addEventListener('click', () => registrarVenta(null)); // El estatus no cambia al actualizar
         document.getElementById('filtroEstatus').addEventListener('change', cargarVentasHistorial);
         document.querySelectorAll('nav a').forEach(b => b.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1273,9 +1298,9 @@
         document.getElementById('formJarabe').addEventListener('submit', (e) => guardarItem(e, 'Jarabe'));
         document.getElementById('formCliente').addEventListener('submit', (e) => guardarItem(e, 'Cliente'));
         document.getElementById('formUsuario').addEventListener('submit', (e) => guardarUsuario(e));
-        document.getElementById('roleUsuario').addEventListener('change', () => {
-          const permisosContainer = document.getElementById('permisos-container');
-          permisosContainer.style.display = 'block'; // Siempre visible ahora
+        document.getElementById('roleUsuario').addEventListener('change', (e) => {
+            const permisosContainer = document.getElementById('permisos-container');
+            permisosContainer.style.display = 'block'; // Siempre visible
         });
         document.getElementById('btnLimpiarFormUsuario').addEventListener('click', limpiarFormularioUsuario);
         document.getElementById('btnAgregarVenta').addEventListener('click', agregarAVenta);

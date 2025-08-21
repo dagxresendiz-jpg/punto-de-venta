@@ -1,4 +1,4 @@
-// server.js - Versión con Permisos Granulares y Lógica Corregida
+// server.js - Versión con Permisos y Superusuario Corregidos
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -81,7 +81,7 @@ const tienePermiso = (seccion) => async (req, res, next) => {
         const usuario = await Usuario.findById(req.user.id);
         if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado.' });
 
-        const primerAdmin = await Usuario.findOne({}).sort({ createdAt: 1 });
+        const primerAdmin = await Usuario.findOne({ role: 'admin' }).sort({ createdAt: 1 });
         
         if (usuario.id === primerAdmin.id.toString()) {
             return next(); // Superusuario siempre tiene acceso
@@ -117,40 +117,26 @@ app.post('/auth/login', async (req, res) => {
 // --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
-// --- RUTAS CRUD (CORREGIDAS PARA PERMISOS GRANULARES) ---
-
-// Productos, Toppings, Jarabes: GET es para todos, el resto solo admin con permiso 'gestion'
-const crearRutasInventario = (modelo, nombre) => {
+// --- RUTAS CRUD GENÉRICAS (CORREGIDAS) ---
+const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
+    
     router.get('/', async (req, res) => res.json(await modelo.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
     
     router.get('/papelera', esAdmin, tienePermiso('papelera'), async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
-    router.post('/', esAdmin, tienePermiso('gestion'), async (req, res) => res.status(201).json(await modelo.create(req.body)));
-    router.put('/:id', esAdmin, tienePermiso('gestion'), async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-    router.delete('/:id', esAdmin, tienePermiso('gestion'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
+    router.post('/', esAdmin, tienePermiso(permiso), async (req, res) => res.status(201).json(await modelo.create(req.body)));
+    router.put('/:id', esAdmin, tienePermiso(permiso), async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+    router.delete('/:id', esAdmin, tienePermiso(permiso), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
     router.put('/:id/restaurar', esAdmin, tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
     router.delete('/:id/permanente', esAdmin, tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
     return router;
 };
 
-app.use('/api/productos', crearRutasInventario(Producto, 'Producto'));
-app.use('/api/toppings', crearRutasInventario(Topping, 'Topping'));
-app.use('/api/jarabes', crearRutasInventario(Jarabe, 'Jarabe'));
-
-// Clientes: GET es para todos, el resto solo admin con permiso 'clientes'
-const crearRutasClientes = (modelo, nombre) => {
-    const router = express.Router();
-    router.get('/', async (req, res) => res.json(await modelo.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
-
-    router.get('/papelera', esAdmin, tienePermiso('papelera'), async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
-    router.post('/', esAdmin, tienePermiso('clientes'), async (req, res) => res.status(201).json(await modelo.create(req.body)));
-    router.put('/:id', esAdmin, tienePermiso('clientes'), async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-    router.delete('/:id', esAdmin, tienePermiso('clientes'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
-    router.put('/:id/restaurar', esAdmin, tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
-    router.delete('/:id/permanente', esAdmin, tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
-    return router;
-};
-app.use('/api/clientes', crearRutasClientes(Cliente, 'Cliente'));
+// --- RUTAS DE API ---
+app.use('/api/productos', crearRutasCrud(Producto, 'Producto', 'gestion'));
+app.use('/api/toppings', crearRutasCrud(Topping, 'Topping', 'gestion'));
+app.use('/api/jarabes', crearRutasCrud(Jarabe, 'Jarabe', 'gestion'));
+app.use('/api/clientes', crearRutasCrud(Cliente, 'Cliente', 'clientes'));
 
 // Ventas
 app.post('/api/ventas', async (req, res) => {

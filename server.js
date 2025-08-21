@@ -1,4 +1,4 @@
-// server.js - Versión con Permisos de Usuario y Edición de Ventas Corregidos
+// server.js - Versión con Permisos y Edición de Ventas Corregidos
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -39,7 +39,7 @@ const userPermissions = {
     clientes: { type: Boolean, default: false },
     historial: { type: Boolean, default: false },
     papelera: { type: Boolean, default: false },
-    usuarios: { type: Boolean, default: false } // CAMBIO 18: Nuevo permiso
+    usuarios: { type: Boolean, default: false }
 };
 
 const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number, ...commonFields }));
@@ -77,20 +77,24 @@ function esAdmin(req, res, next) {
     next();
 }
 const tienePermiso = (seccion) => async (req, res, next) => {
-    const usuario = await Usuario.findById(req.user.id);
-    if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado.' });
+    try {
+        const usuario = await Usuario.findById(req.user.id);
+        if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado.' });
 
-    // El primer admin (superusuario) siempre tiene acceso a todo.
-    const primerAdmin = await Usuario.findOne({ role: 'admin' }).sort({ createdAt: 1 });
-    if (usuario.id === primerAdmin.id.toString()) {
-        return next();
-    }
+        const primerAdmin = await Usuario.findOne({}).sort({ createdAt: 1 });
+        
+        if (usuario.id === primerAdmin.id.toString()) {
+            return next(); // El superusuario tiene acceso a todo
+        }
+        
+        if (usuario.permissions && usuario.permissions[seccion]) {
+            return next();
+        }
     
-    if (usuario.permissions && usuario.permissions[seccion]) {
-        return next();
+        return res.status(403).json({ error: `Acceso denegado. Se requiere permiso para la sección '${seccion}'.` });
+    } catch(error) {
+        return res.status(500).json({ error: 'Error interno del servidor al verificar permisos.' });
     }
-    
-    return res.status(403).json({ error: `Acceso denegado. Se requiere permiso para la sección '${seccion}'.` });
 };
 
 // --- RUTAS DE AUTENTICACIÓN (PÚBLICAS) ---
@@ -161,10 +165,10 @@ app.post('/api/usuarios', esAdmin, tienePermiso('usuarios'), async (req, res) =>
     res.status(201).json({id: nuevoUsuario._id, username: nuevoUsuario.username, role: nuevoUsuario.role, permissions: nuevoUsuario.permissions});
 });
 app.put('/api/usuarios/:id', esAdmin, tienePermiso('usuarios'), async (req, res) => {
-    const { username, role, permissions, password } = req.body;
     const primerAdmin = await Usuario.findOne({}).sort({ createdAt: 1 });
     if (req.params.id === primerAdmin.id.toString()) return res.status(403).json({ error: 'No se puede modificar al superusuario.' });
     
+    const { username, role, permissions, password } = req.body;
     let datosActualizar = { username, role, permissions };
     if (password) {
         datosActualizar.password = await bcrypt.hash(password, 10);

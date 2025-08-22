@@ -164,6 +164,9 @@
 <body>
 
   <div id="login-container" class="card">
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+        <img id="login-logo" src="https://via.placeholder.com/180x60.png?text=Cargando..." alt="Logotipo" style="max-width: 180px; max-height: 70px;">
+    </div>
     <div class="card-header"><h2 style="text-align: center;">Iniciar Sesión</h2></div>
     <form id="login-form">
       <div><label for="username">Usuario</label><input type="text" id="username" required></div>
@@ -434,7 +437,7 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       let ventaActual = [];
       let miGraficaDeVentas, miGraficaDeProductos;
       let ventasEnMemoria = [];
@@ -512,7 +515,8 @@
                   const reader = new FileReader();
                   reader.onload = (e) => {
                       const logo_base64 = e.target.result;
-                      appLogo.src = logo_base64;
+                      document.getElementById('app-logo').src = logo_base64;
+                      document.getElementById('login-logo').src = logo_base64;
                       guardarConfiguracionServidor({ logo_base64 });
                   };
                   reader.readAsDataURL(file);
@@ -532,37 +536,44 @@
           });
       }
 
-      async function cargarYAplicarConfiguracionServidor() {
+      async function loadPublicConfig() {
           const appLogo = document.getElementById('app-logo');
+          const loginLogo = document.getElementById('login-logo');
           const primaryColorPicker = document.getElementById('primary-color-picker');
           const accentColorPicker = document.getElementById('accent-color-picker');
           const root = document.documentElement;
           
           try {
-              const config = await fetchAPI('/api/configuracion');
-              if (!config) {
-                  appLogo.src = 'https://via.placeholder.com/180x60.png?text=Tu+Logo+Aqu%C3%AD';
-                  return;
+              const response = await fetch('/api/configuracion');
+              if (!response.ok) {
+                  throw new Error(`Error de red: ${response.statusText}`);
               }
-
-              if (config.logo_base64) {
+              const config = await response.json();
+              
+              const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
+              
+              if (config && config.logo_base64) {
                   appLogo.src = config.logo_base64;
+                  loginLogo.src = config.logo_base64;
               } else {
-                   appLogo.src = 'https://via.placeholder.com/180x60.png?text=Tu+Logo+Aqu%C3%AD';
+                   appLogo.src = defaultLogo;
+                   loginLogo.src = defaultLogo;
               }
 
-              if (config.primary_color) {
+              if (config && config.primary_color) {
                   root.style.setProperty('--primary-color', config.primary_color);
                   primaryColorPicker.value = config.primary_color;
               }
 
-              if (config.accent_color) {
+              if (config && config.accent_color) {
                   root.style.setProperty('--accent-color', config.accent_color);
                   accentColorPicker.value = config.accent_color;
               }
           } catch (error) {
               console.error("No se pudo cargar la configuración de apariencia desde el servidor.", error);
-              appLogo.src = 'https://via.placeholder.com/180x60.png?text=Error+Logo';
+              const errorLogo = 'https://via.placeholder.com/180x60.png?text=Error';
+              appLogo.src = errorLogo;
+              loginLogo.src = errorLogo;
           }
       }
 
@@ -590,7 +601,6 @@
           appWrapper.style.display = 'flex';
           loginContainer.style.display = 'none';
 
-          await cargarYAplicarConfiguracionServidor();
           initApp();
         } catch (e) { console.error("Error en showApp:", e); showLogin(); }
       }
@@ -1452,6 +1462,9 @@
             }
         });
       }
+
+      // INICIO DE LA APLICACIÓN
+      await loadPublicConfig();
 
       if (localStorage.getItem('token')) {
         showApp();

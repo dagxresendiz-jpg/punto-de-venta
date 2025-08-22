@@ -1,4 +1,4 @@
-// server.js - Versión con Superusuario, Permisos y Personalización de Apariencia
+// server.js - Versión final con personalización y logo en el login
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -9,11 +9,10 @@ const mongoose = require('mongoose');
 // --- CONFIGURACIÓN ---
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = 'tu_secreto_super_secreto_y_largo_y_diferente';
+const JWT_SECRET = process.env.JWT_SECRET || 'tu_secreto_super_secreto_y_largo_y_diferente';
 const MONGO_URI = process.env.MONGO_URI;
 
 app.use(cors());
-// ===== CAMBIO 1: AUMENTAR LÍMITE DE JSON PARA LOGOS =====
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -59,8 +58,6 @@ const Venta = mongoose.model('Venta', createSchema({
     subtotal: Number, costoDomicilio: Number, total: Number, metodoPago: String,
     vendedorId: String, vendedorUsername: String, estatus: String, ...commonFields
 }));
-
-// ===== CAMBIO 2: NUEVO MODELO PARA LA CONFIGURACIÓN DE APARIENCIA =====
 const AppConfig = mongoose.model('AppConfig', createSchema({
     logo_base64: { type: String },
     primary_color: { type: String, default: '#4f46e5' },
@@ -105,7 +102,8 @@ const tienePermiso = (seccion) => async (req, res, next) => {
     }
 };
 
-// --- RUTAS DE AUTENTICACIÓN (PÚBLICAS) ---
+// --- RUTAS PÚBLICAS (NO REQUIEREN TOKEN) ---
+
 app.post('/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -122,10 +120,41 @@ app.post('/auth/login', async (req, res) => {
     } catch (error) { res.status(500).send('Error en el servidor'); }
 });
 
+// Ruta pública para obtener la configuración de la apariencia
+app.get('/api/configuracion', async (req, res) => {
+    try {
+        let config = await AppConfig.findOne();
+        if (!config) {
+            config = await AppConfig.create({
+                primary_color: '#4f46e5',
+                accent_color: '#FF85A2'
+            });
+        }
+        res.json(config);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener la configuración de la aplicación.' });
+    }
+});
+
+
 // --- PROTECCIÓN DE RUTAS API ---
+// Todas las rutas definidas DESPUÉS de esta línea requerirán un token válido.
 app.use('/api', verificarToken);
 
-// --- RUTAS CRUD (CORREGIDAS PARA PERMISOS GRANULARES) ---
+
+// --- RUTAS PRIVADAS (REQUIEREN TOKEN) ---
+
+// Ruta privada para MODIFICAR la configuración (solo admins).
+app.post('/api/configuracion', esAdmin, async (req, res) => {
+    try {
+        const configData = req.body;
+        const updatedConfig = await AppConfig.findOneAndUpdate({}, configData, { new: true, upsert: true });
+        res.json({ message: 'Configuración actualizada con éxito', config: updatedConfig });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar la configuración de la aplicación.' });
+    }
+});
+
 const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
     
@@ -140,46 +169,10 @@ const crearRutasCrud = (modelo, nombre, permiso) => {
     return router;
 };
 
-// --- RUTAS DE API ---
 app.use('/api/productos', crearRutasCrud(Producto, 'Producto', 'gestion'));
 app.use('/api/toppings', crearRutasCrud(Topping, 'Topping', 'gestion'));
 app.use('/api/jarabes', crearRutasCrud(Jarabe, 'Jarabe', 'gestion'));
 app.use('/api/clientes', crearRutasCrud(Cliente, 'Cliente', 'clientes'));
-// (Ventas y Usuarios tienen lógica más compleja, por eso se quedan fuera del helper)
-
-// ===== CAMBIO 3: NUEVAS RUTAS PARA GESTIONAR LA APARIENCIA =====
-
-// GET: Obtener la configuración actual. Si no existe, la crea con valores por defecto.
-app.get('/api/configuracion', async (req, res) => {
-    try {
-        let config = await AppConfig.findOne();
-        if (!config) {
-            // Si es la primera vez que se ejecuta, crea el documento de configuración.
-            config = await AppConfig.create({
-                primary_color: '#4f46e5',
-                accent_color: '#FF85A2'
-            });
-        }
-        res.json(config);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener la configuración de la aplicación.' });
-    }
-});
-
-// POST: Actualizar la configuración. Protegida solo para administradores.
-app.post('/api/configuracion', esAdmin, async (req, res) => {
-    try {
-        const configData = req.body;
-        // findOneAndUpdate con upsert:true es perfecto para este caso.
-        // Si el documento existe, lo actualiza. Si no, lo crea.
-        const updatedConfig = await AppConfig.findOneAndUpdate({}, configData, { new: true, upsert: true });
-        res.json({ message: 'Configuración actualizada con éxito', config: updatedConfig });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al actualizar la configuración de la aplicación.' });
-    }
-});
-
-// ===== FIN DE LOS CAMBIOS =====
 
 // Ventas
 app.post('/api/ventas', async (req, res) => {

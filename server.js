@@ -1,4 +1,4 @@
-// server.js - Versión final con personalización y logo en el login
+// server.js - Versión con Permisos Corregidos y Robustos
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -34,13 +34,13 @@ const createSchema = (definition) => new mongoose.Schema(definition, {
 });
 
 const commonFields = { status: { type: String, default: 'activo' } };
-const userPermissions = {
+const userPermissionsSchema = createSchema({
     gestion: { type: Boolean, default: false },
     clientes: { type: Boolean, default: false },
     historial: { type: Boolean, default: false },
     papelera: { type: Boolean, default: false },
     usuarios: { type: Boolean, default: false }
-};
+});
 
 const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number, ...commonFields }));
@@ -50,7 +50,7 @@ const Usuario = mongoose.model('Usuario', createSchema({
     username: { type: String, unique: true, required: true }, 
     password: { type: String, required: true }, 
     role: { type: String, required: true }, 
-    permissions: createSchema(userPermissions),
+    permissions: { type: userPermissionsSchema, default: () => ({}) },
     ...commonFields 
 }));
 const Venta = mongoose.model('Venta', createSchema({
@@ -83,16 +83,12 @@ function esAdmin(req, res, next) {
 }
 const tienePermiso = (seccion) => async (req, res, next) => {
     try {
-        const usuario = await Usuario.findById(req.user.id);
-        if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado.' });
-
-        const primerAdmin = await Usuario.findOne({ role: 'admin' }).sort({ createdAt: 1 });
-        
-        if (usuario.id === primerAdmin.id.toString()) {
-            return next(); // Superusuario siempre tiene acceso
+        if(req.user.role === 'admin') {
+            return next(); // Los administradores siempre tienen acceso a todo.
         }
-        
-        if (usuario.permissions && usuario.permissions[seccion]) {
+
+        const permisos = req.user.permissions || {};
+        if (permisos[seccion]) {
             return next();
         }
     
@@ -120,7 +116,6 @@ app.post('/auth/login', async (req, res) => {
     } catch (error) { res.status(500).send('Error en el servidor'); }
 });
 
-// Ruta pública para obtener la configuración de la apariencia
 app.get('/api/configuracion', async (req, res) => {
     try {
         let config = await AppConfig.findOne();
@@ -136,15 +131,11 @@ app.get('/api/configuracion', async (req, res) => {
     }
 });
 
-
 // --- PROTECCIÓN DE RUTAS API ---
-// Todas las rutas definidas DESPUÉS de esta línea requerirán un token válido.
 app.use('/api', verificarToken);
-
 
 // --- RUTAS PRIVADAS (REQUIEREN TOKEN) ---
 
-// Ruta privada para MODIFICAR la configuración (solo admins).
 app.post('/api/configuracion', esAdmin, async (req, res) => {
     try {
         const configData = req.body;
@@ -159,12 +150,12 @@ const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
     
     router.get('/', tienePermiso(permiso), async (req, res) => res.json(await modelo.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
-    router.get('/papelera', esAdmin, tienePermiso('papelera'), async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
-    router.post('/', esAdmin, tienePermiso(permiso), async (req, res) => res.status(201).json(await modelo.create(req.body)));
-    router.put('/:id', esAdmin, tienePermiso(permiso), async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
-    router.delete('/:id', esAdmin, tienePermiso(permiso), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
-    router.put('/:id/restaurar', esAdmin, tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
-    router.delete('/:id/permanente', esAdmin, tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
+    router.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
+    router.post('/', tienePermiso(permiso), async (req, res) => res.status(201).json(await modelo.create(req.body)));
+    router.put('/:id', tienePermiso(permiso), async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+    router.delete('/:id', tienePermiso(permiso), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
+    router.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
+    router.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
     
     return router;
 };
@@ -174,35 +165,40 @@ app.use('/api/toppings', crearRutasCrud(Topping, 'Topping', 'gestion'));
 app.use('/api/jarabes', crearRutasCrud(Jarabe, 'Jarabe', 'gestion'));
 app.use('/api/clientes', crearRutasCrud(Cliente, 'Cliente', 'clientes'));
 
-// Ventas
-app.post('/api/ventas', async (req, res) => {
+// Ventas (lógica específica)
+const ventasRouter = express.Router();
+ventasRouter.post('/', async (req, res) => {
     let nuevaVentaData = req.body;
     nuevaVentaData.vendedorId = req.user.id;
     nuevaVentaData.vendedorUsername = req.user.username;
     const ventaCreada = await Venta.create(nuevaVentaData);
     res.status(201).json(ventaCreada);
 });
-app.get('/api/ventas', tienePermiso('historial'), async (req, res) => res.json(await Venta.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
-app.get('/api/ventas/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
-app.put('/api/ventas/:id', async (req, res) => {
+ventasRouter.get('/', tienePermiso('historial'), async (req, res) => res.json(await Venta.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
+ventasRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
+ventasRouter.put('/:id', tienePermiso('historial'), async (req, res) => {
     res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true }));
 });
-app.delete('/api/ventas/:id', esAdmin, tienePermiso('historial'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
-app.put('/api/ventas/:id/restaurar', esAdmin, tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Venta restaurada' }); });
-app.delete('/api/ventas/:id/permanente', esAdmin, tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
+ventasRouter.delete('/:id', tienePermiso('historial'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
+ventasRouter.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Venta restaurada' }); });
+ventasRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
+app.use('/api/ventas', ventasRouter);
 
-// Usuarios
-app.get('/api/usuarios', esAdmin, tienePermiso('usuarios'), async (req, res) => res.json(await Usuario.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] }).select('-password')));
-app.get('/api/usuarios/papelera', esAdmin, tienePermiso('papelera'), async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
-app.post('/api/usuarios', esAdmin, tienePermiso('usuarios'), async (req, res) => {
+// Usuarios (lógica específica)
+const usuariosRouter = express.Router();
+usuariosRouter.get('/', tienePermiso('usuarios'), async (req, res) => res.json(await Usuario.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] }).select('-password')));
+usuariosRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
+usuariosRouter.post('/', tienePermiso('usuarios'), async (req, res) => {
     const { username, password, role, permissions } = req.body;
     if (!username || !password || !role) return res.status(400).json({ error: 'Usuario, contraseña y rol son requeridos.' });
     if (await Usuario.findOne({ username })) return res.status(409).json({ error: 'El nombre de usuario ya existe.' });
     const hashedPassword = await bcrypt.hash(password, 10);
     const nuevoUsuario = await Usuario.create({ username, password: hashedPassword, role, permissions: permissions || {} });
-    res.status(201).json({id: nuevoUsuario._id, username: nuevoUsuario.username, role: nuevoUsuario.role, permissions: nuevoUsuario.permissions});
+    const userResponse = nuevoUsuario.toJSON();
+    delete userResponse.password;
+    res.status(201).json(userResponse);
 });
-app.put('/api/usuarios/:id', esAdmin, tienePermiso('usuarios'), async (req, res) => {
+usuariosRouter.put('/:id', tienePermiso('usuarios'), async (req, res) => {
     const primerAdmin = await Usuario.findOne({}).sort({ createdAt: 1 });
     if (req.params.id === primerAdmin.id.toString()) return res.status(403).json({ error: 'No se puede modificar al superusuario.' });
     
@@ -215,15 +211,16 @@ app.put('/api/usuarios/:id', esAdmin, tienePermiso('usuarios'), async (req, res)
     if (!usuarioActualizado) return res.status(404).json({error: 'Usuario no encontrado'});
     res.json(usuarioActualizado);
 });
-app.put('/api/usuarios/:id/restaurar', esAdmin, tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Usuario restaurado' }); });
-app.delete('/api/usuarios/:id', esAdmin, tienePermiso('usuarios'), async (req, res) => {
+usuariosRouter.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Usuario restaurado' }); });
+usuariosRouter.delete('/:id', tienePermiso('usuarios'), async (req, res) => {
     const primerAdmin = await Usuario.findOne({}).sort({ createdAt: 1 });
     if (req.params.id === primerAdmin.id.toString()) return res.status(403).json({ error: 'No se puede eliminar al superusuario.' });
     if (req.params.id === req.user.id) return res.status(403).json({ error: 'No puedes eliminarte a ti mismo.' });
     await Usuario.findByIdAndUpdate(req.params.id, { status: 'eliminado' });
     res.status(204).send();
 });
-app.delete('/api/usuarios/:id/permanente', esAdmin, tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndDelete(req.params.id); res.status(204).send(); });
+usuariosRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndDelete(req.params.id); res.status(204).send(); });
+app.use('/api/usuarios', esAdmin, usuariosRouter);
 
 // --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
 app.get('*', (req, res) => {

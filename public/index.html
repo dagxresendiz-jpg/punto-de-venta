@@ -455,11 +455,6 @@
       const mainContent = document.querySelector('.main-content');
       const { jsPDF } = window.jspdf;
       
-      const btnGestion = document.getElementById('btn-gestion');
-      const btnClientes = document.getElementById('btn-clientes');
-      const btnUsuarios = document.getElementById('btn-usuarios');
-      const btnHistorial = document.getElementById('btn-historial');
-      const btnPapelera = document.getElementById('btn-papelera');
       const themeSwitch = document.getElementById('theme-switch');
       const togglePassword = document.getElementById('toggle-password');
       const passwordInput = document.getElementById('password');
@@ -579,30 +574,83 @@
 
       async function showApp() {
         try {
-          const token = localStorage.getItem('token');
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          welcomeUserSpan.textContent = `Bienvenido, ${payload.username} (${payload.role})`;
-          
-          const esAdmin = payload.role === 'admin';
-          const permisos = payload.permissions || {};
+            const token = localStorage.getItem('token');
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            welcomeUserSpan.textContent = `Bienvenido, ${payload.username} (${payload.role})`;
+            
+            const esAdmin = payload.role === 'admin';
+            const permisos = payload.permissions || {};
 
-          btnGestion.style.display = (esAdmin || (permisos && permisos.gestion)) ? 'flex' : 'none';
-          btnClientes.style.display = (esAdmin || (permisos && permisos.clientes)) ? 'flex' : 'none';
-          btnHistorial.style.display = (esAdmin || (permisos && permisos.historial)) ? 'flex' : 'none';
-          btnPapelera.style.display = (esAdmin || (permisos && permisos.papelera)) ? 'flex' : 'none';
-          btnUsuarios.style.display = (esAdmin || (permisos && permisos.usuarios)) ? 'flex' : 'none';
-          
-          document.getElementById('filtro-usuario-container').style.display = esAdmin ? 'block' : 'none';
+            const mapaPermisos = {
+                'gestion': document.getElementById('btn-gestion'),
+                'clientes': document.getElementById('btn-clientes'),
+                'usuarios': document.getElementById('btn-usuarios'),
+                'historial': document.getElementById('btn-historial'),
+                'papelera': document.getElementById('btn-papelera')
+            };
+            
+            let primeraSeccionVisible = 'registrar-venta'; // Por defecto para todos
+            let algunaSeccionVisible = true;
 
-          if (esAdmin) {
-              document.getElementById('customization-container').style.display = 'block';
-          }
+            for (const permiso in mapaPermisos) {
+                const tieneAcceso = esAdmin || (permisos && permisos[permiso]);
+                if (mapaPermisos[permiso]) {
+                    mapaPermisos[permiso].style.display = tieneAcceso ? 'flex' : 'none';
+                }
+            }
+            
+            document.getElementById('customization-container').style.display = esAdmin ? 'block' : 'none';
+            document.getElementById('filtro-usuario-container').style.display = esAdmin ? 'block' : 'none';
 
-          appWrapper.style.display = 'flex';
-          loginContainer.style.display = 'none';
+            if (!esAdmin) {
+                const ordenDeSecciones = [
+                    'registrar-venta', 'gestion-completa', 'gestion-clientes', 
+                    'historial-ventas', 'papelera-reciclaje', 'gestion-usuarios'
+                ];
+                const mapaSeccionesAPermisos = {
+                    'gestion-completa': 'gestion',
+                    'gestion-clientes': 'clientes',
+                    'gestion-usuarios': 'usuarios',
+                    'historial-ventas': 'historial',
+                    'papelera-reciclaje': 'papelera'
+                };
+                
+                let primeraEncontrada = false;
+                for(const seccion of ordenDeSecciones) {
+                    if (seccion === 'registrar-venta') {
+                        primeraSeccionVisible = 'registrar-venta';
+                        primeraEncontrada = true;
+                        break;
+                    }
+                    const permisoNecesario = mapaSeccionesAPermisos[seccion];
+                    if(permisos[permisoNecesario]){
+                        primeraSeccionVisible = seccion;
+                        primeraEncontrada = true;
+                        break;
+                    }
+                }
+                if(!primeraEncontrada){
+                    algunaSeccionVisible = false;
+                }
+            }
 
-          initApp();
-        } catch (e) { console.error("Error en showApp:", e); showLogin(); }
+            appWrapper.style.display = 'flex';
+            loginContainer.style.display = 'none';
+
+            initApp();
+
+            if (algunaSeccionVisible) {
+                mostrarSeccion(primeraSeccionVisible);
+            } else {
+                alert('No tienes permisos asignados para ver ninguna sección. Contacta a un administrador.');
+                document.querySelector('main').innerHTML = '<div class="card"><p>No tienes acceso a ninguna sección.</p></div>';
+            }
+
+        } catch (e) { 
+            console.error("Error en showApp:", e); 
+            localStorage.removeItem('token');
+            showLogin();
+        }
       }
       
       function showLogin() {
@@ -625,7 +673,7 @@
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Credenciales inválidas');
             localStorage.setItem('token', data.token);
-            showApp();
+            await showApp();
         } catch (error) {
             loginError.textContent = error.message;
         }
@@ -639,9 +687,13 @@
         const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...options.headers };
         const response = await fetch(url, { ...options, headers });
         if (response.status === 204) return;
-        if (response.status === 401 || response.status === 403) { showLogin(); throw new Error('Sesión expirada.'); }
+        if (response.status === 401) { showLogin(); throw new Error('Sesión expirada.'); }
         if (!response.ok) { 
             const errorData = await response.json(); 
+            if (response.status === 403) { // Permiso denegado
+              console.error(`Acceso denegado a ${url}:`, errorData.error);
+              // No hacemos logout, simplemente no se cargará el contenido
+            }
             if (suppressError) {
                 console.error(`Error en la petición a ${url}:`, errorData.error);
                 return;
@@ -655,10 +707,8 @@
         setupEventListeners();
         setupCustomizationEventListeners();
         setupCollapsibles(); 
-        const seccionInicial = 'registrar-venta';
-        mostrarSeccion(seccionInicial);
       }
-
+      
       function mostrarSeccion(id) {
         document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
         document.querySelectorAll('nav a').forEach(link => link.classList.remove('active-link'));
@@ -778,18 +828,23 @@
         for (const func of funciones) { await func(); }
       }
 
-      async function cargarProductos() { try { const data = await fetchAPI('/api/productos'); renderizarLista(data, 'Producto', ['nombre', 'precio']); } catch (e) { renderizarLista([], 'Producto', ['nombre', 'precio']); } }
-      async function cargarToppings() { try { const data = await fetchAPI('/api/toppings'); renderizarLista(data, 'Topping', ['nombre', 'precio']); } catch (e) { renderizarLista([], 'Topping', ['nombre', 'precio']); } }
-      async function cargarJarabes() { try { const data = await fetchAPI('/api/jarabes'); renderizarLista(data, 'Jarabe', ['nombre', 'precio']); } catch (e) { renderizarLista([], 'Jarabe', ['nombre', 'precio']); } }
-      async function cargarClientes() { try { const data = await fetchAPI('/api/clientes'); renderizarLista(data, 'Cliente', ['nombre', 'telefono']); } catch (e) { renderizarLista([], 'Cliente', ['nombre', 'telefono']); } }
+      async function cargarProductos() { try { const data = await fetchAPI('/api/productos'); renderizarLista(data, 'Producto', ['nombre', 'precio']); } catch (e) { console.error(e); renderizarLista([], 'Producto', ['nombre', 'precio']); } }
+      async function cargarToppings() { try { const data = await fetchAPI('/api/toppings'); renderizarLista(data, 'Topping', ['nombre', 'precio']); } catch (e) { console.error(e); renderizarLista([], 'Topping', ['nombre', 'precio']); } }
+      async function cargarJarabes() { try { const data = await fetchAPI('/api/jarabes'); renderizarLista(data, 'Jarabe', ['nombre', 'precio']); } catch (e) { console.error(e); renderizarLista([], 'Jarabe', ['nombre', 'precio']); } }
+      async function cargarClientes() { try { const data = await fetchAPI('/api/clientes'); renderizarLista(data, 'Cliente', ['nombre', 'telefono']); } catch (e) { console.error(e); renderizarLista([], 'Cliente', ['nombre', 'telefono']); } }
+      
       async function cargarOpcionesParaVenta() { 
-          await Promise.all([ 
-              cargarDataParaSelector('/api/productos', 'ventaProducto', 'id', item => `${item.nombre} - $${item.precio.toFixed(2)}`), 
-              cargarDataParaSelector('/api/clientes', 'ventaCliente', 'id', 'nombre'),
-              cargarDataParaBotones('/api/toppings', 'toppings-container'),
-              cargarDataParaBotones('/api/jarabes', 'jarabes-container') 
-          ]);
-          setupCollapsibles();
+        try {
+            await Promise.all([ 
+                cargarDataParaSelector('/api/productos', 'ventaProducto', 'id', item => `${item.nombre} - $${item.precio.toFixed(2)}`), 
+                cargarDataParaSelector('/api/clientes', 'ventaCliente', 'id', 'nombre'),
+                cargarDataParaBotones('/api/toppings', 'toppings-container'),
+                cargarDataParaBotones('/api/jarabes', 'jarabes-container') 
+            ]);
+            setupCollapsibles();
+        } catch(e) {
+            console.error("Fallo al cargar opciones para la venta:", e);
+        }
       }
       
       async function cargarDataParaSelector(url, selectId, valueField, textField) {
@@ -1467,7 +1522,7 @@
       await loadPublicConfig();
 
       if (localStorage.getItem('token')) {
-        showApp();
+        await showApp();
       } else {
         showLogin();
       }

@@ -12,11 +12,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      /* Estos son los colores que ahora se podrán cambiar desde la interfaz */
       --primary-color: #4f46e5; 
       --accent-color: #FF85A2;
-
-      /* Colores derivados y fijos */
       --primary-hover: #4338ca; --danger-color: #ef4444; --danger-hover: #dc2626;
       --success-color: #22c55e; --success-hover: #16a34a; --info-color: #38bdf8; --info-hover: #0ea5e9;
       --background-color: #f8fafc; --card-background: #ffffff; --text-color-dark: #1e293b; 
@@ -50,7 +47,6 @@
     .app-wrapper { display: flex; min-height: 100vh; }
     .sidebar { width: 250px; background-color: var(--card-background); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 1.5rem 1rem; transition: transform 0.3s ease; }
     .sidebar-header { text-align: center; margin-bottom: 2rem; }
-    /* NUEVO: Estilo para la imagen del logo */
     #app-logo { max-width: 180px; max-height: 80px; cursor: pointer; transition: transform 0.2s ease; }
     #app-logo:hover { transform: scale(1.05); }
     .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -188,15 +184,11 @@
 
   <div id="app-wrapper" style="display:none;">
     <nav class="sidebar">
-      <!-- ===== CAMBIO 1: SECCIÓN DEL LOGO ===== -->
-      <!-- Se reemplazó el texto por una imagen. Al hacer clic en ella, podrás cambiar el logo. -->
       <div class="sidebar-header">
-        <img id="app-logo" src="https://via.placeholder.com/180x60.png?text=Tu+Logo+Aqu%C3%AD" alt="Logotipo">
+        <img id="app-logo" src="https://via.placeholder.com/180x60.png?text=Cargando..." alt="Logotipo">
       </div>
-      <!-- ===== FIN DEL CAMBIO 1 ===== -->
-
       <div class="sidebar-nav">
-        <a class="nav-link" data-seccion="registrar-venta"><svg xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.838-6.967c.124-.467-.202-1.026-.693-1.026H6.118" /></svg><span>Registrar Venta</span></a>
+        <a class="nav-link" data-seccion="registrar-venta"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.838-6.967c.124-.467-.202-1.026-.693-1.026H6.118" /></svg><span>Registrar Venta</span></a>
         <a class="nav-link" data-seccion="gestion-completa" id="btn-gestion"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg><span>Gestión</span></a>
         <a class="nav-link" data-seccion="gestion-clientes" id="btn-clientes"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-4.663c.278.472.548.972.786 1.503z" /></svg><span>Clientes</span></a>
         <a class="nav-link" data-seccion="gestion-usuarios" id="btn-usuarios"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962c.57-1.023.994-2.131 1.253-3.284C13.437 11.08 14 9.61 14 8c0-1.61-.563-3.08-1.5-4.216m-4.5 14.15a9.083 9.083 0 01-1.253-3.284C6.563 13.08 6 11.61 6 10c0-1.61.563-3.08 1.5-4.216m0 0a5.012 5.012 0 011.5 0c.828 1.136 1.5 2.606 1.5 4.216 0 1.61-.563-3.08-1.5 4.216m0 0l-2.25 2.25a5.012 5.012 0 01-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 00-1.5 0l-2.25 2.25a5.012 5.012 0 00-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 01-1.5 0l-2.25 2.25" /></svg><span>Usuarios</span></a>
@@ -204,18 +196,18 @@
         <a class="nav-link" data-seccion="papelera-reciclaje" id="btn-papelera"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.067-2.09 1.02-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg><span>Papelera</span></a>
       </div>
       <div class="sidebar-footer">
-        <!-- ===== CAMBIO 2: CONTROLES DE PERSONALIZACIÓN ===== -->
-        <div id="customization-controls" style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-            <h4 style="margin-bottom: 0.75rem; color: var(--text-color-light); font-weight: 500;">Personalizar Apariencia</h4>
-            <input type="file" id="logo-input" accept="image/*" style="display: none;">
-            <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; align-items: center;">
-                <label for="primary-color-picker" style="font-size: 0.9em;">Primario:</label>
-                <input type="color" id="primary-color-picker" style="width: 100%; height: 25px; border: none; background: none; cursor: pointer;">
-                <label for="accent-color-picker" style="font-size: 0.9em;">Acento:</label>
-                <input type="color" id="accent-color-picker" style="width: 100%; height: 25px; border: none; background: none; cursor: pointer;">
+        <div id="customization-container" style="display: none;">
+            <div id="customization-controls" style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <h4 style="margin-bottom: 0.75rem; color: var(--text-color-light); font-weight: 500;">Personalizar Apariencia</h4>
+                <input type="file" id="logo-input" accept="image/*" style="display: none;">
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; align-items: center;">
+                    <label for="primary-color-picker" style="font-size: 0.9em;">Primario:</label>
+                    <input type="color" id="primary-color-picker" style="width: 100%; height: 25px; border: none; background: none; cursor: pointer;">
+                    <label for="accent-color-picker" style="font-size: 0.9em;">Acento:</label>
+                    <input type="color" id="accent-color-picker" style="width: 100%; height: 25px; border: none; background: none; cursor: pointer;">
+                </div>
             </div>
         </div>
-        <!-- ===== FIN DEL CAMBIO 2 ===== -->
         <div class="theme-toggle-container">
             <span>Modo Oscuro</span>
             <label class="theme-switch" for="theme-switch">
@@ -227,7 +219,6 @@
       </div>
     </nav>
     <div class="main-content">
-      <!-- El resto de tu HTML (main-content) permanece exactamente igual -->
       <header class="main-header">
         <button class="menu-toggle" id="menu-toggle">&#9776;</button>
         <div class="user-info">
@@ -481,71 +472,7 @@
               themeSwitch.checked = false;
           }
       }
-
-      // ===== CAMBIO 3: NUEVA FUNCIÓN DE JAVASCRIPT =====
-      // Esta función maneja toda la lógica para cambiar el logo y los colores.
-      function setupCustomization() {
-          const logoInput = document.getElementById('logo-input');
-          const appLogo = document.getElementById('app-logo');
-          const primaryColorPicker = document.getElementById('primary-color-picker');
-          const accentColorPicker = document.getElementById('accent-color-picker');
-          const root = document.documentElement;
-
-          // --- Cargar personalización guardada al iniciar la app ---
-          const savedLogo = localStorage.getItem('appLogo');
-          if (savedLogo) {
-              appLogo.src = savedLogo;
-          }
-
-          const savedPrimaryColor = localStorage.getItem('primaryColor');
-          const savedAccentColor = localStorage.getItem('accentColor');
-
-          if (savedPrimaryColor) {
-              root.style.setProperty('--primary-color', savedPrimaryColor);
-          }
-          if (savedAccentColor) {
-              root.style.setProperty('--accent-color', savedAccentColor);
-          }
-
-          // Asignar el valor actual de los colores a los selectores
-          // Se usa un timeout para asegurar que los estilos CSS se hayan aplicado
-          setTimeout(() => {
-            primaryColorPicker.value = getComputedStyle(root).getPropertyValue('--primary-color').trim();
-            accentColorPicker.value = getComputedStyle(root).getPropertyValue('--accent-color').trim();
-          }, 100);
-
-
-          // --- Event Listeners para los cambios ---
-          appLogo.addEventListener('click', () => logoInput.click());
-
-          logoInput.addEventListener('change', (event) => {
-              const file = event.target.files[0];
-              if (file) {
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                      const imageUrl = e.target.result;
-                      appLogo.src = imageUrl;
-                      localStorage.setItem('appLogo', imageUrl); // Guardar en localStorage
-                  };
-                  reader.readAsDataURL(file);
-              }
-          });
-
-          primaryColorPicker.addEventListener('input', (event) => {
-              const newColor = event.target.value;
-              root.style.setProperty('--primary-color', newColor);
-              root.style.setProperty('--primary-hover', newColor + 'e0'); // Añade un poco de transparencia para el hover
-              localStorage.setItem('primaryColor', newColor); // Guardar
-          });
-          
-          accentColorPicker.addEventListener('input', (event) => {
-              const newColor = event.target.value;
-              root.style.setProperty('--accent-color', newColor);
-              localStorage.setItem('accentColor', newColor); // Guardar
-          });
-      }
-      // ===== FIN DEL CAMBIO 3 =====
-
+      
       const savedTheme = localStorage.getItem('theme');
       const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (savedTheme) {
@@ -556,12 +483,90 @@
           applyTheme('light');
       }
 
-      // Se llama a la nueva función aquí, después de aplicar el tema.
-      setupCustomization(); 
-
       menuToggle.addEventListener('click', () => nav.classList.toggle('nav-open'));
-      
-      function showApp() {
+
+      async function guardarConfiguracionServidor(config) {
+          try {
+              await fetchAPI('/api/configuracion', { 
+                  method: 'POST', 
+                  body: JSON.stringify(config) 
+              }, true);
+          } catch (error) {
+              console.error("Error guardando configuración:", error);
+              alert("No se pudo guardar la configuración. Revisa la conexión con el servidor.");
+          }
+      }
+
+      function setupCustomizationEventListeners() {
+          const logoInput = document.getElementById('logo-input');
+          const appLogo = document.getElementById('app-logo');
+          const primaryColorPicker = document.getElementById('primary-color-picker');
+          const accentColorPicker = document.getElementById('accent-color-picker');
+          const root = document.documentElement;
+
+          appLogo.addEventListener('click', () => logoInput.click());
+
+          logoInput.addEventListener('change', (event) => {
+              const file = event.target.files[0];
+              if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                      const logo_base64 = e.target.result;
+                      appLogo.src = logo_base64;
+                      guardarConfiguracionServidor({ logo_base64 });
+                  };
+                  reader.readAsDataURL(file);
+              }
+          });
+
+          primaryColorPicker.addEventListener('input', (event) => {
+              const primary_color = event.target.value;
+              root.style.setProperty('--primary-color', primary_color);
+              guardarConfiguracionServidor({ primary_color });
+          });
+          
+          accentColorPicker.addEventListener('input', (event) => {
+              const accent_color = event.target.value;
+              root.style.setProperty('--accent-color', accent_color);
+              guardarConfiguracionServidor({ accent_color });
+          });
+      }
+
+      async function cargarYAplicarConfiguracionServidor() {
+          const appLogo = document.getElementById('app-logo');
+          const primaryColorPicker = document.getElementById('primary-color-picker');
+          const accentColorPicker = document.getElementById('accent-color-picker');
+          const root = document.documentElement;
+          
+          try {
+              const config = await fetchAPI('/api/configuracion');
+              if (!config) {
+                  appLogo.src = 'https://via.placeholder.com/180x60.png?text=Tu+Logo+Aqu%C3%AD';
+                  return;
+              }
+
+              if (config.logo_base64) {
+                  appLogo.src = config.logo_base64;
+              } else {
+                   appLogo.src = 'https://via.placeholder.com/180x60.png?text=Tu+Logo+Aqu%C3%AD';
+              }
+
+              if (config.primary_color) {
+                  root.style.setProperty('--primary-color', config.primary_color);
+                  primaryColorPicker.value = config.primary_color;
+              }
+
+              if (config.accent_color) {
+                  root.style.setProperty('--accent-color', config.accent_color);
+                  accentColorPicker.value = config.accent_color;
+              }
+          } catch (error) {
+              console.error("No se pudo cargar la configuración de apariencia desde el servidor.", error);
+              appLogo.src = 'https://via.placeholder.com/180x60.png?text=Error+Logo';
+          }
+      }
+
+      async function showApp() {
         try {
           const token = localStorage.getItem('token');
           const payload = JSON.parse(atob(token.split('.')[1]));
@@ -570,21 +575,26 @@
           const esAdmin = payload.role === 'admin';
           const permisos = payload.permissions || {};
 
-          btnGestion.style.display = (esAdmin || permisos.gestion) ? 'flex' : 'none';
-          btnClientes.style.display = (esAdmin || permisos.clientes) ? 'flex' : 'none';
-          btnHistorial.style.display = (esAdmin || permisos.historial) ? 'flex' : 'none';
-          btnPapelera.style.display = (esAdmin && (payload.username === 'ERICK' || permisos.papelera)) ? 'flex' : 'none';
-          btnUsuarios.style.display = (esAdmin && (payload.username === 'ERICK' || permisos.usuarios)) ? 'flex' : 'none';
+          btnGestion.style.display = (esAdmin || (permisos && permisos.gestion)) ? 'flex' : 'none';
+          btnClientes.style.display = (esAdmin || (permisos && permisos.clientes)) ? 'flex' : 'none';
+          btnHistorial.style.display = (esAdmin || (permisos && permisos.historial)) ? 'flex' : 'none';
+          btnPapelera.style.display = (esAdmin || (permisos && permisos.papelera)) ? 'flex' : 'none';
+          btnUsuarios.style.display = (esAdmin || (permisos && permisos.usuarios)) ? 'flex' : 'none';
           
-          document.getElementById('filtro-usuario-container').style.display = esAdmin ? 'flex' : 'none';
+          document.getElementById('filtro-usuario-container').style.display = esAdmin ? 'block' : 'none';
+
+          if (esAdmin) {
+              document.getElementById('customization-container').style.display = 'block';
+          }
 
           appWrapper.style.display = 'flex';
           loginContainer.style.display = 'none';
+
+          await cargarYAplicarConfiguracionServidor();
           initApp();
         } catch (e) { console.error("Error en showApp:", e); showLogin(); }
       }
       
-      // ... (El resto de tu código JavaScript permanece exactamente igual)
       function showLogin() {
         localStorage.removeItem('token');
         appWrapper.style.display = 'none';
@@ -613,20 +623,27 @@
 
       logoutButton.addEventListener('click', () => { showLogin(); });
       
-      async function fetchAPI(url, options = {}) {
+      async function fetchAPI(url, options = {}, suppressError = false) {
         const token = localStorage.getItem('token');
         if (!token) { showLogin(); throw new Error('No autenticado'); }
         const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...options.headers };
-        options.cache = 'no-cache'; 
         const response = await fetch(url, { ...options, headers });
         if (response.status === 204) return;
         if (response.status === 401 || response.status === 403) { showLogin(); throw new Error('Sesión expirada.'); }
-        if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.error || `Error en la petición a ${url}`); }
+        if (!response.ok) { 
+            const errorData = await response.json(); 
+            if (suppressError) {
+                console.error(`Error en la petición a ${url}:`, errorData.error);
+                return;
+            }
+            throw new Error(errorData.error || `Error en la petición a ${url}`); 
+        }
         return response.json();
       }
       
       function initApp() {
         setupEventListeners();
+        setupCustomizationEventListeners();
         setupCollapsibles(); 
         const seccionInicial = 'registrar-venta';
         mostrarSeccion(seccionInicial);
@@ -728,6 +745,7 @@
         try {
           await fetchAPI(url, { method: metodo, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
           form.reset();
+          document.getElementById(`id${tipo}`).value = '';
           await actualizarUIGlobal(tipo);
         } catch (err) { alert(`Error: ${err.message}`); }
       }
@@ -743,8 +761,8 @@
       
       async function actualizarUIGlobal(tipo) {
         const cargaFuncs = {
-          'Producto': [cargarProductos], 'Topping': [cargarToppings], 'Jarabe': [cargarJarabes],
-          'Cliente': [cargarClientes], 'Usuario': [cargarUsuarios], 'Venta': [cargarVentasHistorial]
+          'Producto': [cargarProductos, cargarOpcionesParaVenta], 'Topping': [cargarToppings, cargarOpcionesParaVenta], 'Jarabe': [cargarJarabes, cargarOpcionesParaVenta],
+          'Cliente': [cargarClientes, cargarOpcionesParaVenta, cargarClientesParaFiltro], 'Usuario': [cargarUsuarios, cargarUsuariosParaFiltro], 'Venta': [cargarVentasHistorial]
         };
         const funciones = cargaFuncs[tipo] || [];
         for (const func of funciones) { await func(); }
@@ -755,10 +773,12 @@
       async function cargarJarabes() { try { const data = await fetchAPI('/api/jarabes'); renderizarLista(data, 'Jarabe', ['nombre', 'precio']); } catch (e) { renderizarLista([], 'Jarabe', ['nombre', 'precio']); } }
       async function cargarClientes() { try { const data = await fetchAPI('/api/clientes'); renderizarLista(data, 'Cliente', ['nombre', 'telefono']); } catch (e) { renderizarLista([], 'Cliente', ['nombre', 'telefono']); } }
       async function cargarOpcionesParaVenta() { 
-          await Promise.all([ cargarDataParaSelector('/api/productos', 'ventaProducto', 'id', item => `${item.nombre} - $${item.precio.toFixed(2)}`), 
-                              cargarDataParaSelector('/api/clientes', 'ventaCliente', 'id', 'nombre'),
-                              cargarDataParaBotones('/api/toppings', 'toppings-container'),
-                              cargarDataParaBotones('/api/jarabes', 'jarabes-container') ]);
+          await Promise.all([ 
+              cargarDataParaSelector('/api/productos', 'ventaProducto', 'id', item => `${item.nombre} - $${item.precio.toFixed(2)}`), 
+              cargarDataParaSelector('/api/clientes', 'ventaCliente', 'id', 'nombre'),
+              cargarDataParaBotones('/api/toppings', 'toppings-container'),
+              cargarDataParaBotones('/api/jarabes', 'jarabes-container') 
+          ]);
           setupCollapsibles();
       }
       
@@ -791,23 +811,10 @@
                   button.dataset.nombre = item.nombre;
                   button.onclick = () => {
                       button.classList.toggle('selected');
-                      calcularTotalEnForm();
                   };
                   container.appendChild(button);
               });
           } catch(e) { /* Error manejado en fetchAPI */ }
-      }
-      
-      function calcularTotalEnForm() {
-        let totalItemFormulario = 0;
-        const productoSelect = document.getElementById('ventaProducto');
-        if (productoSelect.value) {
-            const precioProducto = parseFloat(productoSelect.options[productoSelect.selectedIndex].dataset.precio);
-            const cantidad = parseInt(document.getElementById('ventaCantidad').value) || 1;
-            totalItemFormulario += precioProducto * cantidad;
-        }
-        document.querySelectorAll('.option-btn.selected').forEach(btn => { totalItemFormulario += parseFloat(btn.dataset.precio); });
-        actualizarTotalVenta(totalItemFormulario);
       }
       
       function resetearFormularioItem() {
@@ -819,7 +826,6 @@
               c.classList.remove('active');
               c.nextElementSibling.style.maxHeight = '0px';
           });
-          calcularTotalEnForm();
       }
 
       function agregarAVenta() {
@@ -849,9 +855,7 @@
         const btnPagado = document.getElementById('btnRegistrarPagado');
         const btnPendiente = document.getElementById('btnRegistrarPendiente');
         const btnActualizar = document.getElementById('btnActualizarVenta');
-        btnPagado.disabled = true;
-        btnPendiente.disabled = true;
-        btnActualizar.disabled = true;
+        [btnPagado, btnPendiente, btnActualizar].forEach(btn => btn.disabled = true);
         
         try {
             if (ventaActual.length === 0) {
@@ -867,7 +871,7 @@
 
             const ventaData = { 
                 fecha: new Date().toISOString(), 
-                clienteId: clienteSelect.value ? parseInt(clienteSelect.value) : null,
+                clienteId: clienteSelect.value || null,
                 clienteNombre: clienteSelect.value ? clienteSelect.options[clienteSelect.selectedIndex].text : 'Público General',
                 items: ventaActual, 
                 subtotal: subtotal, 
@@ -876,10 +880,7 @@
                 metodoPago: document.getElementById('metodoPago').value,
                 estatus: estatus || ventaOriginal.estatus
             };
-            if (!idVentaEditada) {
-                ventaData.id = Date.now();
-            }
-
+            
             const url = idVentaEditada ? `/api/ventas/${idVentaEditada}` : '/api/ventas';
             const metodo = idVentaEditada ? 'PUT' : 'POST';
 
@@ -887,13 +888,12 @@
             alert(`Venta ${idVentaEditada ? 'actualizada' : 'guardada como ' + estatus} con éxito`);
             document.getElementById('ticket').textContent = generarTextoTicket(ventaGuardada);
             resetearFormularioCompleto();
+            await cargarVentasHistorial();
         } catch (e) {
             alert(`Error: ${e.message}`);
         } finally {
             procesandoVenta = false;
-            btnPagado.disabled = false;
-            btnPendiente.disabled = false;
-            btnActualizar.disabled = false;
+            [btnPagado, btnPendiente, btnActualizar].forEach(btn => btn.disabled = false);
         }
       }
 
@@ -903,7 +903,6 @@
         ventaActual.forEach((item, index) => {
           const li = document.createElement('li');
           const itemInfo = document.createElement('div');
-          itemInfo.className = 'item-info';
           itemInfo.innerHTML = `<span>${item.productoNombre} x${item.cantidad} - $${item.total.toFixed(2)}</span>`;
           const btnEliminar = document.createElement('button');
           btnEliminar.textContent = 'X';
@@ -919,7 +918,6 @@
           li.appendChild(itemInfo);
           if (item.nota) {
             const notaDiv = document.createElement('div');
-            notaDiv.className = 'item-nota';
             notaDiv.textContent = `Nota: ${item.nota}`;
             li.appendChild(notaDiv);
           }
@@ -928,10 +926,10 @@
         actualizarTotalVenta();
       }
 
-      function actualizarTotalVenta(totalFormulario = 0) {
+      function actualizarTotalVenta() {
         const subtotalVenta = ventaActual.reduce((acc, item) => acc + item.total, 0);
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
-        const totalFinal = subtotalVenta + totalFormulario + costoDomicilio;
+        const totalFinal = subtotalVenta + costoDomicilio;
         document.getElementById('totalVenta').textContent = `Total Venta: $${totalFinal.toFixed(2)}`;
       }
 
@@ -980,8 +978,7 @@
       function limpiarFormularioUsuario() {
           document.getElementById('formUsuario').reset();
           document.getElementById('idUsuario').value = '';
-          const permisosContainer = document.getElementById('permisos-container');
-          permisosContainer.style.display = 'block';
+          document.getElementById('permisos-container').style.display = 'block';
           document.getElementById('passwordUsuario').setAttribute('placeholder', 'Contraseña');
           document.getElementById('formUsuario').querySelector('button[type="submit"]').textContent = 'Crear Usuario';
       }
@@ -1169,7 +1166,7 @@
             }
 
             tr.innerHTML = `
-              <td>${venta.id}</td>
+              <td>${venta.id.slice(-6)}</td>
               <td>${venta.vendedorUsername}</td>
               <td>${venta.clienteNombre}</td>
               <td>$${venta.total.toFixed(2)}</td>
@@ -1308,7 +1305,7 @@
           const clave = new Date(venta.fecha).toLocaleDateString('es-ES', formatoFecha);
           ventasPorDia[clave] = (ventasPorDia[clave] || 0) + venta.total;
         });
-        actualizarGraficaBarras(Object.keys(ventasPorDia), Object.values(ventasPorDia));
+        actualizarGraficaBarras(Object.keys(ventasPorDia).reverse(), Object.values(ventasPorDia).reverse());
         let productosVendidos = {};
         ventas.forEach(venta => {
             venta.items.forEach(item => {
@@ -1345,8 +1342,8 @@
           ventas.forEach(venta => {
               venta.items.forEach(item => {
                   resumenProductos[item.productoNombre] = (resumenProductos[item.productoNombre] || 0) + item.cantidad;
-                  item.toppings.forEach(t => { resumenToppings[t.nombre] = (resumenToppings[t.nombre] || 0) + 1; });
-                  item.jarabes.forEach(j => { resumenJarabes[j.nombre] = (resumenJarabes[j.nombre] || 0) + 1; });
+                  if (item.toppings) item.toppings.forEach(t => { resumenToppings[t.nombre] = (resumenToppings[t.nombre] || 0) + 1; });
+                  if (item.jarabes) item.jarabes.forEach(j => { resumenJarabes[j.nombre] = (resumenJarabes[j.nombre] || 0) + 1; });
               });
           });
           let textoResumen = "--- RESUMEN DE PRODUCTOS ---\n" + Object.entries(resumenProductos).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
@@ -1387,8 +1384,8 @@
             mostrarSeccion(b.dataset.seccion);
         }));
         mainContent.addEventListener('click', (e) => {
-          if (nav.classList.contains('nav-open')) {
-            if (!e.target.closest('#menu-toggle')) {
+          if (nav.classList.contains('nav-open') && window.innerWidth < 992) {
+            if (!e.target.closest('.sidebar') && !e.target.closest('#menu-toggle')) {
               nav.classList.remove('nav-open');
             }
           }
@@ -1409,16 +1406,14 @@
         });
         document.getElementById('btnLimpiarFormUsuario').addEventListener('click', limpiarFormularioUsuario);
         document.getElementById('btnAgregarVenta').addEventListener('click', agregarAVenta);
-        document.getElementById('ventaProducto').addEventListener('change', calcularTotalEnForm);
-        document.getElementById('ventaCantidad').addEventListener('input', calcularTotalEnForm);
         document.getElementById('checkDomicilio').addEventListener('change', (e) => {
           const costoInput = document.getElementById('costoDomicilio');
           costoInput.style.display = e.target.checked ? 'inline-block' : 'none';
           if (e.target.checked) { costoInput.value = COSTO_DOMICILIO_PREDET.toFixed(2); }
           else { costoInput.value = ''; }
-          calcularTotalEnForm();
+          actualizarTotalVenta();
         });
-        document.getElementById('costoDomicilio').addEventListener('input', calcularTotalEnForm);
+        document.getElementById('costoDomicilio').addEventListener('input', actualizarTotalVenta);
         document.querySelectorAll('#botones-periodo button').forEach(button => {
           button.addEventListener('click', () => {
             document.querySelector('#botones-periodo button.active').classList.remove('active');

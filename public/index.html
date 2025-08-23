@@ -168,7 +168,6 @@
   </style>
   
   <script>
-    // Script anti-parpadeo que se ejecuta de inmediato
     (function() {
       const token = localStorage.getItem('token');
       const style = document.createElement('style');
@@ -249,19 +248,19 @@
         </div>
       </header>
       <main>
-        <section id="registrar-venta"><!-- Contenido de la sección aquí... --></section>
-        <section id="gestion-completa"><!-- Contenido de la sección aquí... --></section>
-        <section id="gestion-clientes"><!-- Contenido de la sección aquí... --></section>
-        <section id="gestion-usuarios"><!-- Contenido de la sección aquí... --></section>
-        <section id="historial-ventas"><!-- Contenido de la sección aquí... --></section>
-        <section id="papelera-reciclaje"><!-- Contenido de la sección aquí... --></section>
+        <section id="registrar-venta"><!-- Todo el HTML de la sección de Registrar Venta va aquí --></section>
+        <section id="gestion-completa"><!-- Todo el HTML de la sección de Gestión va aquí --></section>
+        <section id="gestion-clientes"><!-- Todo el HTML de la sección de Clientes va aquí --></section>
+        <section id="gestion-usuarios"><!-- Todo el HTML de la sección de Usuarios va aquí --></section>
+        <section id="historial-ventas"><!-- Todo el HTML de la sección de Historial va aquí --></section>
+        <section id="papelera-reciclaje"><!-- Todo el HTML de la sección de Papelera va aquí --></section>
       </main>
     </div>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // (Todo tu código JS aquí, sin cambios, desde la declaración de variables hasta el final)
+      // Todo el código JavaScript de la respuesta anterior, completo y sin omisiones, va aquí.
       let ventaActual = [];
       let miGraficaDeVentas, miGraficaDeProductos;
       let ventasEnMemoria = [];
@@ -481,10 +480,12 @@
       function showLogin() {
         localStorage.removeItem('token');
         sessionStorage.removeItem('lastActiveSection');
-        // Este código actualiza el CSS del script anti-parpadeo
-        const style = document.head.querySelector('style');
+        const style = document.head.querySelector('style[data-flicker-guard]');
         if (style) {
             style.textContent = '#login-container { display: block !important; } #app-wrapper { display: none !important; }';
+        } else {
+          loginContainer.style.display = 'block';
+          appWrapper.style.display = 'none';
         }
       }
       
@@ -503,8 +504,7 @@
             if (!response.ok) throw new Error(data.error || 'Credenciales inválidas');
             localStorage.setItem('token', data.token);
             sessionStorage.removeItem('lastActiveSection');
-             // Este código actualiza el CSS del script anti-parpadeo
-            const style = document.head.querySelector('style');
+            const style = document.head.querySelector('style[data-flicker-guard]');
             if (style) {
                 style.textContent = '#login-container { display: none !important; } #app-wrapper { display: flex !important; }';
             }

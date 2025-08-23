@@ -1,4 +1,4 @@
-// server.js - Versión con Menú para Clientes y Sistema de Pedidos
+// server.js - Versión final con "catch-all" corregido
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -63,14 +63,12 @@ const AppConfig = mongoose.model('AppConfig', createSchema({
     primary_color: { type: String, default: '#4f46e5' },
     accent_color: { type: String, default: '#FF85A2' }
 }));
-
-// ===== NUEVO MODELO: PEDIDOS DE CLIENTES =====
 const Pedido = mongoose.model('Pedido', createSchema({
     nombreCliente: { type: String, required: true },
     telefonoCliente: { type: String, required: true },
     items: Array,
     total: Number,
-    estatus: { type: String, default: 'recibido' } // Ej: recibido, en_preparacion, listo, entregado
+    estatus: { type: String, default: 'recibido' }
 }));
 
 // --- MIDDLEWARES DE SEGURIDAD ---
@@ -138,20 +136,17 @@ app.get('/api/configuracion', async (req, res) => {
     }
 });
 
-// ===== NUEVAS RUTAS PÚBLICAS PARA EL MENÚ DEL CLIENTE =====
 const findActive = { $or: [{ status: 'activo' }, { status: { $exists: false } }] };
 app.get('/api/menu/productos', async (req, res) => res.json(await Producto.find(findActive)));
 app.get('/api/menu/toppings', async (req, res) => res.json(await Topping.find(findActive)));
 app.get('/api/menu/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
 
-// Ruta pública para que los clientes envíen sus pedidos
 app.post('/api/pedidos', async (req, res) => {
     try {
         const { nombreCliente, telefonoCliente, items, total } = req.body;
         if (!nombreCliente || !telefonoCliente || !items || items.length === 0) {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
-        // Aquí podrías añadir una validación de precios del lado del servidor por seguridad
         const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, items, total });
         res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
     } catch (error) {
@@ -174,7 +169,6 @@ app.post('/api/configuracion', esAdmin, async (req, res) => {
     }
 });
 
-// ===== NUEVAS RUTAS PRIVADAS PARA GESTIONAR PEDIDOS =====
 const pedidosRouter = express.Router();
 pedidosRouter.get('/', async (req, res) => res.json(await Pedido.find().sort({ createdAt: -1 })));
 pedidosRouter.put('/:id', async (req, res) => {
@@ -188,7 +182,6 @@ pedidosRouter.delete('/:id', async (req, res) => {
     res.status(204).send();
 });
 app.use('/api/pedidos', esAdmin, pedidosRouter);
-
 
 const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
@@ -264,9 +257,13 @@ usuariosRouter.delete('/:id', tienePermiso('usuarios'), async (req, res) => {
 usuariosRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndDelete(req.params.id); res.status(204).send(); });
 app.use('/api/usuarios', esAdmin, usuariosRouter);
 
-// --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
+// ===== CORRECCIÓN: LA RUTA "CATCH-ALL" DEBE IR AL FINAL =====
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    if (req.originalUrl.startsWith('/menu')) {
+        res.sendFile(path.join(__dirname, 'public', 'menu.html'));
+    } else {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    }
 });
 
 app.listen(PORT, () => console.log(`Servidor escuchando en el puerto ${PORT}`));

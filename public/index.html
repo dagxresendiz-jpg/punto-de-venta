@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- ===== NUEVA LIBRERÍA PARA TABLAS EN PDF ===== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -66,10 +68,12 @@
     section.active { display: block; animation: fadeIn 0.4s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .card { background-color: var(--card-background); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow); }
-    .card-header { margin-bottom: 1.5rem; }
-    .card-header h2 { font-size: 1.25rem; font-weight: 600; border: none; padding: 0; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .card-header h2, .card-header h3 { font-size: 1.25rem; font-weight: 600; border: none; padding: 0; margin: 0; }
     .card h3 { margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; font-weight: 600; }
     .card h3:first-child { margin-top: 0; }
+    .export-buttons button { padding: 0.4rem; font-size: 0.8em; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
+    .export-buttons button svg { width: 18px; height: 18px; }
     form label { display: block; margin-bottom: 0.5rem; font-weight: 500; text-align: left; color: var(--text-color-dark); }
     form input, form select { background-color: var(--form-control-bg); color: var(--text-color-dark); display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s, border-color 0.2s; }
     form input::placeholder { color: var(--text-color-light); opacity: 0.8; }
@@ -378,13 +382,36 @@
                 <div class="chart-container"><canvas id="graficaProductos"></canvas></div>
             </div>
             <div class="card" id="resumen-container">
-                <h3>Resumen de Ventas del Período</h3>
+                <div class="card-header">
+                    <h3>Resumen de Ventas del Período</h3>
+                </div>
                 <div id="totalPeriodoHistorial"></div>
                 <pre id="resumen-ventas"></pre>
-                <button id="btnGenerarReporte">Generar Reporte PDF</button>
+                <!-- ===== NUEVOS BOTONES DE EXPORTACIÓN ===== -->
+                <div style="display:flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+                    <button id="btnResumenWhatsapp" class="btn-secondary" style="flex-grow: 1;">Enviar Resumen por WhatsApp</button>
+                    <button id="btnResumenPDF" class="btn-secondary" style="flex-grow: 1;">Generar PDF del Resumen</button>
+                    <button id="btnGenerarReporte" style="flex-grow: 1;">Generar Reporte Completo</button>
+                </div>
             </div>
             <div class="card full-width-card">
-                <h3>Detalle de Ventas</h3>
+                <div class="card-header">
+                    <h3>Detalle de Ventas</h3>
+                    <!-- ===== NUEVOS BOTONES DE EXPORTACIÓN ===== -->
+                    <div class="export-buttons" style="display:flex; gap: 0.5rem;">
+                        <button id="btnDetalleWhatsapp" class="btn-secondary" title="Enviar Detalle por WhatsApp">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+                            </svg>
+                        </button>
+                        <button id="btnDetallePDF" class="btn-secondary" title="Generar PDF del Detalle">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                                <path d="M4.603 14.087a.8.8 0 0 1-1.128.001l-2.023-1.91a.5.5 0 0 1 .757-.793l2.023 1.91a.3.3 0 0 0 .424 0l4.869-4.633a.5.5 0 0 1 .645.768l-4.869 4.633a.8.8 0 0 1-.569.241z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
                 <div style="overflow-x:auto;">
                     <table>
                         <thead><tr>
@@ -441,6 +468,7 @@
       let ventaActual = [];
       let miGraficaDeVentas, miGraficaDeProductos;
       let ventasEnMemoria = [];
+      let ventasFiltradasGlobal = []; // Variable global para los datos filtrados
       let procesandoVenta = false;
       const COSTO_DOMICILIO_PREDET = 30.00;
       
@@ -582,14 +610,14 @@
             const permisos = payload.permissions || {};
 
             const mapaPermisos = {
-                'gestion': document.getElementById('btn-gestion'),
-                'clientes': document.getElementById('btn-clientes'),
-                'usuarios': document.getElementById('btn-usuarios'),
-                'historial': document.getElementById('btn-historial'),
-                'papelera': document.getElementById('btn-papelera')
+                'gestion': document.querySelector('[data-seccion="gestion-completa"]'),
+                'clientes': document.querySelector('[data-seccion="gestion-clientes"]'),
+                'usuarios': document.querySelector('[data-seccion="gestion-usuarios"]'),
+                'historial': document.querySelector('[data-seccion="historial-ventas"]'),
+                'papelera': document.querySelector('[data-seccion="papelera-reciclaje"]')
             };
             
-            let primeraSeccionVisible = 'registrar-venta'; // Por defecto para todos
+            let primeraSeccionVisible = 'registrar-venta';
             let algunaSeccionVisible = true;
 
             for (const permiso in mapaPermisos) {
@@ -605,7 +633,7 @@
             if (!esAdmin) {
                 const ordenDeSecciones = [
                     'registrar-venta', 'gestion-completa', 'gestion-clientes', 
-                    'historial-ventas', 'papelera-reciclaje', 'gestion-usuarios'
+                    'historial-ventas', 'gestion-usuarios', 'papelera-reciclaje'
                 ];
                 const mapaSeccionesAPermisos = {
                     'gestion-completa': 'gestion',
@@ -690,9 +718,8 @@
         if (response.status === 401) { showLogin(); throw new Error('Sesión expirada.'); }
         if (!response.ok) { 
             const errorData = await response.json(); 
-            if (response.status === 403) { // Permiso denegado
+            if (response.status === 403) {
               console.error(`Acceso denegado a ${url}:`, errorData.error);
-              // No hacemos logout, simplemente no se cargará el contenido
             }
             if (suppressError) {
                 console.error(`Error en la petición a ${url}:`, errorData.error);
@@ -1202,10 +1229,9 @@
           let ventasFiltradas = ventasEnMemoria.filter(venta => new Date(venta.fecha) >= fechaInicio);
           if (clienteId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.clienteId == clienteId); }
           if (usuarioId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.vendedorId == usuarioId); }
+          if (estatus) { ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus); }
           
-          if (estatus) {
-              ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus);
-          }
+          ventasFiltradasGlobal = ventasFiltradas; // Guardar para exportación
 
           const tbody = document.getElementById('tablaVentasBody');
           tbody.innerHTML = '';
@@ -1436,7 +1462,73 @@
           pdf.setFont('helvetica', 'bold');
           pdf.setFontSize(14);
           pdf.text(totalTexto, 105, 280, { align: 'center' });
-          pdf.save("reporte-ventas.pdf");
+          pdf.save("reporte-ventas-completo.pdf");
+      }
+
+      // ===== NUEVAS FUNCIONES DE EXPORTACIÓN =====
+      function enviarResumenWhatsapp() {
+          const textoResumen = document.getElementById('resumen-ventas').textContent;
+          const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
+          if (!textoResumen.trim()) { alert('No hay resumen para enviar.'); return; }
+          const mensaje = `*Resumen de Ventas*\n\n${textoResumen}\n\n${totalTexto}`;
+          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`, '_blank');
+      }
+
+      function generarResumenPDFSimple() {
+          const textoResumen = document.getElementById('resumen-ventas').textContent;
+          const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
+          if (!textoResumen.trim()) { alert('No hay resumen para generar.'); return; }
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF();
+          pdf.setFont('courier', 'normal');
+          pdf.setFontSize(12);
+          pdf.text("Resumen de Ventas del Período", 10, 10);
+          pdf.text(textoResumen, 10, 20);
+          const yPosFinal = pdf.splitTextToSize(textoResumen, 180).length * 5 + 30; // Calcular posición
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(totalTexto, 10, yPosFinal);
+          pdf.save("resumen-ventas.pdf");
+      }
+
+      function enviarDetalleWhatsapp() {
+          if (ventasFiltradasGlobal.length === 0) { alert('No hay detalles de ventas para enviar.'); return; }
+          let mensaje = '*Detalle de Ventas del Período*\n\n';
+          ventasFiltradasGlobal.forEach(v => {
+              mensaje += `ID: ${v.id.slice(-6)}, Cliente: ${v.clienteNombre}, Total: $${v.total.toFixed(2)}, Estatus: ${v.estatus}\n`;
+          });
+          const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
+          mensaje += `\n${totalTexto}`;
+          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`, '_blank');
+      }
+
+      function generarDetallePDF() {
+          if (ventasFiltradasGlobal.length === 0) { alert('No hay detalles de ventas para generar el PDF.'); return; }
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF();
+          const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
+
+          const head = [['ID Venta', 'Cliente', 'Total', 'Estatus', 'Fecha']];
+          const body = ventasFiltradasGlobal.map(v => [
+              v.id.slice(-6),
+              v.clienteNombre,
+              `$${v.total.toFixed(2)}`,
+              v.estatus || 'N/A',
+              new Date(v.fecha).toLocaleDateString()
+          ]);
+
+          pdf.setFontSize(18);
+          pdf.text("Detalle de Ventas del Período", 14, 22);
+          pdf.autoTable({
+              head: head,
+              body: body,
+              startY: 30,
+              theme: 'grid'
+          });
+          const finalY = pdf.lastAutoTable.finalY || 50;
+          pdf.setFontSize(12);
+          pdf.text(totalTexto, 14, finalY + 10);
+
+          pdf.save('detalle-ventas.pdf');
       }
 
       function setupEventListeners() {
@@ -1516,6 +1608,12 @@
                 localStorage.setItem('theme', 'light');
             }
         });
+
+        // Event Listeners para los nuevos botones de exportación
+        document.getElementById('btnResumenWhatsapp').addEventListener('click', enviarResumenWhatsapp);
+        document.getElementById('btnResumenPDF').addEventListener('click', generarResumenPDFSimple);
+        document.getElementById('btnDetalleWhatsapp').addEventListener('click', enviarDetalleWhatsapp);
+        document.getElementById('btnDetallePDF').addEventListener('click', generarDetallePDF);
       }
 
       // INICIO DE LA APLICACIÓN

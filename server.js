@@ -1,4 +1,5 @@
-// server.js - Versión Final con Rutas Corregidas para Login y API
+
+// server.js - Versión Final con Login de Administrador Corregido
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -14,9 +15,6 @@ const MONGO_URI = process.env.MONGO_URI;
 
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
-
-// --- SERVIR ARCHIVOS ESTÁTICOS ---
-// Sirve los archivos de la carpeta 'public' (index.html, menu.html, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
 
 
@@ -25,7 +23,7 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('Conexión a MongoDB Atlas exitosa.'))
   .catch(err => console.error('Error al conectar a MongoDB:', err));
 
-// --- MODELOS DE DATOS (Sin cambios) ---
+// --- MODELOS DE DATOS ---
 const createSchema = (definition) => new mongoose.Schema(definition, { 
     timestamps: true, 
     versionKey: false,
@@ -36,6 +34,7 @@ const createSchema = (definition) => new mongoose.Schema(definition, {
         }
     }
 });
+
 const commonFields = { status: { type: String, default: 'activo' } };
 const userPermissionsSchema = createSchema({
     gestion: { type: Boolean, default: false },
@@ -44,6 +43,7 @@ const userPermissionsSchema = createSchema({
     papelera: { type: Boolean, default: false },
     usuarios: { type: Boolean, default: false }
 });
+
 const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number, ...commonFields }));
@@ -73,8 +73,7 @@ const Pedido = mongoose.model('Pedido', createSchema({
     estatus: { type: String, default: 'recibido' }
 }));
 
-
-// --- MIDDLEWARES DE SEGURIDAD (Sin cambios) ---
+// --- MIDDLEWARES DE SEGURIDAD ---
 function verificarToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -102,29 +101,39 @@ const tienePermiso = (seccion) => async (req, res, next) => {
     }
 };
 
-// ==========================================================
-// ===== ORGANIZACIÓN DE RUTAS API (ESTA ES LA CORRECCIÓN) =====
-// ==========================================================
-// Todas las rutas de la API ahora están agrupadas bajo '/api' o '/auth'
+// --- RUTAS DE LA API ---
 
-// --- RUTAS DE AUTENTICACIÓN Y PÚBLICAS DE LA API ---
-const publicApiRouter = express.Router();
+const apiRouter = express.Router();
+const authRouter = express.Router();
+
 const findActive = { $or: [{ status: 'activo' }, { status: { $exists: false } }] };
 
-publicApiRouter.post('/login', async (req, res) => {
+// --- RUTAS PÚBLICAS (NO REQUIEREN TOKEN) ---
+
+// Ruta de Autenticación
+authRouter.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
+        // ===== CORRECCIÓN CLAVE AQUÍ =====
+        // Usamos la condición 'findActive' para asegurar que tanto usuarios nuevos (con status='activo')
+        // como el usuario administrador original (sin campo 'status') puedan iniciar sesión.
         const usuario = await Usuario.findOne({ username, ...findActive });
+        
         if (!usuario || !(await bcrypt.compare(password, usuario.password))) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
+        
         const token = jwt.sign({ id: usuario._id, username: usuario.username, role: usuario.role, permissions: usuario.permissions }, JWT_SECRET, { expiresIn: '8h' });
         res.json({ message: 'Login exitoso', token });
-    } catch (error) { res.status(500).send('Error en el servidor'); }
+    } catch (error) { 
+        console.error("Error en login:", error);
+        res.status(500).send('Error en el servidor'); 
+    }
 });
-app.use('/auth', publicApiRouter);
+app.use('/auth', authRouter);
 
-const apiRouter = express.Router();
+
+// Rutas Públicas de la API (Menú, Configuración)
 apiRouter.get('/configuracion', async (req, res) => {
     try {
         let config = await AppConfig.findOne();
@@ -138,7 +147,7 @@ apiRouter.get('/menu/jarabes', async (req, res) => res.json(await Jarabe.find(fi
 apiRouter.post('/pedidos', async (req, res) => {
     try {
         const { nombreCliente, telefonoCliente, items, total } = req.body;
-        if (!nombreCliente || !telefonoCliente || !items || items.length === 0) {
+        if (!nombreCliente || !telefonoCliente || !items || !items.length) {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
         const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, items, total });
@@ -148,8 +157,8 @@ apiRouter.post('/pedidos', async (req, res) => {
     }
 });
 
-// --- RUTAS PRIVADAS DE LA API ---
-apiRouter.use(verificarToken); // <-- A partir de aquí, todas las rutas en apiRouter requieren token
+// --- RUTAS PRIVADAS (REQUIEREN TOKEN) ---
+apiRouter.use(verificarToken);
 
 apiRouter.post('/configuracion', esAdmin, async (req, res) => {
     const updatedConfig = await AppConfig.findOneAndUpdate({}, req.body, { new: true, upsert: true });
@@ -179,12 +188,52 @@ apiRouter.use('/jarabes', crearRutasCrud(Jarabe, 'Jarabe', 'gestion'));
 apiRouter.use('/clientes', crearRutasCrud(Cliente, 'Cliente', 'clientes'));
 
 const ventasRouter = express.Router();
-ventasRouter.post('/', (req, res) => { /* ... */ }); // Sin cambios
+ventasRouter.post('/', (req, res, next) => {
+    let nuevaVentaData = req.body;
+    nuevaVentaData.vendedorId = req.user.id;
+    nuevaVentaData.vendedorUsername = req.user.username;
+    Venta.create(nuevaVentaData).then(venta => res.status(201).json(venta)).catch(next);
+});
+ventasRouter.get('/', tienePermiso('historial'), async (req, res) => res.json(await Venta.find(findActive)));
+ventasRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
+ventasRouter.put('/:id', tienePermiso('historial'), async (req, res) => res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true })));
+ventasRouter.delete('/:id', tienePermiso('historial'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
+ventasRouter.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Venta restaurada' }); });
+ventasRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 apiRouter.use('/ventas', ventasRouter);
 
 const usuariosRouter = express.Router();
 usuariosRouter.get('/', tienePermiso('usuarios'), async (req, res) => res.json(await Usuario.find(findActive).select('-password')));
-usuariosRouter.post('/', tienePermiso('usuarios'), async (req, res) => { /* ... */ }); // Sin cambios
+usuariosRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
+usuariosRouter.post('/', tienePermiso('usuarios'), async (req, res) => {
+    const { username, password, role, permissions } = req.body;
+    if (!username || !password || !role) return res.status(400).json({ error: 'Usuario, contraseña y rol son requeridos.' });
+    if (await Usuario.findOne({ username })) return res.status(409).json({ error: 'El nombre de usuario ya existe.' });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const nuevoUsuario = await Usuario.create({ username, password: hashedPassword, role, permissions: permissions || {} });
+    const userResponse = nuevoUsuario.toJSON();
+    delete userResponse.password;
+    res.status(201).json(userResponse);
+});
+usuariosRouter.put('/:id', tienePermiso('usuarios'), async (req, res) => {
+    const primerAdmin = await Usuario.findOne({}).sort({ createdAt: 1 });
+    if (req.params.id === primerAdmin.id.toString()) return res.status(403).json({ error: 'No se puede modificar al superusuario.' });
+    const { username, role, permissions, password } = req.body;
+    let datosActualizar = { username, role, permissions };
+    if (password) { datosActualizar.password = await bcrypt.hash(password, 10); }
+    const usuarioActualizado = await Usuario.findByIdAndUpdate(req.params.id, datosActualizar, { new: true }).select('-password');
+    if (!usuarioActualizado) return res.status(404).json({error: 'Usuario no encontrado'});
+    res.json(usuarioActualizado);
+});
+usuariosRouter.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Usuario restaurado' }); });
+usuariosRouter.delete('/:id', tienePermiso('usuarios'), async (req, res) => {
+    const primerAdmin = await Usuario.findOne({}).sort({ createdAt: 1 });
+    if (req.params.id === primerAdmin.id.toString()) return res.status(403).json({ error: 'No se puede eliminar al superusuario.' });
+    if (req.params.id === req.user.id) return res.status(403).json({ error: 'No puedes eliminarte a ti mismo.' });
+    await Usuario.findByIdAndUpdate(req.params.id, { status: 'eliminado' });
+    res.status(204).send();
+});
+usuariosRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndDelete(req.params.id); res.status(204).send(); });
 apiRouter.use('/usuarios', esAdmin, usuariosRouter);
 
 // Usar el router principal de la API
@@ -192,9 +241,12 @@ app.use('/api', apiRouter);
 
 
 // --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
-// ESTA RUTA DEBE IR SIEMPRE AL FINAL
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    if (req.originalUrl.startsWith('/menu')) {
+        res.sendFile(path.join(__dirname, 'public', 'menu.html'));
+    } else {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    }
 });
 
 app.listen(PORT, () => console.log(`Servidor escuchando en el puerto ${PORT}`));

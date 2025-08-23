@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú - Dulces Amigas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5; 
+            --accent-color: #FF85A2;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-color-dark: #1e293b;
+            --text-color-light: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color-dark); padding: 1rem; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header img { max-width: 200px; max-height: 80px; }
+        .card { background-color: var(--card-background); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow); }
+        h2 { font-size: 1.5rem; color: var(--accent-color); margin-bottom: 1rem; border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem;}
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .menu-item { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .menu-item:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+        .menu-item.disabled { background-color: #f1f5f9; color: #9ca3af; cursor: not-allowed; }
+        .menu-item h4 { margin-bottom: 0.5rem; font-size: 1.1rem; }
+        .menu-item p { color: var(--text-color-light); }
+        .cart h3 { font-size: 1.25rem; }
+        #cart-items { list-style: none; padding: 0; margin-bottom: 1rem; }
+        #cart-items li { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
+        #cart-total { text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--primary-color); margin-bottom: 1.5rem; }
+        form label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        form input { display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; }
+        form button { width: 100%; padding: 0.75rem; border-radius: 8px; border: none; background-color: var(--accent-color); color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+        form button:disabled { background-color: #9ca3af; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img id="menu-logo" src="https://via.placeholder.com/200x80.png?text=Cargando..." alt="Logo del Negocio">
+            <h1>Nuestro Menú</h1>
+        </div>
+
+        <div class="card">
+            <h2>Productos</h2>
+            <div id="productos-container" class="menu-grid"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Elige tus Toppings (Opcional)</h2>
+            <div id="toppings-container" class="menu-grid"></div>
+        </div>
+
+        <div class="card">
+            <h2>Elige tus Jarabes (Opcional)</h2>
+            <div id="jarabes-container" class="menu-grid"></div>
+        </div>
+        
+        <div class="card cart">
+            <h3>Tu Pedido</h3>
+            <ul id="cart-items"></ul>
+            <p id="cart-total">Total: $0.00</p>
+            <form id="order-form">
+                <label for="nombreCliente">Tu Nombre:</label>
+                <input type="text" id="nombreCliente" required>
+                <label for="telefonoCliente">Tu Teléfono (WhatsApp):</label>
+                <input type="tel" id="telefonoCliente" required>
+                <button type="submit" id="submit-order-btn">Realizar Pedido</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let carrito = [];
+            let productos = [], toppings = [], jarabes = [];
+
+            const productosContainer = document.getElementById('productos-container');
+            const toppingsContainer = document.getElementById('toppings-container');
+            const jarabesContainer = document.getElementById('jarabes-container');
+            const cartItemsEl = document.getElementById('cart-items');
+            const cartTotalEl = document.getElementById('cart-total');
+            const orderForm = document.getElementById('order-form');
+            const submitBtn = document.getElementById('submit-order-btn');
+
+            async function fetchData() {
+                try {
+                    const [productosRes, toppingsRes, jarabesRes, configRes] = await Promise.all([
+                        fetch('/api/menu/productos'),
+                        fetch('/api/menu/toppings'),
+                        fetch('/api/menu/jarabes'),
+                        fetch('/api/configuracion')
+                    ]);
+                    productos = await productosRes.json();
+                    toppings = await toppingsRes.json();
+                    jarabes = await jarabesRes.json();
+                    const config = await configRes.json();
+                    
+                    if (config.logo_base64) {
+                        document.getElementById('menu-logo').src = config.logo_base64;
+                    }
+
+                    renderMenu();
+                } catch (error) {
+                    console.error('Error al cargar el menú:', error);
+                    productosContainer.innerHTML = '<p>No se pudo cargar el menú. Intenta de nuevo más tarde.</p>';
+                }
+            }
+
+            function renderMenu() {
+                productosContainer.innerHTML = productos.map(p => `
+                    <div class="menu-item" data-id="${p.id}" data-tipo="producto">
+                        <h4>${p.nombre}</h4>
+                        <p>$${p.precio.toFixed(2)}</p>
+                    </div>`).join('');
+
+                toppingsContainer.innerHTML = toppings.map(t => `
+                    <div class="menu-item disabled" data-id="${t.id}" data-tipo="topping">
+                        <h4>${t.nombre}</h4>
+                        <p>$${t.precio.toFixed(2)}</p>
+                    </div>`).join('');
+
+                jarabesContainer.innerHTML = jarabes.map(j => `
+                    <div class="menu-item disabled" data-id="${j.id}" data-tipo="jarabe">
+                        <h4>${j.nombre}</h4>
+                        <p>$${j.precio.toFixed(2)}</p>
+                    </div>`).join('');
+                
+                addEventListenersToItems();
+            }
+
+            function addEventListenersToItems() {
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        if (item.classList.contains('disabled')) return;
+                        
+                        const id = item.dataset.id;
+                        const tipo = item.dataset.tipo;
+                        let itemData;
+                        
+                        if (tipo === 'producto') itemData = productos.find(p => p.id === id);
+                        if (tipo === 'topping') itemData = toppings.find(t => t.id === id);
+                        if (tipo === 'jarabe') itemData = jarabes.find(j => j.id === id);
+
+                        if (itemData) {
+                            carrito.push({ ...itemData, tipo });
+                            updateCart();
+                        }
+                    });
+                });
+            }
+
+            function updateCart() {
+                cartItemsEl.innerHTML = '';
+                let total = 0;
+
+                const productoBase = carrito.find(item => item.tipo === 'producto');
+
+                if (productoBase) {
+                    document.querySelectorAll('.menu-item[data-tipo="producto"]').forEach(el => el.classList.add('disabled'));
+                    document.querySelectorAll('.menu-item[data-tipo="topping"], .menu-item[data-tipo="jarabe"]').forEach(el => el.classList.remove('disabled'));
+                } else {
+                    document.querySelectorAll('.menu-item[data-tipo="producto"]').forEach(el => el.classList.remove('disabled'));
+                    document.querySelectorAll('.menu-item[data-tipo="topping"], .menu-item[data-tipo="jarabe"]').forEach(el => el.classList.add('disabled'));
+                }
+
+                carrito.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${item.nombre}</span><span>$${item.precio.toFixed(2)}</span>`;
+                    cartItemsEl.appendChild(li);
+                    total += item.precio;
+                });
+
+                cartTotalEl.textContent = `Total: $${total.toFixed(2)}`;
+
+                if (carrito.length > 0) {
+                    const clearBtn = document.createElement('button');
+                    clearBtn.textContent = 'Limpiar pedido';
+                    clearBtn.style.backgroundColor = '#ef4444';
+                    clearBtn.style.marginTop = '1rem';
+                    clearBtn.onclick = () => {
+                        carrito = [];
+                        updateCart();
+                    };
+                    if (!document.querySelector('.cart button[style*="background-color: #ef4444"]')) {
+                        cartItemsEl.parentNode.insertBefore(clearBtn, orderForm);
+                    }
+                } else {
+                    const clearBtn = document.querySelector('.cart button[style*="background-color: #ef4444"]');
+                    if(clearBtn) clearBtn.remove();
+                }
+            }
+            
+            orderForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (carrito.length === 0 || !carrito.some(item => item.tipo === 'producto')) {
+                    alert('Debes seleccionar al menos un producto principal.');
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Enviando...';
+
+                const orderData = {
+                    nombreCliente: document.getElementById('nombreCliente').value,
+                    telefonoCliente: document.getElementById('telefonoCliente').value,
+                    items: carrito.map(i => ({ nombre: i.nombre, precio: i.precio })),
+                    total: carrito.reduce((sum, item) => sum + item.precio, 0)
+                };
+
+                try {
+                    const response = await fetch('/api/pedidos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error);
+                    
+                    alert('¡Tu pedido ha sido recibido! Nos pondremos en contacto contigo pronto.');
+                    carrito = [];
+                    orderForm.reset();
+                    updateCart();
+
+                } catch (error) {
+                    alert('Hubo un error al enviar tu pedido: ' + error.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Realizar Pedido';
+                }
+            });
+
+            fetchData();
+        });
+    </script>
+</body>
+</html>

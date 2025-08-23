@@ -1,4 +1,4 @@
-// server.js - Versión con Permisos Corregidos y Robustos
+// server.js - Versión con Menú para Clientes y Sistema de Pedidos
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -64,6 +64,15 @@ const AppConfig = mongoose.model('AppConfig', createSchema({
     accent_color: { type: String, default: '#FF85A2' }
 }));
 
+// ===== NUEVO MODELO: PEDIDOS DE CLIENTES =====
+const Pedido = mongoose.model('Pedido', createSchema({
+    nombreCliente: { type: String, required: true },
+    telefonoCliente: { type: String, required: true },
+    items: Array,
+    total: Number,
+    estatus: { type: String, default: 'recibido' } // Ej: recibido, en_preparacion, listo, entregado
+}));
+
 // --- MIDDLEWARES DE SEGURIDAD ---
 function verificarToken(req, res, next) {
     const authHeader = req.headers['authorization'];
@@ -84,14 +93,12 @@ function esAdmin(req, res, next) {
 const tienePermiso = (seccion) => async (req, res, next) => {
     try {
         if(req.user.role === 'admin') {
-            return next(); // Los administradores siempre tienen acceso a todo.
+            return next();
         }
-
         const permisos = req.user.permissions || {};
         if (permisos[seccion]) {
             return next();
         }
-    
         return res.status(403).json({ error: `Acceso denegado. Se requiere permiso para la sección '${seccion}'.` });
     } catch(error) {
         return res.status(500).json({ error: 'Error interno del servidor al verificar permisos.' });
@@ -131,6 +138,27 @@ app.get('/api/configuracion', async (req, res) => {
     }
 });
 
+// ===== NUEVAS RUTAS PÚBLICAS PARA EL MENÚ DEL CLIENTE =====
+const findActive = { $or: [{ status: 'activo' }, { status: { $exists: false } }] };
+app.get('/api/menu/productos', async (req, res) => res.json(await Producto.find(findActive)));
+app.get('/api/menu/toppings', async (req, res) => res.json(await Topping.find(findActive)));
+app.get('/api/menu/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
+
+// Ruta pública para que los clientes envíen sus pedidos
+app.post('/api/pedidos', async (req, res) => {
+    try {
+        const { nombreCliente, telefonoCliente, items, total } = req.body;
+        if (!nombreCliente || !telefonoCliente || !items || items.length === 0) {
+            return res.status(400).json({ error: 'Faltan datos en el pedido.' });
+        }
+        // Aquí podrías añadir una validación de precios del lado del servidor por seguridad
+        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, items, total });
+        res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al procesar el pedido.' });
+    }
+});
+
 // --- PROTECCIÓN DE RUTAS API ---
 app.use('/api', verificarToken);
 
@@ -146,10 +174,26 @@ app.post('/api/configuracion', esAdmin, async (req, res) => {
     }
 });
 
+// ===== NUEVAS RUTAS PRIVADAS PARA GESTIONAR PEDIDOS =====
+const pedidosRouter = express.Router();
+pedidosRouter.get('/', async (req, res) => res.json(await Pedido.find().sort({ createdAt: -1 })));
+pedidosRouter.put('/:id', async (req, res) => {
+    const { estatus } = req.body;
+    if (!estatus) return res.status(400).json({ error: 'Se requiere un nuevo estatus.' });
+    const pedidoActualizado = await Pedido.findByIdAndUpdate(req.params.id, { estatus }, { new: true });
+    res.json(pedidoActualizado);
+});
+pedidosRouter.delete('/:id', async (req, res) => {
+    await Pedido.findByIdAndDelete(req.params.id);
+    res.status(204).send();
+});
+app.use('/api/pedidos', esAdmin, pedidosRouter);
+
+
 const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
     
-    router.get('/', tienePermiso(permiso), async (req, res) => res.json(await modelo.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
+    router.get('/', tienePermiso(permiso), async (req, res) => res.json(await modelo.find(findActive)));
     router.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await modelo.find({ status: 'eliminado' })));
     router.post('/', tienePermiso(permiso), async (req, res) => res.status(201).json(await modelo.create(req.body)));
     router.put('/:id', tienePermiso(permiso), async (req, res) => res.json(await modelo.findByIdAndUpdate(req.params.id, req.body, { new: true })));
@@ -165,7 +209,6 @@ app.use('/api/toppings', crearRutasCrud(Topping, 'Topping', 'gestion'));
 app.use('/api/jarabes', crearRutasCrud(Jarabe, 'Jarabe', 'gestion'));
 app.use('/api/clientes', crearRutasCrud(Cliente, 'Cliente', 'clientes'));
 
-// Ventas (lógica específica)
 const ventasRouter = express.Router();
 ventasRouter.post('/', async (req, res) => {
     let nuevaVentaData = req.body;
@@ -174,7 +217,7 @@ ventasRouter.post('/', async (req, res) => {
     const ventaCreada = await Venta.create(nuevaVentaData);
     res.status(201).json(ventaCreada);
 });
-ventasRouter.get('/', tienePermiso('historial'), async (req, res) => res.json(await Venta.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] })));
+ventasRouter.get('/', tienePermiso('historial'), async (req, res) => res.json(await Venta.find(findActive)));
 ventasRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
 ventasRouter.put('/:id', tienePermiso('historial'), async (req, res) => {
     res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true }));
@@ -184,9 +227,8 @@ ventasRouter.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) =>
 ventasRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
 app.use('/api/ventas', ventasRouter);
 
-// Usuarios (lógica específica)
 const usuariosRouter = express.Router();
-usuariosRouter.get('/', tienePermiso('usuarios'), async (req, res) => res.json(await Usuario.find({ $or: [{ status: 'activo' }, { status: { $exists: false } }] }).select('-password')));
+usuariosRouter.get('/', tienePermiso('usuarios'), async (req, res) => res.json(await Usuario.find(findActive).select('-password')));
 usuariosRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
 usuariosRouter.post('/', tienePermiso('usuarios'), async (req, res) => {
     const { username, password, role, permissions } = req.body;

@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <!-- ===== NUEVA LIBRERÍA PARA TABLAS EN PDF ===== -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -383,11 +382,10 @@
             </div>
             <div class="card" id="resumen-container">
                 <div class="card-header">
-                    <h3>Resumen de Ventas del Período</h3>
+                    <h3>Resumen de Ventas</h3>
                 </div>
                 <div id="totalPeriodoHistorial"></div>
                 <pre id="resumen-ventas"></pre>
-                <!-- ===== NUEVOS BOTONES DE EXPORTACIÓN ===== -->
                 <div style="display:flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
                     <button id="btnResumenWhatsapp" class="btn-secondary" style="flex-grow: 1;">Enviar Resumen por WhatsApp</button>
                     <button id="btnResumenPDF" class="btn-secondary" style="flex-grow: 1;">Generar PDF del Resumen</button>
@@ -397,7 +395,6 @@
             <div class="card full-width-card">
                 <div class="card-header">
                     <h3>Detalle de Ventas</h3>
-                    <!-- ===== NUEVOS BOTONES DE EXPORTACIÓN ===== -->
                     <div class="export-buttons" style="display:flex; gap: 0.5rem;">
                         <button id="btnDetalleWhatsapp" class="btn-secondary" title="Enviar Detalle por WhatsApp">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
@@ -468,7 +465,7 @@
       let ventaActual = [];
       let miGraficaDeVentas, miGraficaDeProductos;
       let ventasEnMemoria = [];
-      let ventasFiltradasGlobal = []; // Variable global para los datos filtrados
+      let ventasFiltradasGlobal = [];
       let procesandoVenta = false;
       const COSTO_DOMICILIO_PREDET = 30.00;
       
@@ -616,9 +613,6 @@
                 'historial': document.querySelector('[data-seccion="historial-ventas"]'),
                 'papelera': document.querySelector('[data-seccion="papelera-reciclaje"]')
             };
-            
-            let primeraSeccionVisible = 'registrar-venta';
-            let algunaSeccionVisible = true;
 
             for (const permiso in mapaPermisos) {
                 const tieneAcceso = esAdmin || (permisos && permisos[permiso]);
@@ -629,49 +623,57 @@
             
             document.getElementById('customization-container').style.display = esAdmin ? 'block' : 'none';
             document.getElementById('filtro-usuario-container').style.display = esAdmin ? 'block' : 'none';
-
-            if (!esAdmin) {
-                const ordenDeSecciones = [
-                    'registrar-venta', 'gestion-completa', 'gestion-clientes', 
-                    'historial-ventas', 'gestion-usuarios', 'papelera-reciclaje'
-                ];
-                const mapaSeccionesAPermisos = {
-                    'gestion-completa': 'gestion',
-                    'gestion-clientes': 'clientes',
-                    'gestion-usuarios': 'usuarios',
-                    'historial-ventas': 'historial',
-                    'papelera-reciclaje': 'papelera'
-                };
-                
-                let primeraEncontrada = false;
-                for(const seccion of ordenDeSecciones) {
-                    if (seccion === 'registrar-venta') {
-                        primeraSeccionVisible = 'registrar-venta';
-                        primeraEncontrada = true;
-                        break;
-                    }
-                    const permisoNecesario = mapaSeccionesAPermisos[seccion];
-                    if(permisos[permisoNecesario]){
-                        primeraSeccionVisible = seccion;
-                        primeraEncontrada = true;
-                        break;
-                    }
-                }
-                if(!primeraEncontrada){
-                    algunaSeccionVisible = false;
-                }
-            }
-
+            
             appWrapper.style.display = 'flex';
             loginContainer.style.display = 'none';
 
             initApp();
+            
+            // ===== CAMBIO: LÓGICA PARA DECIDIR LA SECCIÓN INICIAL =====
+            let seccionInicial = sessionStorage.getItem('lastActiveSection');
+            let seccionEsValida = false;
 
-            if (algunaSeccionVisible) {
-                mostrarSeccion(primeraSeccionVisible);
+            const mapaSeccionesAPermisos = {
+                'gestion-completa': 'gestion',
+                'gestion-clientes': 'clientes',
+                'gestion-usuarios': 'usuarios',
+                'historial-ventas': 'historial',
+                'papelera-reciclaje': 'papelera'
+            };
+
+            if (seccionInicial) {
+                if (seccionInicial === 'registrar-venta' || esAdmin) {
+                    seccionEsValida = true;
+                } else {
+                    const permisoNecesario = mapaSeccionesAPermisos[seccionInicial];
+                    if (permisos && permisos[permisoNecesario]) {
+                        seccionEsValida = true;
+                    }
+                }
+            }
+
+            if (seccionEsValida) {
+                mostrarSeccion(seccionInicial);
             } else {
-                alert('No tienes permisos asignados para ver ninguna sección. Contacta a un administrador.');
-                document.querySelector('main').innerHTML = '<div class="card"><p>No tienes acceso a ninguna sección.</p></div>';
+                // Si no hay sección guardada o no es válida, calcular la de por defecto
+                if (esAdmin) {
+                    mostrarSeccion('registrar-venta');
+                } else {
+                    const ordenDeSecciones = ['registrar-venta', 'gestion-completa', 'gestion-clientes', 'historial-ventas', 'gestion-usuarios', 'papelera-reciclaje'];
+                    let primeraEncontrada = '';
+                    for (const seccion of ordenDeSecciones) {
+                        if (seccion === 'registrar-venta') { primeraEncontrada = 'registrar-venta'; break; }
+                        const permisoNecesario = mapaSeccionesAPermisos[seccion];
+                        if (permisos && permisos[permisoNecesario]) { primeraEncontrada = seccion; break; }
+                    }
+                    
+                    if (primeraEncontrada) {
+                        mostrarSeccion(primeraEncontrada);
+                    } else {
+                        alert('No tienes permisos asignados. Contacta a un administrador.');
+                        document.querySelector('main').innerHTML = '<div class="card"><p>No tienes acceso a ninguna sección.</p></div>';
+                    }
+                }
             }
 
         } catch (e) { 
@@ -683,6 +685,7 @@
       
       function showLogin() {
         localStorage.removeItem('token');
+        sessionStorage.removeItem('lastActiveSection'); // Limpiar al cerrar sesión
         appWrapper.style.display = 'none';
         loginContainer.style.display = 'block';
       }
@@ -701,6 +704,8 @@
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Credenciales inválidas');
             localStorage.setItem('token', data.token);
+            // ===== CAMBIO: LIMPIAR SECCIÓN AL INICIAR SESIÓN =====
+            sessionStorage.removeItem('lastActiveSection');
             await showApp();
         } catch (error) {
             loginError.textContent = error.message;
@@ -736,6 +741,7 @@
         setupCollapsibles(); 
       }
       
+      // ===== CAMBIO: GUARDAR LA SECCIÓN ACTIVA =====
       function mostrarSeccion(id) {
         document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
         document.querySelectorAll('nav a').forEach(link => link.classList.remove('active-link'));
@@ -745,6 +751,9 @@
         if (seccionActiva) {
           seccionActiva.classList.add('active');
           if (linkActivo) linkActivo.classList.add('active-link');
+          
+          sessionStorage.setItem('lastActiveSection', id); // Guardar la sección actual
+
           const cargarMap = {
             'registrar-venta': () => cargarOpcionesParaVenta(),
             'gestion-completa': () => { cargarProductos(); cargarToppings(); cargarJarabes(); },
@@ -758,6 +767,8 @@
         nav.classList.remove('nav-open');
       }
 
+      // ... (El resto del código JavaScript es idéntico al de la respuesta anterior)
+      // ... (Pega aquí el resto de tu JS desde `setupCollapsibles` hasta el final)
       function setupCollapsibles() {
         document.querySelectorAll(".collapsible").forEach(c => {
           const newC = c.cloneNode(true);
@@ -877,6 +888,7 @@
       async function cargarDataParaSelector(url, selectId, valueField, textField) {
         try {
           const data = await fetchAPI(url);
+          if (!data) return; // Si la petición falla por permisos, data será undefined
           const select = document.getElementById(selectId);
           const currentValue = select.value;
           let optionsHtml = selectId === 'ventaCliente' ? '<option value="">Público General</option>' : '<option value="">-- Selecciona un producto --</option>';
@@ -892,6 +904,7 @@
       async function cargarDataParaBotones(url, containerId) {
           try{
               const data = await fetchAPI(url);
+              if (!data) return;
               const container = document.getElementById(containerId);
               container.innerHTML = '';
               data.forEach(item => {
@@ -1231,7 +1244,7 @@
           if (usuarioId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.vendedorId == usuarioId); }
           if (estatus) { ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus); }
           
-          ventasFiltradasGlobal = ventasFiltradas; // Guardar para exportación
+          ventasFiltradasGlobal = ventasFiltradas;
 
           const tbody = document.getElementById('tablaVentasBody');
           tbody.innerHTML = '';
@@ -1464,8 +1477,7 @@
           pdf.text(totalTexto, 105, 280, { align: 'center' });
           pdf.save("reporte-ventas-completo.pdf");
       }
-
-      // ===== NUEVAS FUNCIONES DE EXPORTACIÓN =====
+      
       function enviarResumenWhatsapp() {
           const textoResumen = document.getElementById('resumen-ventas').textContent;
           const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
@@ -1484,7 +1496,7 @@
           pdf.setFontSize(12);
           pdf.text("Resumen de Ventas del Período", 10, 10);
           pdf.text(textoResumen, 10, 20);
-          const yPosFinal = pdf.splitTextToSize(textoResumen, 180).length * 5 + 30; // Calcular posición
+          const yPosFinal = pdf.splitTextToSize(textoResumen, 180).length * 5 + 30;
           pdf.setFont('helvetica', 'bold');
           pdf.text(totalTexto, 10, yPosFinal);
           pdf.save("resumen-ventas.pdf");
@@ -1609,7 +1621,6 @@
             }
         });
 
-        // Event Listeners para los nuevos botones de exportación
         document.getElementById('btnResumenWhatsapp').addEventListener('click', enviarResumenWhatsapp);
         document.getElementById('btnResumenPDF').addEventListener('click', generarResumenPDFSimple);
         document.getElementById('btnDetalleWhatsapp').addEventListener('click', enviarDetalleWhatsapp);

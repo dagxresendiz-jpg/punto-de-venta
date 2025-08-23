@@ -687,9 +687,7 @@
             };
 
             if (seccionInicial) {
-                if (seccionInicial === 'registrar-venta') {
-                    seccionEsValida = true;
-                } else if (esAdmin) {
+                if (seccionInicial === 'registrar-venta' || esAdmin) {
                     seccionEsValida = true;
                 } else {
                     const permisoNecesario = mapaSeccionesAPermisos[seccionInicial];
@@ -1593,6 +1591,79 @@
           pdf.text(totalTexto, 14, finalY + 10);
 
           pdf.save('detalle-ventas.pdf');
+      }
+      
+      // NUEVAS FUNCIONES PARA GESTIONAR PEDIDOS
+      async function cargarPedidos() {
+        const pedidos = await fetchAPI('/api/pedidos');
+        if (!pedidos) return;
+
+        const cols = {
+            recibidos: document.getElementById('pedidos-recibidos'),
+            preparacion: document.getElementById('pedidos-en-preparacion'),
+            listos: document.getElementById('pedidos-listos')
+        };
+        Object.values(cols).forEach(c => c.innerHTML = ''); // Limpiar columnas
+
+        pedidos.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'pedido-card';
+            card.innerHTML = `
+                <div class="pedido-card-header">
+                    <h4>${p.nombreCliente}</h4>
+                    <span>${new Date(p.createdAt).toLocaleTimeString()}</span>
+                </div>
+                <div class="pedido-card-body">
+                    <ul>${p.items.map(i => `<li>- ${i.nombre} ($${i.precio.toFixed(2)})</li>`).join('')}</ul>
+                </div>
+                <div class="pedido-card-footer">
+                    <span class="total">Total: $${p.total.toFixed(2)}</span>
+                    <div class="pedido-actions"></div>
+                </div>
+            `;
+            const actions = card.querySelector('.pedido-actions');
+            
+            if (p.estatus === 'recibido') {
+                const btnW = document.createElement('button');
+                btnW.className = 'btn-whatsapp';
+                btnW.textContent = 'Contactar';
+                btnW.onclick = () => window.open(`https://wa.me/${p.telefonoCliente}?text=¡Hola ${p.nombreCliente}! Recibimos tu pedido y estamos por prepararlo.`, '_blank');
+                actions.appendChild(btnW);
+
+                const btnP = document.createElement('button');
+                btnP.className = 'btn-preparar';
+                btnP.textContent = 'Preparar';
+                btnP.onclick = () => cambiarEstatusPedido(p.id, 'en_preparacion');
+                actions.appendChild(btnP);
+                cols.recibidos.appendChild(card);
+            } else if (p.estatus === 'en_preparacion') {
+                const btnL = document.createElement('button');
+                btnL.className = 'btn-listo';
+                btnL.textContent = 'Listo';
+                btnL.onclick = () => cambiarEstatusPedido(p.id, 'listo');
+                actions.appendChild(btnL);
+                cols.preparacion.appendChild(card);
+            } else if (p.estatus === 'listo') {
+                const btnE = document.createElement('button');
+                btnE.className = 'btn-entregado';
+                btnE.textContent = 'Entregado/Finalizar';
+                btnE.onclick = () => finalizarPedido(p.id);
+                actions.appendChild(btnE);
+                cols.listos.appendChild(card);
+            }
+        });
+      }
+
+      async function cambiarEstatusPedido(id, nuevoEstatus) {
+        await fetchAPI(`/api/pedidos/${id}`, { method: 'PUT', body: JSON.stringify({ estatus: nuevoEstatus }) });
+        cargarPedidos();
+      }
+
+      async function finalizarPedido(id) {
+        if(confirm('¿Marcar este pedido como entregado y eliminarlo de la vista?')) {
+            await fetchAPI(`/api/pedidos/${id}`, { method: 'DELETE' });
+            cargarPedidos();
+        }
       }
 
       function setupEventListeners() {

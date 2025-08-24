@@ -1,5 +1,4 @@
-
-// server.js - Versión Final con Login de Administrador Corregido
+// server.js - Versión con Agotados, Permiso de Pedidos y Conversión a Venta
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -16,7 +15,6 @@ const MONGO_URI = process.env.MONGO_URI;
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
-
 
 // --- CONEXIÓN A LA BASE DE DATOS ---
 mongoose.connect(MONGO_URI)
@@ -37,14 +35,19 @@ const createSchema = (definition) => new mongoose.Schema(definition, {
 
 const commonFields = { status: { type: String, default: 'activo' } };
 const userPermissionsSchema = createSchema({
+    pedidos: { type: Boolean, default: false },
     gestion: { type: Boolean, default: false },
     clientes: { type: Boolean, default: false },
     historial: { type: Boolean, default: false },
     papelera: { type: Boolean, default: false },
     usuarios: { type: Boolean, default: false }
 });
-
-const Producto = mongoose.model('Producto', createSchema({ nombre: String, precio: Number, ...commonFields }));
+const Producto = mongoose.model('Producto', createSchema({ 
+    nombre: String, 
+    precio: Number, 
+    agotado: { type: Boolean, default: false },
+    ...commonFields 
+}));
 const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Cliente = mongoose.model('Cliente', createSchema({ nombre: String, telefono: String, direccion: String, ...commonFields }));
@@ -102,27 +105,18 @@ const tienePermiso = (seccion) => async (req, res, next) => {
 };
 
 // --- RUTAS DE LA API ---
-
 const apiRouter = express.Router();
 const authRouter = express.Router();
-
 const findActive = { $or: [{ status: 'activo' }, { status: { $exists: false } }] };
 
 // --- RUTAS PÚBLICAS (NO REQUIEREN TOKEN) ---
-
-// Ruta de Autenticación
 authRouter.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        // ===== CORRECCIÓN CLAVE AQUÍ =====
-        // Usamos la condición 'findActive' para asegurar que tanto usuarios nuevos (con status='activo')
-        // como el usuario administrador original (sin campo 'status') puedan iniciar sesión.
         const usuario = await Usuario.findOne({ username, ...findActive });
-        
         if (!usuario || !(await bcrypt.compare(password, usuario.password))) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
-        
         const token = jwt.sign({ id: usuario._id, username: usuario.username, role: usuario.role, permissions: usuario.permissions }, JWT_SECRET, { expiresIn: '8h' });
         res.json({ message: 'Login exitoso', token });
     } catch (error) { 
@@ -132,8 +126,6 @@ authRouter.post('/login', async (req, res) => {
 });
 app.use('/auth', authRouter);
 
-
-// Rutas Públicas de la API (Menú, Configuración)
 apiRouter.get('/configuracion', async (req, res) => {
     try {
         let config = await AppConfig.findOne();
@@ -166,9 +158,34 @@ apiRouter.post('/configuracion', esAdmin, async (req, res) => {
 });
 
 const pedidosRouter = express.Router();
-pedidosRouter.get('/', esAdmin, async (req, res) => res.json(await Pedido.find().sort({ createdAt: -1 })));
-pedidosRouter.put('/:id', esAdmin, async (req, res) => res.json(await Pedido.findByIdAndUpdate(req.params.id, { estatus: req.body.estatus }, { new: true })));
-pedidosRouter.delete('/:id', esAdmin, async (req, res) => { await Pedido.findByIdAndDelete(req.params.id); res.status(204).send(); });
+pedidosRouter.get('/', tienePermiso('pedidos'), async (req, res) => res.json(await Pedido.find().sort({ createdAt: -1 })));
+pedidosRouter.put('/:id', tienePermiso('pedidos'), async (req, res) => res.json(await Pedido.findByIdAndUpdate(req.params.id, { estatus: req.body.estatus }, { new: true })));
+pedidosRouter.delete('/:id', tienePermiso('pedidos'), async (req, res) => { await Pedido.findByIdAndDelete(req.params.id); res.status(204).send(); });
+pedidosRouter.post('/:id/convertir-a-venta', tienePermiso('pedidos'), async (req, res) => {
+    try {
+        const pedido = await Pedido.findById(req.params.id);
+        if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado.' });
+
+        const nuevaVenta = await Venta.create({
+            fecha: new Date(),
+            clienteNombre: pedido.nombreCliente,
+            items: pedido.items.map(item => ({ nombre: item.nombre, total: item.precio, cantidad: 1 })),
+            subtotal: pedido.total,
+            costoDomicilio: 0,
+            total: pedido.total,
+            metodoPago: 'Pedido Online',
+            estatus: 'Pagado',
+            vendedorId: req.user.id,
+            vendedorUsername: req.user.username,
+        });
+
+        await Pedido.findByIdAndDelete(req.params.id);
+        res.status(201).json(nuevaVenta);
+    } catch (error) {
+        console.error("Error al convertir pedido:", error);
+        res.status(500).json({ error: 'Error al convertir el pedido a venta.' });
+    }
+});
 apiRouter.use('/pedidos', pedidosRouter);
 
 const crearRutasCrud = (modelo, nombre, permiso) => {
@@ -182,7 +199,20 @@ const crearRutasCrud = (modelo, nombre, permiso) => {
     router.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
     return router;
 };
-apiRouter.use('/productos', crearRutasCrud(Producto, 'Producto', 'gestion'));
+
+const productosRouter = crearRutasCrud(Producto, 'Producto', 'gestion');
+productosRouter.put('/:id/toggle-agotado', tienePermiso('gestion'), async (req, res) => {
+    try {
+        const producto = await Producto.findById(req.params.id);
+        if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+        producto.agotado = !producto.agotado;
+        await producto.save();
+        res.json(producto);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar el estado del producto.' });
+    }
+});
+apiRouter.use('/productos', productosRouter);
 apiRouter.use('/toppings', crearRutasCrud(Topping, 'Topping', 'gestion'));
 apiRouter.use('/jarabes', crearRutasCrud(Jarabe, 'Jarabe', 'gestion'));
 apiRouter.use('/clientes', crearRutasCrud(Cliente, 'Cliente', 'clientes'));
@@ -239,9 +269,9 @@ apiRouter.use('/usuarios', esAdmin, usuariosRouter);
 // Usar el router principal de la API
 app.use('/api', apiRouter);
 
-
 // --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
 app.get('*', (req, res) => {
+    // Si la URL empieza con '/menu', sirve 'menu.html', si no, sirve 'index.html'
     if (req.originalUrl.startsWith('/menu')) {
         res.sendFile(path.join(__dirname, 'public', 'menu.html'));
     } else {

@@ -26,14 +26,18 @@
         .card { background-color: var(--card-background); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow); }
         h2 { font-size: 1.5rem; color: var(--accent-color); margin-bottom: 1rem; border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem;}
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
-        .menu-item { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .menu-item { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
         .menu-item:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
-        .menu-item.disabled { background-color: #f1f5f9; color: #9ca3af; cursor: not-allowed; }
+        .menu-item.agotado { background-color: #f1f5f9; color: #9ca3af; cursor: not-allowed; opacity: 0.6; }
+        .menu-item.agotado:hover { transform: none; box-shadow: none; }
+        .agotado-badge { position: absolute; top: 8px; right: 8px; background-color: #ef4444; color: white; padding: 0.2em 0.5em; border-radius: 12px; font-size: 0.7em; font-weight: 600; }
+        
         .menu-item h4 { margin-bottom: 0.5rem; font-size: 1.1rem; }
         .menu-item p { color: var(--text-color-light); }
         .cart h3 { font-size: 1.25rem; }
         #cart-items { list-style: none; padding: 0; margin-bottom: 1rem; }
-        #cart-items li { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
+        #cart-items li { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
+        .item-controls button { background: none; border: 1px solid var(--border-color); border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
         #cart-total { text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--primary-color); margin-bottom: 1.5rem; }
         form label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
         form input { display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; }
@@ -54,12 +58,12 @@
         </div>
         
         <div class="card">
-            <h2>Elige tus Toppings (Opcional)</h2>
+            <h2>Añade Toppings (Opcional)</h2>
             <div id="toppings-container" class="menu-grid"></div>
         </div>
 
         <div class="card">
-            <h2>Elige tus Jarabes (Opcional)</h2>
+            <h2>Añade Jarabes (Opcional)</h2>
             <div id="jarabes-container" class="menu-grid"></div>
         </div>
         
@@ -106,6 +110,12 @@
                     if (config.logo_base64) {
                         document.getElementById('menu-logo').src = config.logo_base64;
                     }
+                    if (config.primary_color) {
+                        document.documentElement.style.setProperty('--primary-color', config.primary_color);
+                    }
+                    if (config.accent_color) {
+                        document.documentElement.style.setProperty('--accent-color', config.accent_color);
+                    }
 
                     renderMenu();
                 } catch (error) {
@@ -116,19 +126,20 @@
 
             function renderMenu() {
                 productosContainer.innerHTML = productos.map(p => `
-                    <div class="menu-item" data-id="${p.id}" data-tipo="producto">
+                    <div class="menu-item ${p.agotado ? 'agotado' : ''}" data-id="${p.id}" data-tipo="producto">
+                        ${p.agotado ? '<div class="agotado-badge">Agotado</div>' : ''}
                         <h4>${p.nombre}</h4>
                         <p>$${p.precio.toFixed(2)}</p>
                     </div>`).join('');
 
                 toppingsContainer.innerHTML = toppings.map(t => `
-                    <div class="menu-item disabled" data-id="${t.id}" data-tipo="topping">
+                    <div class="menu-item" data-id="${t.id}" data-tipo="topping">
                         <h4>${t.nombre}</h4>
                         <p>$${t.precio.toFixed(2)}</p>
                     </div>`).join('');
 
                 jarabesContainer.innerHTML = jarabes.map(j => `
-                    <div class="menu-item disabled" data-id="${j.id}" data-tipo="jarabe">
+                    <div class="menu-item" data-id="${j.id}" data-tipo="jarabe">
                         <h4>${j.nombre}</h4>
                         <p>$${j.precio.toFixed(2)}</p>
                     </div>`).join('');
@@ -139,7 +150,7 @@
             function addEventListenersToItems() {
                 document.querySelectorAll('.menu-item').forEach(item => {
                     item.addEventListener('click', () => {
-                        if (item.classList.contains('disabled')) return;
+                        if (item.classList.contains('agotado')) return;
                         
                         const id = item.dataset.id;
                         const tipo = item.dataset.tipo;
@@ -150,58 +161,73 @@
                         if (tipo === 'jarabe') itemData = jarabes.find(j => j.id === id);
 
                         if (itemData) {
-                            carrito.push({ ...itemData, tipo });
-                            updateCart();
+                            addToCart(itemData);
                         }
                     });
                 });
+            }
+
+            function addToCart(item) {
+                const itemExistente = carrito.find(cartItem => cartItem.id === item.id);
+                if (itemExistente) {
+                    itemExistente.cantidad++;
+                } else {
+                    carrito.push({ ...item, cantidad: 1 });
+                }
+                updateCart();
+            }
+
+            function removeFromCart(itemId) {
+                const itemIndex = carrito.findIndex(cartItem => cartItem.id === itemId);
+                if (itemIndex > -1) {
+                    carrito[itemIndex].cantidad--;
+                    if (carrito[itemIndex].cantidad === 0) {
+                        carrito.splice(itemIndex, 1);
+                    }
+                }
+                updateCart();
             }
 
             function updateCart() {
                 cartItemsEl.innerHTML = '';
                 let total = 0;
 
-                const productoBase = carrito.find(item => item.tipo === 'producto');
-
-                if (productoBase) {
-                    document.querySelectorAll('.menu-item[data-tipo="producto"]').forEach(el => el.classList.add('disabled'));
-                    document.querySelectorAll('.menu-item[data-tipo="topping"], .menu-item[data-tipo="jarabe"]').forEach(el => el.classList.remove('disabled'));
-                } else {
-                    document.querySelectorAll('.menu-item[data-tipo="producto"]').forEach(el => el.classList.remove('disabled'));
-                    document.querySelectorAll('.menu-item[data-tipo="topping"], .menu-item[data-tipo="jarabe"]').forEach(el => el.classList.add('disabled'));
+                if (carrito.length === 0) {
+                    cartItemsEl.innerHTML = '<li>Tu carrito está vacío.</li>';
                 }
 
-                carrito.forEach((item, index) => {
+                carrito.forEach(item => {
                     const li = document.createElement('li');
-                    li.innerHTML = `<span>${item.nombre}</span><span>$${item.precio.toFixed(2)}</span>`;
+                    li.innerHTML = `
+                        <span>${item.cantidad}x ${item.nombre}</span>
+                        <div class="item-controls" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span>$${(item.precio * item.cantidad).toFixed(2)}</span>
+                            <button onclick="window.app.removeFromCart('${item.id}')">-</button>
+                            <button onclick="window.app.addToCart({id: '${item.id}', tipo: '${item.tipo}'})">+</button>
+                        </div>
+                    `;
                     cartItemsEl.appendChild(li);
-                    total += item.precio;
+                    total += item.precio * item.cantidad;
                 });
 
                 cartTotalEl.textContent = `Total: $${total.toFixed(2)}`;
-
-                if (carrito.length > 0) {
-                    const clearBtn = document.createElement('button');
-                    clearBtn.textContent = 'Limpiar pedido';
-                    clearBtn.style.backgroundColor = '#ef4444';
-                    clearBtn.style.marginTop = '1rem';
-                    clearBtn.onclick = () => {
-                        carrito = [];
-                        updateCart();
-                    };
-                    if (!document.querySelector('.cart button[style*="background-color: #ef4444"]')) {
-                        cartItemsEl.parentNode.insertBefore(clearBtn, orderForm);
-                    }
-                } else {
-                    const clearBtn = document.querySelector('.cart button[style*="background-color: #ef4444"]');
-                    if(clearBtn) clearBtn.remove();
-                }
             }
             
+            window.app = {
+                addToCart: (itemData) => {
+                    let fullItemData;
+                    if(itemData.tipo === 'producto') fullItemData = productos.find(p => p.id === itemData.id);
+                    if(itemData.tipo === 'topping') fullItemData = toppings.find(t => t.id === itemData.id);
+                    if(itemData.tipo === 'jarabe') fullItemData = jarabes.find(j => j.id === itemData.id);
+                    addToCart(fullItemData);
+                },
+                removeFromCart
+            };
+
             orderForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                if (carrito.length === 0 || !carrito.some(item => item.tipo === 'producto')) {
-                    alert('Debes seleccionar al menos un producto principal.');
+                if (carrito.length === 0) {
+                    alert('Tu carrito está vacío.');
                     return;
                 }
 
@@ -211,8 +237,8 @@
                 const orderData = {
                     nombreCliente: document.getElementById('nombreCliente').value,
                     telefonoCliente: document.getElementById('telefonoCliente').value,
-                    items: carrito.map(i => ({ nombre: i.nombre, precio: i.precio })),
-                    total: carrito.reduce((sum, item) => sum + item.precio, 0)
+                    items: carrito.map(i => ({ nombre: `${i.cantidad}x ${i.nombre}`, precio: i.precio * i.cantidad })),
+                    total: carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0)
                 };
 
                 try {
@@ -225,6 +251,16 @@
                     if (!response.ok) throw new Error(result.error);
                     
                     alert('¡Tu pedido ha sido recibido! Nos pondremos en contacto contigo pronto.');
+                    
+                    let mensajeWhatsapp = `*¡Nuevo Pedido Recibido!*\n\n*Cliente:* ${orderData.nombreCliente}\n*Teléfono:* ${orderData.telefonoCliente}\n\n*Pedido:*\n`;
+                    orderData.items.forEach(item => {
+                        mensajeWhatsapp += `- ${item.nombre}\n`;
+                    });
+                    mensajeWhatsapp += `\n*Total: $${orderData.total.toFixed(2)}*`;
+                    
+                    // IMPORTANTE: Reemplaza "TUNUMERO" con tu número de WhatsApp
+                    window.open(`https://api.whatsapp.com/send?phone=TUNUMERO&text=${encodeURIComponent(mensajeWhatsapp)}`, '_blank');
+                    
                     carrito = [];
                     orderForm.reset();
                     updateCart();

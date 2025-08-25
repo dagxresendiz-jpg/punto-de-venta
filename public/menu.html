@@ -52,7 +52,6 @@
         .menu-item h4 { margin-bottom: 0.5rem; font-size: 1.1rem; }
         .menu-item p { color: var(--text-color-light); }
         
-        /* == NUEVOS ESTILOS PARA EL BOTÓN DE AÑADIR Y EL CARRITO == */
         .add-to-cart-section {
             display: flex;
             justify-content: space-between;
@@ -102,7 +101,6 @@
             <p>Arma tus productos uno por uno y añádelos a tu pedido.</p>
         </div>
 
-        <!-- SECCIÓN PARA CONSTRUIR UN PRODUCTO -->
         <div class="card">
             <h2>1. Elige un Producto Principal</h2>
             <div id="productos-container" class="menu-grid"></div>
@@ -113,14 +111,12 @@
             <h4 style="margin-top: 1.5rem;">Jarabes</h4>
             <div id="jarabes-container" class="menu-grid" style="margin-top: 1rem;"></div>
 
-            <!-- BOTÓN PARA AÑADIR EL PRODUCTO ARMADO AL PEDIDO FINAL -->
             <div class="add-to-cart-section">
                 <span id="current-item-total">Subtotal Producto: $0.00</span>
                 <button id="add-to-cart-btn" disabled>Agregar al Pedido</button>
             </div>
         </div>
         
-        <!-- SECCIÓN DEL PEDIDO FINAL (CARRITO) -->
         <div class="card cart">
             <h3>Tu Pedido</h3>
             <div id="cart-items">
@@ -157,12 +153,14 @@
 
             async function fetchData() {
                 try {
+                    // == CORRECCIÓN IMPORTANTE: Rutas API ajustadas para que coincidan con tu servidor ==
                     const [productosRes, toppingsRes, jarabesRes, configRes] = await Promise.all([
-                        fetch('/api/menu/productos'),
-                        fetch('/api/menu/toppings'),
-                        fetch('/api/menu/jarabes'),
+                        fetch('/api/productos'), // Corregido: sin /menu
+                        fetch('/api/toppings'),  // Corregido: sin /menu
+                        fetch('/api/jarabes'),   // Corregido: sin /menu
                         fetch('/api/configuracion')
                     ]);
+                    
                     productos = await productosRes.json();
                     toppings = await toppingsRes.json();
                     jarabes = await jarabesRes.json();
@@ -175,7 +173,7 @@
                     renderMenu();
                 } catch (error) {
                     console.error('Error al cargar el menú:', error);
-                    productosContainer.innerHTML = '<p>No se pudo cargar el menú. Intenta de nuevo más tarde.</p>';
+                    productosContainer.innerHTML = '<p>No se pudo cargar el menú. Revisa la consola para ver los errores.</p>';
                 }
             }
 
@@ -211,7 +209,7 @@
                                 seleccionActual.producto = productos.find(p => p.id === id);
                                 itemEl.classList.add('selected');
                             }
-                        } else { // Toppings y Jarabes
+                        } else {
                             const lista = tipo === 'topping' ? seleccionActual.toppings : seleccionActual.jarabes;
                             const itemData = (tipo === 'topping' ? toppings : jarabes).find(i => i.id === id);
                             const index = lista.findIndex(i => i.id === id);
@@ -245,4 +243,125 @@
             }
 
             function resetCurrentSelection() {
-           
+                seleccionActual = { producto: null, toppings: [], jarabes: [] };
+                document.querySelectorAll('.menu-item.selected').forEach(el => el.classList.remove('selected'));
+                updateCurrentItemTotal();
+            }
+
+            function renderCart() {
+                if (carrito.length === 0) {
+                    cartItemsEl.innerHTML = '<p>Aún no has agregado productos a tu pedido.</p>';
+                    cartTotalEl.textContent = 'Total del Pedido: $0.00';
+                    return;
+                }
+
+                cartItemsEl.innerHTML = '';
+                let granTotal = 0;
+
+                carrito.forEach((item, index) => {
+                    const itemTotal = item.producto.precio + 
+                                      item.toppings.reduce((sum, t) => sum + t.precio, 0) + 
+                                      item.jarabes.reduce((sum, j) => sum + j.precio, 0);
+                    granTotal += itemTotal;
+
+                    let extrasHTML = '';
+                    if (item.toppings.length > 0 || item.jarabes.length > 0) {
+                        extrasHTML += '<ul>';
+                        item.toppings.forEach(t => extrasHTML += `<li>+ ${t.nombre}</li>`);
+                        item.jarabes.forEach(j => extrasHTML += `<li>+ ${j.nombre}</li>`);
+                        extrasHTML += '</ul>';
+                    }
+
+                    const cartItem = document.createElement('div');
+                    cartItem.className = 'cart-item';
+                    cartItem.innerHTML = `
+                        <div class="cart-item-details">
+                            <strong>1x ${item.producto.nombre}</strong>
+                            ${extrasHTML}
+                        </div>
+                        <div class="cart-item-actions">
+                            <span class="price">$${itemTotal.toFixed(2)}</span>
+                            <button data-index="${index}">Eliminar</button>
+                        </div>
+                    `;
+                    cartItemsEl.appendChild(cartItem);
+                });
+                
+                cartItemsEl.querySelectorAll('.cart-item-actions button').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const indexToRemove = parseInt(e.target.dataset.index);
+                        carrito.splice(indexToRemove, 1);
+                        renderCart();
+                    });
+                });
+
+                cartTotalEl.textContent = `Total del Pedido: $${granTotal.toFixed(2)}`;
+            }
+
+            addToCartBtn.addEventListener('click', () => {
+                if (!seleccionActual.producto) return;
+                carrito.push(JSON.parse(JSON.stringify(seleccionActual)));
+                renderCart();
+                resetCurrentSelection();
+            });
+
+            orderForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (carrito.length === 0) {
+                    alert('Tu pedido está vacío. Por favor, agrega al menos un producto.');
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Enviando...';
+
+                const orderData = {
+                    nombreCliente: document.getElementById('nombreCliente').value,
+                    telefonoCliente: document.getElementById('telefonoCliente').value,
+                    items: carrito.map(item => {
+                        const totalItem = item.producto.precio + 
+                                         item.toppings.reduce((s,t) => s + t.precio, 0) +
+                                         item.jarabes.reduce((s,j) => s + j.precio, 0);
+                        return {
+                            nombre: item.producto.nombre,
+                            precio: item.producto.precio,
+                            toppings: item.toppings,
+                            jarabes: item.jarabes,
+                            total: totalItem
+                        }
+                    }),
+                    total: carrito.reduce((granTotal, item) => {
+                        return granTotal + item.producto.precio + 
+                               item.toppings.reduce((s,t) => s + t.precio, 0) +
+                               item.jarabes.reduce((s,j) => s + j.precio, 0);
+                    }, 0)
+                };
+
+                try {
+                    const response = await fetch('/api/pedidos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData)
+                    });
+                    
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Error desconocido del servidor.');
+                    
+                    alert('¡Tu pedido ha sido recibido! Gracias por tu preferencia.');
+                    carrito = [];
+                    orderForm.reset();
+                    renderCart();
+
+                } catch (error) {
+                    alert('Hubo un error al enviar tu pedido: ' + error.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Realizar Pedido';
+                }
+            });
+
+            fetchData();
+        });
+    </script>
+</body>
+</html>

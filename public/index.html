@@ -204,7 +204,14 @@
 </head>
 <body>
 
-  <audio id="notification-sound" src="https://cdn.jsdelivr.net/gh/scottschiller/SoundManager2@master/demo/audio/bell-ring.mp3" preload="auto"></audio>
+  <!-- ========================================================== -->
+  <!--    Paso 1: BANNER PARA ACTIVAR SONIDO (INICIALMENTE OCULTO)   -->
+  <!-- ========================================================== -->
+  <div id="audio-unlock-banner" style="display:none; position: fixed; top: 0; width: 100%; background-color: #f59e0b; color: white; padding: 1rem; text-align: center; z-index: 9999; cursor: pointer;">
+    <strong>¡Hay un nuevo pedido!</strong> Haz clic aquí para activar las notificaciones con sonido.
+  </div>
+
+  <audio id="notification-sound" src="/sounds/notification.mp3" preload="auto"></audio>
 
   <div id="login-container" class="card">
     <div style="text-align: center; margin-bottom: 1.5rem;">
@@ -676,6 +683,9 @@
         }
       }
 
+      // ========================================================== -->
+      //     Paso 2: FUNCIÓN MODIFICADA PARA MANEJAR EL SONIDO       -->
+      // ========================================================== -->
       async function verificarNuevosPedidos() {
           try {
               const data = await fetchAPI('/api/pedidos/nuevos/contador');
@@ -688,8 +698,23 @@
               if (count > 0) {
                   pedidosBadge.style.display = 'block';
                   
+                  // Si hay más pedidos que la última vez que revisamos...
                   if (count > pedidosNuevosAnteriores) {
-                      notificationSound.play().catch(e => console.warn("El navegador bloqueó la reproducción automática de sonido. Se necesita interacción del usuario."));
+                      
+                      // Intentamos reproducir el sonido
+                      const playPromise = notificationSound.play();
+
+                      if (playPromise !== undefined) {
+                        playPromise.then(_ => {
+                          // El sonido se reprodujo con éxito.
+                          console.log("Sonido de notificación reproducido.");
+                          document.getElementById('audio-unlock-banner').style.display = 'none';
+                        }).catch(error => {
+                          // El navegador bloqueó el sonido. Mostramos el banner.
+                          console.warn("El navegador bloqueó la reproducción automática. Mostrando banner para activar sonido.");
+                          document.getElementById('audio-unlock-banner').style.display = 'block';
+                        });
+                      }
                   }
               } else {
                   pedidosBadge.style.display = 'none';
@@ -883,7 +908,7 @@
           if (linkActivo) linkActivo.classList.add('active-link');
           
           sessionStorage.setItem('lastActiveSection', id);
-          document.title = originalTitle; // Reset title when changing sections
+          document.title = originalTitle;
 
           if (id === 'gestion-pedidos') {
               try {
@@ -1890,6 +1915,17 @@
 
         document.body.addEventListener('click', unlockAudio, { once: true });
         document.body.addEventListener('touchstart', unlockAudio, { once: true });
+
+        // ========================================================== -->
+        //       Paso 3: AÑADIMOS EL LISTENER PARA EL BANNER           -->
+        // ========================================================== -->
+        document.getElementById('audio-unlock-banner').addEventListener('click', () => {
+          const banner = document.getElementById('audio-unlock-banner');
+          const sound = document.getElementById('notification-sound');
+          
+          sound.play(); // Al ser por un clic, ahora sí funcionará.
+          banner.style.display = 'none'; // Ocultamos el banner.
+        });
       }
       
       window.app = { toggleAgotado, cancelarPedido, cambiarEstatusPedido, convertirPedidoAVenta };
@@ -1907,3 +1943,5 @@
   </script>
 </body>
 </html>
+
+

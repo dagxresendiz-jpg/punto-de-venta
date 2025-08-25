@@ -248,21 +248,14 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(orderData)
                     });
+                    
                     const result = await response.json();
-                    if (!response.ok) throw new Error(result.error);
+                    if (!response.ok) throw new Error(result.error || 'Error desconocido del servidor.');
                     
                     alert('¡Tu pedido ha sido recibido! Nos pondremos en contacto contigo pronto.');
                     
-                    let mensajeWhatsapp = `*¡Nuevo Pedido Recibido!*\n\n*Cliente:* ${orderData.nombreCliente}\n*Teléfono:* ${orderData.telefonoCliente}\n\n*Pedido:*\n`;
-                    orderData.items.forEach(item => {
-                        mensajeWhatsapp += `- ${item.nombre}\n`;
-                    });
-                    mensajeWhatsapp += `\n*Total: $${orderData.total.toFixed(2)}*`;
-                    
-                    // ===== NÚMERO DE TELÉFONO ACTUALIZADO =====
-                    const tuNumeroDeWhatsapp = "5218132520539";
-                    
-                    window.open(`https://api.whatsapp.com/send?phone=${tuNumeroDeWhatsapp}&text=${encodeURIComponent(mensajeWhatsapp)}`, '_blank');
+                    // ===== LÍNEA DE WHATSAPP ELIMINADA =====
+                    // Ya no se abre ninguna ventana para el cliente.
                     
                     carrito = [];
                     orderForm.reset();

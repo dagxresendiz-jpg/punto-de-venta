@@ -31,7 +31,6 @@
         .menu-item.agotado { background-color: #f1f5f9; color: #9ca3af; cursor: not-allowed; opacity: 0.6; }
         .menu-item.agotado:hover { transform: none; box-shadow: none; }
         .agotado-badge { position: absolute; top: 8px; right: 8px; background-color: #ef4444; color: white; padding: 0.2em 0.5em; border-radius: 12px; font-size: 0.7em; font-weight: 600; }
-        
         .menu-item h4 { margin-bottom: 0.5rem; font-size: 1.1rem; }
         .menu-item p { color: var(--text-color-light); }
         .cart h3 { font-size: 1.25rem; }
@@ -219,7 +218,9 @@
                     if(itemData.tipo === 'producto') fullItemData = productos.find(p => p.id === itemData.id);
                     if(itemData.tipo === 'topping') fullItemData = toppings.find(t => t.id === itemData.id);
                     if(itemData.tipo === 'jarabe') fullItemData = jarabes.find(j => j.id === itemData.id);
-                    addToCart(fullItemData);
+                    if (fullItemData) {
+                       addToCart(fullItemData);
+                    }
                 },
                 removeFromCart
             };
@@ -258,8 +259,10 @@
                     });
                     mensajeWhatsapp += `\n*Total: $${orderData.total.toFixed(2)}*`;
                     
-                    // IMPORTANTE: Reemplaza "TUNUMERO" con tu número de WhatsApp
-                    window.open(`https://api.whatsapp.com/send?phone=TUNUMERO&text=${encodeURIComponent(mensajeWhatsapp)}`, '_blank');
+                    // ===== NÚMERO DE TELÉFONO ACTUALIZADO =====
+                    const tuNumeroDeWhatsapp = "5218132520539";
+                    
+                    window.open(`https://api.whatsapp.com/send?phone=${tuNumeroDeWhatsapp}&text=${encodeURIComponent(mensajeWhatsapp)}`, '_blank');
                     
                     carrito = [];
                     orderForm.reset();

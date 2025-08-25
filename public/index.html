@@ -203,7 +203,7 @@
   </script>
 </head>
 <body>
-
+  
   <audio id="notification-sound" src="https://cdn.jsdelivr.net/gh/scottschiller/SoundManager2@master/demo/audio/bell-ring.mp3" preload="auto"></audio>
 
   <div id="login-container" class="card">
@@ -538,6 +538,7 @@
       let pollingIntervalId = null;
       let pedidosNuevosAnteriores = 0;
       const notificationSound = document.getElementById('notification-sound');
+      const originalTitle = document.title;
       
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
@@ -667,22 +668,33 @@
           }
       }
       
+      function actualizarTituloConNotificacion(count) {
+        if (count > 0) {
+            document.title = `(${count}) Pedidos Nuevos - ${originalTitle}`;
+        } else {
+            document.title = originalTitle;
+        }
+      }
+
       async function verificarNuevosPedidos() {
           try {
               const data = await fetchAPI('/api/pedidos/nuevos/contador');
               const pedidosBadge = document.getElementById('pedidos-badge');
               if (!pedidosBadge) return;
               
-              if (data && data.count > 0) {
+              const count = data ? data.count : 0;
+              actualizarTituloConNotificacion(count);
+
+              if (count > 0) {
                   pedidosBadge.style.display = 'block';
                   
-                  if (data.count > pedidosNuevosAnteriores) {
-                      notificationSound.play().catch(e => console.log("El navegador bloqueó la reproducción automática de sonido."));
+                  if (count > pedidosNuevosAnteriores) {
+                      notificationSound.play().catch(e => console.warn("El navegador bloqueó la reproducción automática de sonido. Se necesita interacción del usuario."));
                   }
               } else {
                   pedidosBadge.style.display = 'none';
               }
-              pedidosNuevosAnteriores = data ? data.count : 0;
+              pedidosNuevosAnteriores = count;
           } catch (error) {
               console.error("Error en el polling de pedidos:", error);
               if (error.message.includes('Sesión expirada') || error.message.includes('No autenticado')) {
@@ -698,6 +710,14 @@
           verificarNuevosPedidos();
           pollingIntervalId = setInterval(verificarNuevosPedidos, 15000);
       }
+      
+      const unlockAudio = () => {
+          notificationSound.play();
+          notificationSound.pause();
+          notificationSound.currentTime = 0;
+          document.body.removeEventListener('click', unlockAudio);
+          document.body.removeEventListener('touchstart', unlockAudio);
+      };
 
       async function showApp() {
         try {
@@ -1762,7 +1782,7 @@
             cargarPedidos();
         }
       }
-
+      
       async function convertirPedidoAVenta(pedido) {
           if (confirm(`¿Convertir el pedido de ${pedido.nombreCliente} a una venta registrada? El pedido se eliminará de esta lista y aparecerá en el Historial.`)) {
               try {
@@ -1774,11 +1794,11 @@
               }
           }
       }
-      
+
       async function toggleAgotado(id) {
           try {
               await fetchAPI(`/api/productos/${id}/toggle-agotado`, { method: 'PUT' });
-              cargarProductos();
+              await cargarProductos();
           } catch (err) {
               alert(`Error al cambiar estado: ${err.message}`);
           }
@@ -1866,6 +1886,9 @@
         document.getElementById('btnResumenPDF').addEventListener('click', generarResumenPDFSimple);
         document.getElementById('btnDetalleWhatsapp').addEventListener('click', enviarDetalleWhatsapp);
         document.getElementById('btnDetallePDF').addEventListener('click', generarDetallePDF);
+
+        document.body.addEventListener('click', unlockAudio, { once: true });
+        document.body.addEventListener('touchstart', unlockAudio, { once: true });
       }
       
       window.app = { toggleAgotado, cancelarPedido, cambiarEstatusPedido, convertirPedidoAVenta };

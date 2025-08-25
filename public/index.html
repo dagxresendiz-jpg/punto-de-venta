@@ -203,7 +203,7 @@
   </script>
 </head>
 <body>
-  
+
   <audio id="notification-sound" src="https://cdn.jsdelivr.net/gh/scottschiller/SoundManager2@master/demo/audio/bell-ring.mp3" preload="auto"></audio>
 
   <div id="login-container" class="card">
@@ -883,6 +883,7 @@
           if (linkActivo) linkActivo.classList.add('active-link');
           
           sessionStorage.setItem('lastActiveSection', id);
+          document.title = originalTitle; // Reset title when changing sections
 
           if (id === 'gestion-pedidos') {
               try {

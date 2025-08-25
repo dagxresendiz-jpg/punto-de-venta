@@ -55,6 +55,18 @@
     .btn-listo { background-color: var(--success-color); color: white; }
     .btn-convertir { background-color: var(--primary-color); color: white; }
     .btn-cancelar { background-color: var(--danger-color); color: white; }
+    .nav-link { position: relative; }
+    .notification-badge {
+        display: none;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 10px;
+        height: 10px;
+        background-color: var(--danger-color);
+        border-radius: 50%;
+        border: 2px solid var(--card-background);
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color-dark); -webkit-font-smoothing: antialiased; }
     .app-wrapper { display: flex; min-height: 100vh; }
@@ -192,6 +204,8 @@
 </head>
 <body>
 
+  <audio id="notification-sound" src="https://cdn.jsdelivr.net/gh/scottschiller/SoundManager2@master/demo/audio/bell-ring.mp3" preload="auto"></audio>
+
   <div id="login-container" class="card">
     <div style="text-align: center; margin-bottom: 1.5rem;">
         <img id="login-logo" src="https://via.placeholder.com/180x60.png?text=Cargando..." alt="Logotipo" style="max-width: 180px; max-height: 70px;">
@@ -220,7 +234,11 @@
         <img id="app-logo" src="https://via.placeholder.com/180x60.png?text=Cargando..." alt="Logotipo">
       </div>
       <div class="sidebar-nav">
-        <a class="nav-link" data-seccion="gestion-pedidos" id="btn-pedidos"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375-3.375-3.375m0 0L12.75 14.5m3-3-3.375-3.375" /></svg><span>Pedidos Online</span></a>
+        <a class="nav-link" data-seccion="gestion-pedidos" id="btn-pedidos">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375-3.375-3.375m0 0L12.75 14.5m3-3-3.375-3.375" /></svg>
+            <span>Pedidos Online</span>
+            <span class="notification-badge" id="pedidos-badge"></span>
+        </a>
         <a class="nav-link" data-seccion="registrar-venta"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.838-6.967c.124-.467-.202-1.026-.693-1.026H6.118" /></svg><span>Registrar Venta</span></a>
         <a class="nav-link" data-seccion="gestion-completa" id="btn-gestion"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg><span>Gestión</span></a>
         <a class="nav-link" data-seccion="gestion-clientes" id="btn-clientes"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-4.663c.278.472.548.972.786 1.503z" /></svg><span>Clientes</span></a>
@@ -517,6 +535,9 @@
       let ventasFiltradasGlobal = [];
       let procesandoVenta = false;
       const COSTO_DOMICILIO_PREDET = 30.00;
+      let pollingIntervalId = null;
+      let pedidosNuevosAnteriores = 0;
+      const notificationSound = document.getElementById('notification-sound');
       
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
@@ -645,6 +666,38 @@
               loginLogo.src = errorLogo;
           }
       }
+      
+      async function verificarNuevosPedidos() {
+          try {
+              const data = await fetchAPI('/api/pedidos/nuevos/contador');
+              const pedidosBadge = document.getElementById('pedidos-badge');
+              if (!pedidosBadge) return;
+              
+              if (data && data.count > 0) {
+                  pedidosBadge.style.display = 'block';
+                  
+                  if (data.count > pedidosNuevosAnteriores) {
+                      notificationSound.play().catch(e => console.log("El navegador bloqueó la reproducción automática de sonido."));
+                  }
+              } else {
+                  pedidosBadge.style.display = 'none';
+              }
+              pedidosNuevosAnteriores = data ? data.count : 0;
+          } catch (error) {
+              console.error("Error en el polling de pedidos:", error);
+              if (error.message.includes('Sesión expirada') || error.message.includes('No autenticado')) {
+                  clearInterval(pollingIntervalId);
+              }
+          }
+      }
+
+      function iniciarPollingDePedidos() {
+          if (pollingIntervalId) {
+              clearInterval(pollingIntervalId);
+          }
+          verificarNuevosPedidos();
+          pollingIntervalId = setInterval(verificarNuevosPedidos, 15000);
+      }
 
       async function showApp() {
         try {
@@ -720,6 +773,10 @@
                     document.querySelector('main').innerHTML = '<div class="card"><p>No tienes acceso a ninguna sección.</p></div>';
                 }
             }
+            
+            if (esAdmin || (permisos && permisos.pedidos)) {
+                iniciarPollingDePedidos();
+            }
 
         } catch (e) { 
             console.error("Error en showApp:", e); 
@@ -731,6 +788,7 @@
       function showLogin() {
         localStorage.removeItem('token');
         sessionStorage.removeItem('lastActiveSection');
+        if (pollingIntervalId) clearInterval(pollingIntervalId);
         const style = document.head.querySelector('style[data-flicker-guard]');
         if (style) {
             style.textContent = '#login-container { display: block !important; } #app-wrapper { display: none !important; }';
@@ -794,7 +852,7 @@
         setupCollapsibles(); 
       }
       
-      function mostrarSeccion(id) {
+      async function mostrarSeccion(id) {
         document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
         document.querySelectorAll('nav a').forEach(link => link.classList.remove('active-link'));
         const seccionActiva = document.getElementById(id);
@@ -805,6 +863,15 @@
           if (linkActivo) linkActivo.classList.add('active-link');
           
           sessionStorage.setItem('lastActiveSection', id);
+
+          if (id === 'gestion-pedidos') {
+              try {
+                  await fetchAPI('/api/pedidos/marcar-vistos', { method: 'POST' });
+                  verificarNuevosPedidos();
+              } catch (error) {
+                  console.error("Error al marcar pedidos como vistos:", error);
+              }
+          }
 
           const cargarMap = {
             'gestion-pedidos': () => cargarPedidos(),
@@ -1134,7 +1201,7 @@
       function generarTextoTicket(venta) {
         let texto = `--- Ticket Dulces Amigas ---\nFecha: ${new Date(venta.fecha).toLocaleString()}\nCliente: ${venta.clienteNombre}\nAtendido por: ${venta.vendedorUsername}\n\n`;
         venta.items.forEach((n, a) => {
-          texto += `${a + 1}. ${n.productoNombre} x${n.cantidad}\n`;
+          texto += `${a + 1}. ${n.nombre || n.productoNombre} x${n.cantidad || 1}\n`;
           if (n.toppings && n.toppings.length) texto += `   + Toppings: ${n.toppings.map(e => e.nombre).join(", ")}\n`;
           if (n.jarabes && n.jarabes.length) texto += `   + Jarabes: ${n.jarabes.map(e => e.nombre).join(", ")}\n`;
           if (n.nota) texto += `   * Nota: ${n.nota}\n`;
@@ -1695,7 +1762,7 @@
             cargarPedidos();
         }
       }
-      
+
       async function convertirPedidoAVenta(pedido) {
           if (confirm(`¿Convertir el pedido de ${pedido.nombreCliente} a una venta registrada? El pedido se eliminará de esta lista y aparecerá en el Historial.`)) {
               try {
@@ -1707,7 +1774,7 @@
               }
           }
       }
-
+      
       async function toggleAgotado(id) {
           try {
               await fetchAPI(`/api/productos/${id}/toggle-agotado`, { method: 'PUT' });

@@ -1,4 +1,4 @@
-// server.js - Versión con Agotados, Permiso de Pedidos y Conversión a Venta
+// server.js - Versión Final con Notificaciones en App
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -73,7 +73,8 @@ const Pedido = mongoose.model('Pedido', createSchema({
     telefonoCliente: { type: String, required: true },
     items: Array,
     total: Number,
-    estatus: { type: String, default: 'recibido' }
+    estatus: { type: String, default: 'recibido' },
+    visto: { type: Boolean, default: false }
 }));
 
 // --- MIDDLEWARES DE SEGURIDAD ---
@@ -109,7 +110,7 @@ const apiRouter = express.Router();
 const authRouter = express.Router();
 const findActive = { $or: [{ status: 'activo' }, { status: { $exists: false } }] };
 
-// --- RUTAS PÚBLICAS (NO REQUIEREN TOKEN) ---
+// --- RUTAS PÚBLICAS ---
 authRouter.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -142,14 +143,14 @@ apiRouter.post('/pedidos', async (req, res) => {
         if (!nombreCliente || !telefonoCliente || !items || !items.length) {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
-        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, items, total });
+        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, items, total, visto: false });
         res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
     } catch (error) {
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
 
-// --- RUTAS PRIVADAS (REQUIEREN TOKEN) ---
+// --- RUTAS PRIVADAS ---
 apiRouter.use(verificarToken);
 
 apiRouter.post('/configuracion', esAdmin, async (req, res) => {
@@ -169,7 +170,7 @@ pedidosRouter.post('/:id/convertir-a-venta', tienePermiso('pedidos'), async (req
         const nuevaVenta = await Venta.create({
             fecha: new Date(),
             clienteNombre: pedido.nombreCliente,
-            items: pedido.items.map(item => ({ nombre: item.nombre, total: item.precio, cantidad: 1 })),
+            items: pedido.items.map(item => ({ nombre: item.nombre, total: item.precio, cantidad: 1 })), // Simplificado para el historial
             subtotal: pedido.total,
             costoDomicilio: 0,
             total: pedido.total,
@@ -184,6 +185,22 @@ pedidosRouter.post('/:id/convertir-a-venta', tienePermiso('pedidos'), async (req
     } catch (error) {
         console.error("Error al convertir pedido:", error);
         res.status(500).json({ error: 'Error al convertir el pedido a venta.' });
+    }
+});
+pedidosRouter.get('/nuevos/contador', tienePermiso('pedidos'), async (req, res) => {
+    try {
+        const count = await Pedido.countDocuments({ visto: false });
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al contar pedidos nuevos.' });
+    }
+});
+pedidosRouter.post('/marcar-vistos', tienePermiso('pedidos'), async (req, res) => {
+    try {
+        await Pedido.updateMany({ visto: false }, { $set: { visto: true } });
+        res.status(200).json({ message: 'Pedidos marcados como vistos.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al marcar pedidos como vistos.' });
     }
 });
 apiRouter.use('/pedidos', pedidosRouter);
@@ -271,7 +288,6 @@ app.use('/api', apiRouter);
 
 // --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
 app.get('*', (req, res) => {
-    // Si la URL empieza con '/menu', sirve 'menu.html', si no, sirve 'index.html'
     if (req.originalUrl.startsWith('/menu')) {
         res.sendFile(path.join(__dirname, 'public', 'menu.html'));
     } else {

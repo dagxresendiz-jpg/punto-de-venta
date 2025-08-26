@@ -18,8 +18,6 @@
             --border-color: #e2e8f0;
             --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
-
-        /* == MEJORA 1: ESTILOS PARA EL MODO OSCURO == */
         body.dark-mode {
             --background-color: #1e293b;
             --card-background: #334155;
@@ -28,7 +26,6 @@
             --border-color: #475569;
             --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
             font-family: 'Poppins', sans-serif; 
@@ -39,7 +36,19 @@
         }
         .container { max-width: 800px; margin: 0 auto; }
         .header { text-align: center; margin-bottom: 2rem; position: relative; }
-        .header img { max-width: 200px; max-height: 80px; }
+        
+        /* == MEJORA ANTI-FLICKER: ESTILOS PARA EL LOGO == */
+        #menu-logo {
+            max-width: 200px;
+            max-height: 80px;
+            min-height: 80px; /* Reserva el espacio vertical para evitar saltos */
+            opacity: 0; /* Empieza oculto */
+            transition: opacity 0.5s ease-in-out; /* Animación de fundido */
+        }
+        #menu-logo.loaded {
+            opacity: 1; /* Se revela cuando está cargado */
+        }
+
         .card { 
             background-color: var(--card-background); 
             border-radius: 12px; 
@@ -118,7 +127,6 @@
         form button:hover { background-color: #f76c8c; }
         form button:disabled { background-color: #9ca3af; }
 
-        /* == MEJORA 1: ESTILOS PARA EL INTERRUPTOR DE MODO OSCURO == */
         .theme-switch-wrapper { position: absolute; top: 0; right: 0; }
         .theme-switch { display: inline-block; height: 26px; position: relative; width: 50px; }
         .theme-switch input { display: none; }
@@ -136,7 +144,6 @@
 <body>
     <div class="container">
         <div class="header">
-            <!-- == MEJORA 1: INTERRUPTOR DE MODO OSCURO == -->
             <div class="theme-switch-wrapper">
                 <label class="theme-switch" for="theme-toggle">
                     <input type="checkbox" id="theme-toggle" />
@@ -146,7 +153,8 @@
                     </div>
                 </label>
             </div>
-            <img id="menu-logo" src="https://via.placeholder.com/200x80.png?text=Cargando..." alt="Logo del Negocio">
+            <!-- == MEJORA ANTI-FLICKER: SRC CAMBIADO A UN PIXEL TRANSPARENTE == -->
+            <img id="menu-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo del Negocio">
             <h1>Nuestro Menú</h1>
             <p style="color: var(--text-color-light);">Arma tus productos uno por uno y añádelos a tu pedido.</p>
         </div>
@@ -201,8 +209,8 @@
             const addToCartBtn = document.getElementById('add-to-cart-btn');
             const currentItemTotalEl = document.getElementById('current-item-total');
             const themeToggle = document.getElementById('theme-toggle');
+            const menuLogo = document.getElementById('menu-logo'); // Variable para el logo
 
-            // == MEJORA 1: LÓGICA DEL MODO OSCURO ==
             function applyTheme(theme) {
                 if (theme === 'dark') {
                     document.body.classList.add('dark-mode');
@@ -219,18 +227,15 @@
                 applyTheme(theme);
             });
 
-            // Aplicar tema guardado al cargar
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme) {
                 applyTheme(savedTheme);
             } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                applyTheme('dark'); // Preferencia del sistema
+                applyTheme('dark');
             }
-
 
             async function fetchData() {
                 try {
-                    // ** CORRECCIÓN DE RUTAS API **
                     const [productosRes, toppingsRes, jarabesRes, configRes] = await Promise.all([
                         fetch('/api/productos'),
                         fetch('/api/toppings'),
@@ -245,7 +250,16 @@
                     jarabes = await jarabesRes.json();
                     
                     const config = await configRes.json().catch(() => ({}));
-                    if (config.logo_base64) document.getElementById('menu-logo').src = config.logo_base64;
+                    
+                    // == MEJORA ANTI-FLICKER: LÓGICA PARA CARGAR Y REVELAR EL LOGO ==
+                    if (config.logo_base64) {
+                        menuLogo.src = config.logo_base64;
+                    } else {
+                        // Si no hay logo, podemos poner uno por defecto o dejarlo vacío
+                        menuLogo.src = "https://via.placeholder.com/200x80.png?text=Dulces+Amigas";
+                    }
+                    menuLogo.classList.add('loaded'); // Añade la clase para revelar el logo con la animación
+                    
                     if (config.primary_color) document.documentElement.style.setProperty('--primary-color', config.primary_color);
                     if (config.accent_color) document.documentElement.style.setProperty('--accent-color', config.accent_color);
 
@@ -253,6 +267,8 @@
                 } catch (error) {
                     console.error('Error al cargar el menú:', error);
                     productosContainer.innerHTML = `<p style="color: var(--danger-color);">${error.message}</p>`;
+                    menuLogo.src = "https://via.placeholder.com/200x80.png?text=Error"; // Muestra un logo de error si todo falla
+                    menuLogo.classList.add('loaded'); // Asegúrate de mostrar el logo de error
                 }
             }
 

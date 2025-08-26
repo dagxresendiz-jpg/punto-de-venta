@@ -204,9 +204,6 @@
 </head>
 <body>
 
-  <!-- ========================================================== -->
-  <!--    Paso 1: BANNER PARA ACTIVAR SONIDO (INICIALMENTE OCULTO)   -->
-  <!-- ========================================================== -->
   <div id="audio-unlock-banner" style="display:none; position: fixed; top: 0; width: 100%; background-color: #f59e0b; color: white; padding: 1rem; text-align: center; z-index: 9999; cursor: pointer;">
     <strong>¡Hay un nuevo pedido!</strong> Haz clic aquí para activar las notificaciones con sonido.
   </div>
@@ -683,9 +680,6 @@
         }
       }
 
-      // ========================================================== -->
-      //     Paso 2: FUNCIÓN MODIFICADA PARA MANEJAR EL SONIDO       -->
-      // ========================================================== -->
       async function verificarNuevosPedidos() {
           try {
               const data = await fetchAPI('/api/pedidos/nuevos/contador');
@@ -698,19 +692,10 @@
               if (count > 0) {
                   pedidosBadge.style.display = 'block';
                   
-                  // Si hay más pedidos que la última vez que revisamos...
                   if (count > pedidosNuevosAnteriores) {
-                      
-                      // Intentamos reproducir el sonido
                       const playPromise = notificationSound.play();
-
                       if (playPromise !== undefined) {
-                        playPromise.then(_ => {
-                          // El sonido se reprodujo con éxito.
-                          console.log("Sonido de notificación reproducido.");
-                          document.getElementById('audio-unlock-banner').style.display = 'none';
-                        }).catch(error => {
-                          // El navegador bloqueó el sonido. Mostramos el banner.
+                        playPromise.catch(error => {
                           console.warn("El navegador bloqueó la reproducción automática. Mostrando banner para activar sonido.");
                           document.getElementById('audio-unlock-banner').style.display = 'block';
                         });
@@ -1731,6 +1716,9 @@
           pdf.save('detalle-ventas.pdf');
       }
       
+      // ========================================================== -->
+      //     FUNCIÓN CORREGIDA PARA MOSTRAR DETALLES DEL PEDIDO      -->
+      // ========================================================== -->
       async function cargarPedidos() {
         const pedidos = await fetchAPI('/api/pedidos');
         if (!pedidos) return;
@@ -1745,13 +1733,28 @@
         pedidos.forEach(p => {
             const card = document.createElement('div');
             card.className = 'pedido-card';
+
+            let itemsHtml = '';
+            p.items.forEach(item => {
+                itemsHtml += `<li><strong>- ${item.nombre}</strong></li>`;
+
+                const extras = [...(item.toppings || []), ...(item.jarabes || [])];
+                if (extras.length > 0) {
+                    itemsHtml += '<ul style="padding-left: 20px;">';
+                    extras.forEach(extra => {
+                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${extra.nombre}</li>`;
+                    });
+                    itemsHtml += '</ul>';
+                }
+            });
+
             card.innerHTML = `
                 <div class="pedido-card-header">
                     <h4>${p.nombreCliente}</h4>
                     <span>${new Date(p.createdAt).toLocaleTimeString()}</span>
                 </div>
                 <div class="pedido-card-body">
-                    <ul>${p.items.map(i => `<li>- ${i.nombre} ($${i.precio.toFixed(2)})</li>`).join('')}</ul>
+                    <ul>${itemsHtml}</ul>
                 </div>
                 <div class="pedido-card-footer">
                     <span class="total">Total: $${p.total.toFixed(2)}</span>
@@ -1916,15 +1919,12 @@
         document.body.addEventListener('click', unlockAudio, { once: true });
         document.body.addEventListener('touchstart', unlockAudio, { once: true });
 
-        // ========================================================== -->
-        //       Paso 3: AÑADIMOS EL LISTENER PARA EL BANNER           -->
-        // ========================================================== -->
         document.getElementById('audio-unlock-banner').addEventListener('click', () => {
           const banner = document.getElementById('audio-unlock-banner');
           const sound = document.getElementById('notification-sound');
           
-          sound.play(); // Al ser por un clic, ahora sí funcionará.
-          banner.style.display = 'none'; // Ocultamos el banner.
+          sound.play();
+          banner.style.display = 'none';
         });
       }
       
@@ -1943,5 +1943,3 @@
   </script>
 </body>
 </html>
-
-

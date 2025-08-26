@@ -1,4 +1,4 @@
-// server.js - Versión Final con Notificaciones en App
+// server.js - Versión Final Corregida y Mejorada
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -108,9 +108,10 @@ const tienePermiso = (seccion) => async (req, res, next) => {
 // --- RUTAS DE LA API ---
 const apiRouter = express.Router();
 const authRouter = express.Router();
+const publicApiRouter = express.Router(); // <-- Router para endpoints públicos
 const findActive = { $or: [{ status: 'activo' }, { status: { $exists: false } }] };
 
-// --- RUTAS PÚBLICAS ---
+// --- RUTAS DE AUTENTICACIÓN (Públicas) ---
 authRouter.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -127,17 +128,21 @@ authRouter.post('/login', async (req, res) => {
 });
 app.use('/auth', authRouter);
 
-apiRouter.get('/configuracion', async (req, res) => {
+// --- RUTAS PÚBLICAS DE LA API (Para el Menú) ---
+publicApiRouter.get('/configuracion', async (req, res) => {
     try {
         let config = await AppConfig.findOne();
         if (!config) { config = await AppConfig.create({}); }
         res.json(config);
     } catch (error) { res.status(500).json({ error: 'Error al obtener la configuración.' }); }
 });
-apiRouter.get('/menu/productos', async (req, res) => res.json(await Producto.find(findActive)));
-apiRouter.get('/menu/toppings', async (req, res) => res.json(await Topping.find(findActive)));
-apiRouter.get('/menu/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
-apiRouter.post('/pedidos', async (req, res) => {
+
+// ** CORRECCIÓN: Se mueven las rutas del menú aquí, al router público y sin /menu **
+publicApiRouter.get('/productos', async (req, res) => res.json(await Producto.find(findActive)));
+publicApiRouter.get('/toppings', async (req, res) => res.json(await Topping.find(findActive)));
+publicApiRouter.get('/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
+
+publicApiRouter.post('/pedidos', async (req, res) => {
     try {
         const { nombreCliente, telefonoCliente, items, total } = req.body;
         if (!nombreCliente || !telefonoCliente || !items || !items.length) {
@@ -149,8 +154,9 @@ apiRouter.post('/pedidos', async (req, res) => {
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
+app.use('/api', publicApiRouter); // Se registra el router público sin token
 
-// --- RUTAS PRIVADAS ---
+// --- RUTAS PRIVADAS (Protegidas por Token) ---
 apiRouter.use(verificarToken);
 
 apiRouter.post('/configuracion', esAdmin, async (req, res) => {
@@ -283,7 +289,7 @@ usuariosRouter.delete('/:id', tienePermiso('usuarios'), async (req, res) => {
 usuariosRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndDelete(req.params.id); res.status(204).send(); });
 apiRouter.use('/usuarios', esAdmin, usuariosRouter);
 
-// Usar el router principal de la API
+// Usar el router principal de la API PRIVADA
 app.use('/api', apiRouter);
 
 // --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---

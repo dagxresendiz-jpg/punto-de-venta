@@ -18,260 +18,429 @@
             --border-color: #e2e8f0;
             --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
+
+        /* == MEJORA 1: ESTILOS PARA EL MODO OSCURO == */
+        body.dark-mode {
+            --background-color: #1e293b;
+            --card-background: #334155;
+            --text-color-dark: #f1f5f9;
+            --text-color-light: #94a3b8;
+            --border-color: #475569;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color-dark); padding: 1rem; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--background-color); 
+            color: var(--text-color-dark); 
+            padding: 1rem;
+            transition: background-color 0.3s, color 0.3s;
+        }
         .container { max-width: 800px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 2rem; }
+        .header { text-align: center; margin-bottom: 2rem; position: relative; }
         .header img { max-width: 200px; max-height: 80px; }
-        .card { background-color: var(--card-background); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow); }
+        .card { 
+            background-color: var(--card-background); 
+            border-radius: 12px; 
+            padding: 1.5rem; 
+            margin-bottom: 2rem; 
+            box-shadow: var(--shadow);
+            transition: background-color 0.3s;
+        }
         h2 { font-size: 1.5rem; color: var(--accent-color); margin-bottom: 1rem; border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem;}
+        h4 { margin-top: 1.5rem; }
+        
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
-        .menu-item { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
-        .menu-item:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+        .menu-item { 
+            border: 2px solid var(--border-color);
+            border-radius: 8px; 
+            padding: 1rem; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background-color 0.2s; 
+            position: relative; 
+        }
+        .menu-item:hover { 
+            transform: translateY(-5px); 
+            box-shadow: var(--shadow);
+            border-color: var(--accent-color);
+        }
+        .menu-item.selected {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .menu-item.selected p { color: #e0e7ff; }
         .menu-item.agotado { background-color: #f1f5f9; color: #9ca3af; cursor: not-allowed; opacity: 0.6; }
-        .menu-item.agotado:hover { transform: none; box-shadow: none; }
+        .menu-item.agotado:hover { transform: none; box-shadow: none; border-color: var(--border-color); }
         .agotado-badge { position: absolute; top: 8px; right: 8px; background-color: #ef4444; color: white; padding: 0.2em 0.5em; border-radius: 12px; font-size: 0.7em; font-weight: 600; }
         .menu-item h4 { margin-bottom: 0.5rem; font-size: 1.1rem; }
         .menu-item p { color: var(--text-color-light); }
+        
+        .add-to-cart-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: var(--background-color);
+            border-radius: 8px;
+        }
+        .add-to-cart-section span { font-size: 1.1rem; font-weight: 600; }
+        #add-to-cart-btn { 
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary-color); 
+            color: white; 
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #add-to-cart-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
+
         .cart h3 { font-size: 1.25rem; }
         #cart-items { list-style: none; padding: 0; margin-bottom: 1rem; }
-        #cart-items li { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
-        .item-controls button { background: none; border: 1px solid var(--border-color); border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+        .cart-item { padding: 1rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: flex-start; }
+        .cart-item-details { flex-grow: 1; }
+        .cart-item-details strong { color: var(--text-color-dark); }
+        .cart-item-details ul { list-style: none; padding-left: 1rem; margin-top: 0.5rem; }
+        .cart-item-details li { color: var(--text-color-light); font-size: 0.9em; }
+        .cart-item-actions { display: flex; flex-direction: column; align-items: flex-end; }
+        .cart-item-actions .price { font-weight: 600; margin-bottom: 0.5rem; }
+        .cart-item-actions button { background: none; border: none; color: var(--danger-color); cursor: pointer; font-size: 0.9em; }
+        
         #cart-total { text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--primary-color); margin-bottom: 1.5rem; }
+        
         form label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        form input { display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; }
-        form button { width: 100%; padding: 0.75rem; border-radius: 8px; border: none; background-color: var(--accent-color); color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+        form input { display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; background-color: var(--card-background); color: var(--text-color-dark); }
+        form button { width: 100%; padding: 0.75rem; border-radius: 8px; border: none; background-color: var(--accent-color); color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        form button:hover { background-color: #f76c8c; }
         form button:disabled { background-color: #9ca3af; }
+
+        /* == MEJORA 1: ESTILOS PARA EL INTERRUPTOR DE MODO OSCURO == */
+        .theme-switch-wrapper { position: absolute; top: 0; right: 0; }
+        .theme-switch { display: inline-block; height: 26px; position: relative; width: 50px; }
+        .theme-switch input { display: none; }
+        .slider { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 26px; }
+        .slider:before { background-color: #fff; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; position: absolute; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .slider .sun, .slider .moon { position: absolute; top: 50%; transform: translateY(-50%); }
+        .slider .sun { left: 6px; opacity: 1; transition: opacity 0.2s; }
+        .slider .moon { right: 6px; opacity: 0; transition: opacity 0.2s; }
+        input:checked + .slider .sun { opacity: 0; }
+        input:checked + .slider .moon { opacity: 1; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <!-- == MEJORA 1: INTERRUPTOR DE MODO OSCURO == -->
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="theme-toggle">
+                    <input type="checkbox" id="theme-toggle" />
+                    <div class="slider">
+                        <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="yellow" viewBox="0 0 16 16"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
+                        <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>
+                    </div>
+                </label>
+            </div>
             <img id="menu-logo" src="https://via.placeholder.com/200x80.png?text=Cargando..." alt="Logo del Negocio">
             <h1>Nuestro Menú</h1>
+            <p style="color: var(--text-color-light);">Arma tus productos uno por uno y añádelos a tu pedido.</p>
         </div>
-code
-Code
-<div class="card">
-        <h2>Productos</h2>
-        <div id="productos-container" class="menu-grid"></div>
-    </div>
-    
-    <div class="card">
-        <h2>Añade Toppings (Opcional)</h2>
-        <div id="toppings-container" class="menu-grid"></div>
-    </div>
 
-    <div class="card">
-        <h2>Añade Jarabes (Opcional)</h2>
-        <div id="jarabes-container" class="menu-grid"></div>
-    </div>
-    
-    <div class="card cart">
-        <h3>Tu Pedido</h3>
-        <ul id="cart-items"></ul>
-        <p id="cart-total">Total: $0.00</p>
-        <form id="order-form">
-            <label for="nombreCliente">Tu Nombre:</label>
-            <input type="text" id="nombreCliente" required>
-            <label for="telefonoCliente">Tu Teléfono (WhatsApp):</label>
-            <input type="tel" id="telefonoCliente" required>
-            <button type="submit" id="submit-order-btn">Realizar Pedido</button>
-        </form>
-    </div>
-</div>
+        <div class="card">
+            <h2>1. Elige un Producto Principal</h2>
+            <div id="productos-container" class="menu-grid"></div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        let carrito = [];
-        let productos = [], toppings = [], jarabes = [];
+            <h2 style="margin-top: 2rem;">2. Personalízalo con Extras</h2>
+            <h4>Toppings</h4>
+            <div id="toppings-container" class="menu-grid" style="margin-top: 1rem;"></div>
+            <h4 style="margin-top: 1.5rem;">Jarabes</h4>
+            <div id="jarabes-container" class="menu-grid" style="margin-top: 1rem;"></div>
 
-        const productosContainer = document.getElementById('productos-container');
-        const toppingsContainer = document.getElementById('toppings-container');
-        const jarabesContainer = document.getElementById('jarabes-container');
-        const cartItemsEl = document.getElementById('cart-items');
-        const cartTotalEl = document.getElementById('cart-total');
-        const orderForm = document.getElementById('order-form');
-        const submitBtn = document.getElementById('submit-order-btn');
-
-        async function fetchData() {
-            try {
-                const [productosRes, toppingsRes, jarabesRes, configRes] = await Promise.all([
-                    fetch('/api/menu/productos'),
-                    fetch('/api/menu/toppings'),
-                    fetch('/api/menu/jarabes'),
-                    fetch('/api/configuracion')
-                ]);
-                productos = await productosRes.json();
-                toppings = await toppingsRes.json();
-                jarabes = await jarabesRes.json();
-                const config = await configRes.json();
-                
-                if (config.logo_base64) {
-                    document.getElementById('menu-logo').src = config.logo_base64;
-                }
-                if (config.primary_color) {
-                    document.documentElement.style.setProperty('--primary-color', config.primary_color);
-                }
-                if (config.accent_color) {
-                    document.documentElement.style.setProperty('--accent-color', config.accent_color);
-                }
-
-                renderMenu();
-            } catch (error) {
-                console.error('Error al cargar el menú:', error);
-                productosContainer.innerHTML = '<p>No se pudo cargar el menú. Intenta de nuevo más tarde.</p>';
-            }
-        }
-
-        function renderMenu() {
-            productosContainer.innerHTML = productos.map(p => `
-                <div class="menu-item ${p.agotado ? 'agotado' : ''}" data-id="${p.id}" data-tipo="producto">
-                    ${p.agotado ? '<div class="agotado-badge">Agotado</div>' : ''}
-                    <h4>${p.nombre}</h4>
-                    <p>$${p.precio.toFixed(2)}</p>
-                </div>`).join('');
-
-            toppingsContainer.innerHTML = toppings.map(t => `
-                <div class="menu-item" data-id="${t.id}" data-tipo="topping">
-                    <h4>${t.nombre}</h4>
-                    <p>$${t.precio.toFixed(2)}</p>
-                </div>`).join('');
-
-            jarabesContainer.innerHTML = jarabes.map(j => `
-                <div class="menu-item" data-id="${j.id}" data-tipo="jarabe">
-                    <h4>${j.nombre}</h4>
-                    <p>$${j.precio.toFixed(2)}</p>
-                </div>`).join('');
-            
-            addEventListenersToItems();
-        }
-
-        function addEventListenersToItems() {
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    if (item.classList.contains('agotado')) return;
-                    
-                    const id = item.dataset.id;
-                    const tipo = item.dataset.tipo;
-                    let itemData;
-                    
-                    if (tipo === 'producto') itemData = productos.find(p => p.id === id);
-                    if (tipo === 'topping') itemData = toppings.find(t => t.id === id);
-                    if (tipo === 'jarabe') itemData = jarabes.find(j => j.id === id);
-
-                    if (itemData) {
-                        addToCart(itemData);
-                    }
-                });
-            });
-        }
-
-        function addToCart(item) {
-            const itemExistente = carrito.find(cartItem => cartItem.id === item.id);
-            if (itemExistente) {
-                itemExistente.cantidad++;
-            } else {
-                carrito.push({ ...item, cantidad: 1 });
-            }
-            updateCart();
-        }
-
-        function removeFromCart(itemId) {
-            const itemIndex = carrito.findIndex(cartItem => cartItem.id === itemId);
-            if (itemIndex > -1) {
-                carrito[itemIndex].cantidad--;
-                if (carrito[itemIndex].cantidad === 0) {
-                    carrito.splice(itemIndex, 1);
-                }
-            }
-            updateCart();
-        }
-
-        function updateCart() {
-            cartItemsEl.innerHTML = '';
-            let total = 0;
-
-            if (carrito.length === 0) {
-                cartItemsEl.innerHTML = '<li>Tu carrito está vacío.</li>';
-            }
-
-            carrito.forEach(item => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span>${item.cantidad}x ${item.nombre}</span>
-                    <div class="item-controls" style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span>$${(item.precio * item.cantidad).toFixed(2)}</span>
-                        <button onclick="window.app.removeFromCart('${item.id}')">-</button>
-                        <button onclick="window.app.addToCart({id: '${item.id}', tipo: '${item.tipo}'})">+</button>
-                    </div>
-                `;
-                cartItemsEl.appendChild(li);
-                total += item.precio * item.cantidad;
-            });
-
-            cartTotalEl.textContent = `Total: $${total.toFixed(2)}`;
-        }
+            <div class="add-to-cart-section">
+                <span id="current-item-total">Subtotal Producto: $0.00</span>
+                <button id="add-to-cart-btn" disabled>Agregar al Pedido</button>
+            </div>
+        </div>
         
-        window.app = {
-            addToCart: (itemData) => {
-                let fullItemData;
-                if(itemData.tipo === 'producto') fullItemData = productos.find(p => p.id === itemData.id);
-                if(itemData.tipo === 'topping') fullItemData = toppings.find(t => t.id === itemData.id);
-                if(itemData.tipo === 'jarabe') fullItemData = jarabes.find(j => j.id === itemData.id);
-                if (fullItemData) {
-                   addToCart(fullItemData);
-                }
-            },
-            removeFromCart
-        };
+        <div class="card cart">
+            <h3>Tu Pedido</h3>
+            <div id="cart-items">
+                <p style="color: var(--text-color-light);">Aún no has agregado productos a tu pedido.</p>
+            </div>
+            <p id="cart-total">Total del Pedido: $0.00</p>
+            
+            <form id="order-form">
+                <h3 style="margin-top: 2rem;">Tus Datos</h3>
+                <label for="nombreCliente">Tu Nombre:</label>
+                <input type="text" id="nombreCliente" required>
+                <label for="telefonoCliente">Tu Teléfono (WhatsApp):</label>
+                <input type="tel" id="telefonoCliente" required>
+                <button type="submit" id="submit-order-btn">Realizar Pedido</button>
+            </form>
+        </div>
+    </div>
 
-        orderForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (carrito.length === 0) {
-                alert('Tu carrito está vacío.');
-                return;
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let seleccionActual = { producto: null, toppings: [], jarabes: [] };
+            let carrito = [];
+            let productos = [], toppings = [], jarabes = [];
+
+            const productosContainer = document.getElementById('productos-container');
+            const toppingsContainer = document.getElementById('toppings-container');
+            const jarabesContainer = document.getElementById('jarabes-container');
+            const cartItemsEl = document.getElementById('cart-items');
+            const cartTotalEl = document.getElementById('cart-total');
+            const orderForm = document.getElementById('order-form');
+            const submitBtn = document.getElementById('submit-order-btn');
+            const addToCartBtn = document.getElementById('add-to-cart-btn');
+            const currentItemTotalEl = document.getElementById('current-item-total');
+            const themeToggle = document.getElementById('theme-toggle');
+
+            // == MEJORA 1: LÓGICA DEL MODO OSCURO ==
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    document.body.classList.add('dark-mode');
+                    themeToggle.checked = true;
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    themeToggle.checked = false;
+                }
             }
 
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Enviando...';
+            themeToggle.addEventListener('change', () => {
+                const theme = themeToggle.checked ? 'dark' : 'light';
+                localStorage.setItem('theme', theme);
+                applyTheme(theme);
+            });
 
-            const orderData = {
-                nombreCliente: document.getElementById('nombreCliente').value,
-                telefonoCliente: document.getElementById('telefonoCliente').value,
-                items: carrito.map(i => ({ nombre: `${i.cantidad}x ${i.nombre}`, precio: i.precio * i.cantidad })),
-                total: carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0)
-            };
+            // Aplicar tema guardado al cargar
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                applyTheme('dark'); // Preferencia del sistema
+            }
 
-            try {
-                const response = await fetch('/api/pedidos', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderData)
+
+            async function fetchData() {
+                try {
+                    // ** CORRECCIÓN DE RUTAS API **
+                    const [productosRes, toppingsRes, jarabesRes, configRes] = await Promise.all([
+                        fetch('/api/productos'),
+                        fetch('/api/toppings'),
+                        fetch('/api/jarabes'),
+                        fetch('/api/configuracion')
+                    ]);
+                    
+                    if (!productosRes.ok || !toppingsRes.ok || !jarabesRes.ok) throw new Error("No se pudieron cargar los datos del menú.");
+
+                    productos = await productosRes.json();
+                    toppings = await toppingsRes.json();
+                    jarabes = await jarabesRes.json();
+                    
+                    const config = await configRes.json().catch(() => ({}));
+                    if (config.logo_base64) document.getElementById('menu-logo').src = config.logo_base64;
+                    if (config.primary_color) document.documentElement.style.setProperty('--primary-color', config.primary_color);
+                    if (config.accent_color) document.documentElement.style.setProperty('--accent-color', config.accent_color);
+
+                    renderMenu();
+                } catch (error) {
+                    console.error('Error al cargar el menú:', error);
+                    productosContainer.innerHTML = `<p style="color: var(--danger-color);">${error.message}</p>`;
+                }
+            }
+
+            function renderMenu() {
+                const createItemHTML = (item, tipo) => `
+                    <div class="menu-item ${item.agotado ? 'agotado' : ''}" data-id="${item.id}" data-tipo="${tipo}">
+                        ${item.agotado ? '<div class="agotado-badge">Agotado</div>' : ''}
+                        <h4>${item.nombre}</h4>
+                        <p>$${item.precio.toFixed(2)}</p>
+                    </div>`;
+
+                productosContainer.innerHTML = productos.map(p => createItemHTML(p, 'producto')).join('');
+                toppingsContainer.innerHTML = toppings.map(t => createItemHTML(t, 'topping')).join('');
+                jarabesContainer.innerHTML = jarabes.map(j => createItemHTML(j, 'jarabe')).join('');
+                
+                addEventListenersToItems();
+            }
+
+            function addEventListenersToItems() {
+                document.querySelectorAll('.menu-item').forEach(itemEl => {
+                    itemEl.addEventListener('click', () => {
+                        if (itemEl.classList.contains('agotado')) return;
+                        
+                        const id = itemEl.dataset.id;
+                        const tipo = itemEl.dataset.tipo;
+                        
+                        if (tipo === 'producto') {
+                            if (seleccionActual.producto && seleccionActual.producto.id === id) {
+                                seleccionActual.producto = null;
+                                itemEl.classList.remove('selected');
+                            } else {
+                                document.querySelectorAll('.menu-item[data-tipo="producto"].selected').forEach(el => el.classList.remove('selected'));
+                                seleccionActual.producto = productos.find(p => p.id === id);
+                                itemEl.classList.add('selected');
+                            }
+                        } else {
+                            const lista = tipo === 'topping' ? seleccionActual.toppings : seleccionActual.jarabes;
+                            const itemData = (tipo === 'topping' ? toppings : jarabes).find(i => i.id === id);
+                            const index = lista.findIndex(i => i.id === id);
+
+                            if (index > -1) {
+                                lista.splice(index, 1);
+                                itemEl.classList.remove('selected');
+                            } else {
+                                lista.push(itemData);
+                                itemEl.classList.add('selected');
+                            }
+                        }
+                        updateCurrentItemTotal();
+                    });
+                });
+            }
+
+            function updateCurrentItemTotal() {
+                if (!seleccionActual.producto) {
+                    currentItemTotalEl.textContent = 'Subtotal Producto: $0.00';
+                    addToCartBtn.disabled = true;
+                    return;
+                }
+
+                let subtotal = seleccionActual.producto.precio;
+                subtotal += seleccionActual.toppings.reduce((sum, t) => sum + t.precio, 0);
+                subtotal += seleccionActual.jarabes.reduce((sum, j) => sum + j.precio, 0);
+                
+                currentItemTotalEl.textContent = `Subtotal Producto: $${subtotal.toFixed(2)}`;
+                addToCartBtn.disabled = false;
+            }
+
+            function resetCurrentSelection() {
+                seleccionActual = { producto: null, toppings: [], jarabes: [] };
+                document.querySelectorAll('.menu-item.selected').forEach(el => el.classList.remove('selected'));
+                updateCurrentItemTotal();
+            }
+
+            function renderCart() {
+                if (carrito.length === 0) {
+                    cartItemsEl.innerHTML = '<p style="color: var(--text-color-light);">Aún no has agregado productos a tu pedido.</p>';
+                    cartTotalEl.textContent = 'Total del Pedido: $0.00';
+                    return;
+                }
+
+                cartItemsEl.innerHTML = '';
+                let granTotal = 0;
+
+                carrito.forEach((item, index) => {
+                    const itemTotal = item.producto.precio + 
+                                      item.toppings.reduce((sum, t) => sum + t.precio, 0) + 
+                                      item.jarabes.reduce((sum, j) => sum + j.precio, 0);
+                    granTotal += itemTotal;
+
+                    let extrasHTML = '';
+                    if (item.toppings.length > 0 || item.jarabes.length > 0) {
+                        extrasHTML += '<ul>';
+                        item.toppings.forEach(t => extrasHTML += `<li>+ ${t.nombre}</li>`);
+                        item.jarabes.forEach(j => extrasHTML += `<li>+ ${j.nombre}</li>`);
+                        extrasHTML += '</ul>';
+                    }
+
+                    const cartItem = document.createElement('div');
+                    cartItem.className = 'cart-item';
+                    cartItem.innerHTML = `
+                        <div class="cart-item-details">
+                            <strong>1x ${item.producto.nombre}</strong>
+                            ${extrasHTML}
+                        </div>
+                        <div class="cart-item-actions">
+                            <span class="price">$${itemTotal.toFixed(2)}</span>
+                            <button data-index="${index}">Eliminar</button>
+                        </div>
+                    `;
+                    cartItemsEl.appendChild(cartItem);
                 });
                 
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.error || 'Error desconocido del servidor.');
-                
-                alert('¡Tu pedido ha sido recibido! Nos pondremos en contacto contigo pronto.');
-                
-                // ===== LÍNEA DE WHATSAPP ELIMINADA =====
-                // Ya no se abre ninguna ventana para el cliente.
-                
-                carrito = [];
-                orderForm.reset();
-                updateCart();
+                cartItemsEl.querySelectorAll('.cart-item-actions button').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const indexToRemove = parseInt(e.target.dataset.index);
+                        carrito.splice(indexToRemove, 1);
+                        renderCart();
+                    });
+                });
 
-            } catch (error) {
-                alert('Hubo un error al enviar tu pedido: ' + error.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Realizar Pedido';
+                cartTotalEl.textContent = `Total del Pedido: $${granTotal.toFixed(2)}`;
             }
-        });
 
-        fetchData();
-    });
-</script>
+            addToCartBtn.addEventListener('click', () => {
+                if (!seleccionActual.producto) return;
+                carrito.push(JSON.parse(JSON.stringify(seleccionActual)));
+                renderCart();
+                resetCurrentSelection();
+            });
+
+            orderForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (carrito.length === 0) {
+                    alert('Tu pedido está vacío. Por favor, agrega al menos un producto.');
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Enviando...';
+
+                const orderData = {
+                    nombreCliente: document.getElementById('nombreCliente').value,
+                    telefonoCliente: document.getElementById('telefonoCliente').value,
+                    items: carrito.map(item => {
+                        const totalItem = item.producto.precio + 
+                                         item.toppings.reduce((s,t) => s + t.precio, 0) +
+                                         item.jarabes.reduce((s,j) => s + j.precio, 0);
+                        return {
+                            nombre: item.producto.nombre,
+                            precio: item.producto.precio,
+                            toppings: item.toppings,
+                            jarabes: item.jarabes,
+                            total: totalItem
+                        }
+                    }),
+                    total: carrito.reduce((granTotal, item) => {
+                        return granTotal + item.producto.precio + 
+                               item.toppings.reduce((s,t) => s + t.precio, 0) +
+                               item.jarabes.reduce((s,j) => s + j.precio, 0);
+                    }, 0)
+                };
+
+                try {
+                    const response = await fetch('/api/pedidos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData)
+                    });
+                    
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Error desconocido del servidor.');
+                    
+                    alert('¡Tu pedido ha sido recibido! Gracias por tu preferencia.');
+                    carrito = [];
+                    orderForm.reset();
+                    renderCart();
+
+                } catch (error) {
+                    alert('Hubo un error al enviar tu pedido: ' + error.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Realizar Pedido';
+                }
+            });
+
+            fetchData();
+        });
+    </script>
 </body>
 </html>

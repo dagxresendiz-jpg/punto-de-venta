@@ -1,4 +1,4 @@
-// server.js - v8.1 (Backend con Lógica de Repartidores)
+// server.js - v8.1 (Backend con Lógica y Rutas para Repartidores)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -52,7 +52,6 @@ const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio:
 const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Cliente = mongoose.model('Cliente', createSchema({ nombre: String, telefono: String, direccion: String, ...commonFields }));
 
-// == MEJORA REPARTIDOR: Se añade el rol 'repartidor' ==
 const Usuario = mongoose.model('Usuario', createSchema({ 
     username: { type: String, unique: true, required: true }, 
     password: { type: String, required: true }, 
@@ -61,7 +60,6 @@ const Usuario = mongoose.model('Usuario', createSchema({
     ...commonFields 
 }));
 
-// == MEJORA REPARTIDOR: Se añade info del repartidor a la venta ==
 const Venta = mongoose.model('Venta', createSchema({
     fecha: Date, clienteId: String, clienteNombre: String, items: Array,
     subtotal: Number, costoDomicilio: Number, total: Number, metodoPago: String,
@@ -78,7 +76,6 @@ const AppConfig = mongoose.model('AppConfig', createSchema({
     accent_color: { type: String, default: '#FF85A2' }
 }));
 
-// == MEJORA REPARTIDOR: Se actualiza el modelo Pedido ==
 const Pedido = mongoose.model('Pedido', createSchema({
     nombreCliente: { type: String, required: true },
     telefonoCliente: { type: String, required: true },
@@ -112,6 +109,12 @@ function esAdmin(req, res, next) {
     }
     next();
 }
+function esRepartidor(req, res, next) {
+    if (req.user.role !== 'repartidor') {
+        return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de repartidor.' });
+    }
+    next();
+}
 const tienePermiso = (seccion) => async (req, res, next) => {
     try {
         if(req.user.role === 'admin') { return next(); }
@@ -127,6 +130,7 @@ const tienePermiso = (seccion) => async (req, res, next) => {
 const apiRouter = express.Router();
 const authRouter = express.Router();
 const publicApiRouter = express.Router();
+const repartidorRouter = express.Router();
 const findActive = { $or: [{ status: 'activo' }, { status: { $exists: false } }] };
 
 // --- RUTAS DE AUTENTICACIÓN (Públicas) ---
@@ -138,7 +142,7 @@ authRouter.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
         const token = jwt.sign({ id: usuario._id, username: usuario.username, role: usuario.role, permissions: usuario.permissions }, JWT_SECRET, { expiresIn: '8h' });
-        res.json({ message: 'Login exitoso', token });
+        res.json({ message: 'Login exitoso', token, role: usuario.role });
     } catch (error) { 
         console.error("Error en login:", error);
         res.status(500).send('Error en el servidor'); 
@@ -171,6 +175,54 @@ publicApiRouter.post('/pedidos', async (req, res) => {
 });
 app.use('/api', publicApiRouter);
 
+// --- RUTAS DE REPARTIDOR (Protegidas por Token y Rol) ---
+repartidorRouter.use(verificarToken, esRepartidor);
+
+repartidorRouter.get('/mis-pedidos', async (req, res) => {
+    try {
+        const pedidosAsignados = await Pedido.find({ repartidorId: req.user.id, estatus: 'en_reparto' }).sort({ createdAt: 1 });
+        res.json(pedidosAsignados);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener tus pedidos asignados.' });
+    }
+});
+
+repartidorRouter.post('/finalizar-entrega/:id', async (req, res) => {
+    try {
+        const { metodoPago, estatus } = req.body;
+        const pedido = await Pedido.findOneAndUpdate(
+            { _id: req.params.id, repartidorId: req.user.id },
+            { estatus: 'entregado' },
+            { new: true }
+        ).populate('repartidorId', 'username');
+
+        if (!pedido) {
+            return res.status(404).json({ error: 'Pedido no encontrado o no asignado a ti.' });
+        }
+        
+        await Venta.create({
+            fecha: new Date(),
+            clienteNombre: pedido.nombreCliente,
+            items: pedido.items,
+            subtotal: pedido.total,
+            costoDomicilio: 0,
+            total: pedido.total,
+            metodoPago: metodoPago,
+            estatus: estatus,
+            vendedorUsername: 'Pedido Online',
+            repartidorId: pedido.repartidorId ? pedido.repartidorId.id : null,
+            repartidorUsername: pedido.repartidorId ? pedido.repartidorId.username : null,
+        });
+
+        res.status(200).json({ message: 'Entrega finalizada y registrada con éxito.' });
+    } catch (error) {
+        console.error("Error al finalizar entrega:", error);
+        res.status(500).json({ error: 'Error al finalizar la entrega.' });
+    }
+});
+app.use('/api/repartidor', repartidorRouter);
+
+
 // --- RUTAS PRIVADAS (Protegidas por Token) ---
 apiRouter.use(verificarToken);
 
@@ -186,34 +238,26 @@ pedidosRouter.get('/', tienePermiso('pedidos'), async (req, res) => {
 });
 pedidosRouter.put('/:id', tienePermiso('pedidos'), async (req, res) => res.json(await Pedido.findByIdAndUpdate(req.params.id, { estatus: req.body.estatus }, { new: true })));
 pedidosRouter.delete('/:id', tienePermiso('pedidos'), async (req, res) => { await Pedido.findByIdAndDelete(req.params.id); res.status(204).send(); });
-
-// == MEJORA REPARTIDOR: Nueva ruta para asignar un repartidor ==
 pedidosRouter.post('/:id/asignar', tienePermiso('pedidos'), async (req, res) => {
     try {
         const { repartidorId } = req.body;
-        if (!repartidorId) {
-            return res.status(400).json({ error: 'Se requiere el ID del repartidor.' });
-        }
+        if (!repartidorId) return res.status(400).json({ error: 'Se requiere el ID del repartidor.' });
         const pedido = await Pedido.findByIdAndUpdate(
             req.params.id, 
             { repartidorId: repartidorId, estatus: 'en_reparto' }, 
             { new: true }
         ).populate('repartidorId', 'username');
-        if (!pedido) {
-            return res.status(404).json({ error: 'Pedido no encontrado.' });
-        }
+        if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado.' });
         res.json(pedido);
     } catch (error) {
         console.error("Error al asignar repartidor:", error);
         res.status(500).json({ error: 'Error interno al asignar repartidor.' });
     }
 });
-
 pedidosRouter.post('/:id/convertir-a-venta', tienePermiso('pedidos'), async (req, res) => {
     try {
         const pedido = await Pedido.findById(req.params.id).populate('repartidorId', 'username');
         if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado.' });
-
         const nuevaVenta = await Venta.create({
             fecha: new Date(),
             clienteNombre: pedido.nombreCliente,
@@ -222,13 +266,12 @@ pedidosRouter.post('/:id/convertir-a-venta', tienePermiso('pedidos'), async (req
             costoDomicilio: 0,
             total: pedido.total,
             metodoPago: 'Pedido Online',
-            estatus: 'Pagado', // Por defecto, si se convierte manualmente
+            estatus: 'Pagado',
             vendedorId: req.user.id,
             vendedorUsername: req.user.username,
             repartidorId: pedido.repartidorId ? pedido.repartidorId.id : null,
             repartidorUsername: pedido.repartidorId ? pedido.repartidorId.username : null,
         });
-
         await Pedido.findByIdAndDelete(req.params.id);
         res.status(201).json(nuevaVenta);
     } catch (error) {
@@ -240,17 +283,13 @@ pedidosRouter.get('/nuevos/contador', tienePermiso('pedidos'), async (req, res) 
     try {
         const count = await Pedido.countDocuments({ visto: false });
         res.json({ count });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al contar pedidos nuevos.' });
-    }
+    } catch (error) { res.status(500).json({ error: 'Error al contar pedidos nuevos.' }); }
 });
 pedidosRouter.post('/marcar-vistos', tienePermiso('pedidos'), async (req, res) => {
     try {
         await Pedido.updateMany({ visto: false }, { $set: { visto: true } });
         res.status(200).json({ message: 'Pedidos marcados como vistos.' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al marcar pedidos como vistos.' });
-    }
+    } catch (error) { res.status(500).json({ error: 'Error al marcar pedidos como vistos.' }); }
 });
 apiRouter.use('/pedidos', pedidosRouter);
 
@@ -274,9 +313,7 @@ productosRouter.put('/:id/toggle-agotado', tienePermiso('gestion'), async (req, 
         producto.agotado = !producto.agotado;
         await producto.save();
         res.json(producto);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al actualizar el estado del producto.' });
-    }
+    } catch (error) { res.status(500).json({ error: 'Error al actualizar el estado del producto.' }); }
 });
 apiRouter.use('/productos', productosRouter);
 apiRouter.use('/toppings', crearRutasCrud(Topping, 'Topping', 'gestion'));
@@ -301,17 +338,12 @@ apiRouter.use('/ventas', ventasRouter);
 const usuariosRouter = express.Router();
 usuariosRouter.get('/', tienePermiso('usuarios'), async (req, res) => res.json(await Usuario.find(findActive).select('-password')));
 usuariosRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
-
-// == MEJORA REPARTIDOR: Nueva ruta para obtener solo repartidores ==
 usuariosRouter.get('/repartidores', tienePermiso('pedidos'), async (req, res) => {
     try {
         const repartidores = await Usuario.find({ role: 'repartidor', ...findActive }).select('username');
         res.json(repartidores);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener la lista de repartidores.' });
-    }
+    } catch (error) { res.status(500).json({ error: 'Error al obtener la lista de repartidores.' }); }
 });
-
 usuariosRouter.post('/', tienePermiso('usuarios'), async (req, res) => {
     const { username, password, role, permissions } = req.body;
     if (!username || !password || !role) return res.status(400).json({ error: 'Usuario, contraseña y rol son requeridos.' });
@@ -348,7 +380,9 @@ app.use('/api', apiRouter);
 
 // --- RUTA "CATCH-ALL" PARA SERVIR EL FRONTEND ---
 app.get('*', (req, res) => {
-    if (req.originalUrl.startsWith('/menu')) {
+    if (req.originalUrl.startsWith('/repartidor')) {
+        res.sendFile(path.join(__dirname, 'public', 'repartidor.html'));
+    } else if (req.originalUrl.startsWith('/menu')) {
         res.sendFile(path.join(__dirname, 'public', 'menu.html'));
     } else {
         res.sendFile(path.join(__dirname, 'public', 'index.html'));

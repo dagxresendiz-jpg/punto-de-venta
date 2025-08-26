@@ -36,19 +36,14 @@
         }
         .container { max-width: 800px; margin: 0 auto; }
         .header { text-align: center; margin-bottom: 2rem; position: relative; }
-        
-        /* == MEJORA ANTI-FLICKER: ESTILOS PARA EL LOGO == */
         #menu-logo {
             max-width: 200px;
             max-height: 80px;
-            min-height: 80px; /* Reserva el espacio vertical para evitar saltos */
-            opacity: 0; /* Empieza oculto */
-            transition: opacity 0.5s ease-in-out; /* Animación de fundido */
+            min-height: 80px;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
         }
-        #menu-logo.loaded {
-            opacity: 1; /* Se revela cuando está cargado */
-        }
-
+        #menu-logo.loaded { opacity: 1; }
         .card { 
             background-color: var(--card-background); 
             border-radius: 12px; 
@@ -67,7 +62,7 @@
             padding: 1rem; 
             text-align: center; 
             cursor: pointer; 
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background-color 0.2s; 
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background-color 0.2s, color 0.2s; 
             position: relative; 
         }
         .menu-item:hover { 
@@ -153,7 +148,6 @@
                     </div>
                 </label>
             </div>
-            <!-- == MEJORA ANTI-FLICKER: SRC CAMBIADO A UN PIXEL TRANSPARENTE == -->
             <img id="menu-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo del Negocio">
             <h1>Nuestro Menú</h1>
             <p style="color: var(--text-color-light);">Arma tus productos uno por uno y añádelos a tu pedido.</p>
@@ -188,6 +182,8 @@
                 <input type="text" id="nombreCliente" required>
                 <label for="telefonoCliente">Tu Teléfono (WhatsApp):</label>
                 <input type="tel" id="telefonoCliente" required>
+                <label for="direccionEntrega">Dirección de Entrega:</label>
+                <input type="text" id="direccionEntrega" required>
                 <button type="submit" id="submit-order-btn">Realizar Pedido</button>
             </form>
         </div>
@@ -209,7 +205,7 @@
             const addToCartBtn = document.getElementById('add-to-cart-btn');
             const currentItemTotalEl = document.getElementById('current-item-total');
             const themeToggle = document.getElementById('theme-toggle');
-            const menuLogo = document.getElementById('menu-logo'); // Variable para el logo
+            const menuLogo = document.getElementById('menu-logo');
 
             function applyTheme(theme) {
                 if (theme === 'dark') {
@@ -251,14 +247,12 @@
                     
                     const config = await configRes.json().catch(() => ({}));
                     
-                    // == MEJORA ANTI-FLICKER: LÓGICA PARA CARGAR Y REVELAR EL LOGO ==
                     if (config.logo_base64) {
                         menuLogo.src = config.logo_base64;
                     } else {
-                        // Si no hay logo, podemos poner uno por defecto o dejarlo vacío
                         menuLogo.src = "https://via.placeholder.com/200x80.png?text=Dulces+Amigas";
                     }
-                    menuLogo.classList.add('loaded'); // Añade la clase para revelar el logo con la animación
+                    menuLogo.classList.add('loaded');
                     
                     if (config.primary_color) document.documentElement.style.setProperty('--primary-color', config.primary_color);
                     if (config.accent_color) document.documentElement.style.setProperty('--accent-color', config.accent_color);
@@ -266,9 +260,9 @@
                     renderMenu();
                 } catch (error) {
                     console.error('Error al cargar el menú:', error);
-                    productosContainer.innerHTML = `<p style="color: var(--danger-color);">${error.message}</p>`;
-                    menuLogo.src = "https://via.placeholder.com/200x80.png?text=Error"; // Muestra un logo de error si todo falla
-                    menuLogo.classList.add('loaded'); // Asegúrate de mostrar el logo de error
+                    productosContainer.innerHTML = `<p style="color: red;">${error.message}</p>`;
+                    menuLogo.src = "https://via.placeholder.com/200x80.png?text=Error";
+                    menuLogo.classList.add('loaded');
                 }
             }
 
@@ -413,6 +407,7 @@
                 const orderData = {
                     nombreCliente: document.getElementById('nombreCliente').value,
                     telefonoCliente: document.getElementById('telefonoCliente').value,
+                    direccionEntrega: document.getElementById('direccionEntrega').value,
                     items: carrito.map(item => {
                         const totalItem = item.producto.precio + 
                                          item.toppings.reduce((s,t) => s + t.precio, 0) +

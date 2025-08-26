@@ -37,14 +37,14 @@
     .agotado-switch .slider { width: 40px; height: 20px; }
     .agotado-switch .slider:before { height: 14px; width: 14px; bottom: 3px; }
     input:checked + .slider:before { transform: translateX(18px); }
-    .kanban-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .kanban-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
     .kanban-column { background-color: var(--background-color); border-radius: 8px; padding: 1rem; }
     .kanban-column h3 { text-align: center; margin-bottom: 1rem; color: var(--text-color-dark); }
     .pedido-card { background: var(--card-background); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; box-shadow: var(--shadow); }
     .pedido-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
     .pedido-card-header h4 { margin: 0; }
     .pedido-card-header span { font-size: 0.8em; color: var(--text-color-light); }
-    .pedido-card-body ul { list-style: none; padding-left: 1rem; margin: 0.5rem 0; }
+    .pedido-card-body ul { list-style: none; padding: 0; margin: 0.5rem 0; }
     .pedido-card-body li { font-size: 0.9em; }
     .pedido-card-footer { border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
     .pedido-card-footer .total { font-weight: 600; }
@@ -53,8 +53,9 @@
     .btn-whatsapp { background-color: #25D366; color: white; }
     .btn-preparar { background-color: var(--info-color); color: white; }
     .btn-listo { background-color: var(--success-color); color: white; }
-    .btn-convertir { background-color: var(--primary-color); color: white; }
+    .btn-asignar { background-color: var(--primary-color); color: white; }
     .btn-cancelar { background-color: var(--danger-color); color: white; }
+    .repartidor-info { font-size: 0.8em; color: var(--primary-color); font-weight: 600; margin-top: 0.5rem; }
     .nav-link { position: relative; }
     .notification-badge {
         display: none;
@@ -298,6 +299,10 @@
                     <div class="kanban-column">
                         <h3>Listos para Entregar</h3>
                         <div id="pedidos-listos"></div>
+                    </div>
+                    <div class="kanban-column">
+                        <h3>En Reparto</h3>
+                        <div id="pedidos-en-reparto"></div>
                     </div>
                 </div>
             </div>
@@ -1716,9 +1721,6 @@
           pdf.save('detalle-ventas.pdf');
       }
       
-      // ========================================================== -->
-      //     FUNCIÓN CORREGIDA PARA MOSTRAR DETALLES DEL PEDIDO      -->
-      // ========================================================== -->
       async function cargarPedidos() {
         const pedidos = await fetchAPI('/api/pedidos');
         if (!pedidos) return;
@@ -1726,7 +1728,8 @@
         const cols = {
             recibidos: document.getElementById('pedidos-recibidos'),
             preparacion: document.getElementById('pedidos-en-preparacion'),
-            listos: document.getElementById('pedidos-listos')
+            listos: document.getElementById('pedidos-listos'),
+            enReparto: document.getElementById('pedidos-en-reparto')
         };
         Object.values(cols).forEach(c => c.innerHTML = '');
 
@@ -1737,7 +1740,6 @@
             let itemsHtml = '';
             p.items.forEach(item => {
                 itemsHtml += `<li><strong>- ${item.nombre}</strong></li>`;
-
                 const extras = [...(item.toppings || []), ...(item.jarabes || [])];
                 if (extras.length > 0) {
                     itemsHtml += '<ul style="padding-left: 20px;">';
@@ -1748,6 +1750,8 @@
                 }
             });
 
+            const repartidorInfo = p.repartidorId && p.repartidorId.username ? `<div class="repartidor-info">Repartidor: ${p.repartidorId.username}</div>` : '';
+
             card.innerHTML = `
                 <div class="pedido-card-header">
                     <h4>${p.nombreCliente}</h4>
@@ -1755,6 +1759,7 @@
                 </div>
                 <div class="pedido-card-body">
                     <ul>${itemsHtml}</ul>
+                    ${repartidorInfo}
                 </div>
                 <div class="pedido-card-footer">
                     <span class="total">Total: $${p.total.toFixed(2)}</span>
@@ -1789,15 +1794,50 @@
                 actions.appendChild(btnL);
                 cols.preparacion.appendChild(card);
             } else if (p.estatus === 'listo') {
-                const btnE = document.createElement('button');
-                btnE.className = 'btn-convertir';
-                btnE.textContent = 'Convertir a Venta';
-                btnE.onclick = () => window.app.convertirPedidoAVenta(p);
-                actions.appendChild(btnE);
+                const btnA = document.createElement('button');
+                btnA.className = 'btn-asignar';
+                btnA.textContent = 'Asignar Reparto';
+                btnA.onclick = () => window.app.asignarRepartidor(p.id);
+                actions.appendChild(btnA);
                 cols.listos.appendChild(card);
+            } else if (p.estatus === 'en_reparto') {
+                cols.enReparto.appendChild(card);
             }
             actions.appendChild(btnCancelar);
         });
+      }
+
+      async function asignarRepartidor(pedidoId) {
+          try {
+              const repartidores = await fetchAPI('/api/usuarios/repartidores');
+              if (!repartidores || repartidores.length === 0) {
+                  alert('No hay repartidores disponibles. Crea un usuario con el rol "repartidor" primero.');
+                  return;
+              }
+
+              const listaPrompt = repartidores.map((r, i) => `${i + 1}. ${r.username}`).join('\n');
+              const eleccion = prompt(`Selecciona un repartidor:\n\n${listaPrompt}`);
+              
+              if (eleccion === null || eleccion.trim() === '') return;
+
+              const indice = parseInt(eleccion, 10) - 1;
+              if (isNaN(indice) || indice < 0 || indice >= repartidores.length) {
+                  alert('Selección inválida. Por favor, introduce un número de la lista.');
+                  return;
+              }
+
+              const repartidorSeleccionado = repartidores[indice];
+              await fetchAPI(`/api/pedidos/${pedidoId}/asignar`, {
+                  method: 'POST',
+                  body: JSON.stringify({ repartidorId: repartidorSeleccionado.id })
+              });
+
+              alert(`Pedido asignado a ${repartidorSeleccionado.username}.`);
+              cargarPedidos();
+
+          } catch (error) {
+              alert('Error al asignar el repartidor: ' + error.message);
+          }
       }
 
       async function cambiarEstatusPedido(id, nuevoEstatus) {
@@ -1928,7 +1968,7 @@
         });
       }
       
-      window.app = { toggleAgotado, cancelarPedido, cambiarEstatusPedido, convertirPedidoAVenta };
+      window.app = { toggleAgotado, cancelarPedido, cambiarEstatusPedido, convertirPedidoAVenta, asignarRepartidor };
 
       await loadPublicConfig();
 

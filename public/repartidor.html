@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Entregas - Dulces Amigas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5; 
+            --accent-color: #FF85A2;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-color-dark: #1e293b;
+            --text-color-light: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color-dark); }
+        .app-container { max-width: 600px; margin: 0 auto; padding: 1rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem; }
+        .header h1 { font-size: 1.25rem; }
+        #logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-color-dark); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; }
+        .pedido-card { background-color: var(--card-background); border-radius: 12px; margin-bottom: 1rem; box-shadow: var(--shadow); overflow: hidden; }
+        .pedido-card-header { padding: 1rem; border-bottom: 1px solid var(--border-color); }
+        .pedido-card-header h3 { margin: 0; }
+        .pedido-card-header p { color: var(--text-color-light); font-size: 0.9em; }
+        .pedido-card-body { padding: 1rem; }
+        .info-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .info-row strong { width: 80px; }
+        .info-row a { text-decoration: none; color: var(--primary-color); }
+        .items-list { list-style: none; padding-left: 1rem; font-size: 0.9em; }
+        .total-section { text-align: right; font-size: 1.2rem; font-weight: 600; margin-top: 1rem; }
+        .pedido-card-footer { background-color: #f9fafb; padding: 1rem; }
+        .action-btn { width: 100%; padding: 0.75rem; border-radius: 8px; border: none; background-color: #22c55e; color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+        .no-pedidos { text-align: center; padding: 3rem; color: var(--text-color-light); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>Mis Entregas</h1>
+            <button id="logout-btn">Cerrar Sesión</button>
+        </header>
+        <main id="pedidos-container">
+            <p class="no-pedidos">Cargando pedidos...</p>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pedidosContainer = document.getElementById('pedidos-container');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/index.html'; // Si no hay token, fuera
+                return;
+            }
+
+            // Verificar que el rol sea repartidor
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (payload.role !== 'repartidor') {
+                    localStorage.removeItem('token');
+                    window.location.href = '/index.html'; // Si no es repartidor, fuera
+                    return;
+                }
+                document.querySelector('h1').textContent += ` (${payload.username})`;
+            } catch (e) {
+                localStorage.removeItem('token');
+                window.location.href = '/index.html';
+                return;
+            }
+            
+            async function fetchAPI(url, options = {}) {
+                const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...options.headers };
+                const response = await fetch(url, { ...options, headers });
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/index.html';
+                    throw new Error('Sesión expirada.');
+                }
+                if (!response.ok) { 
+                    const errorData = await response.json(); 
+                    throw new Error(errorData.error || `Error en la petición`); 
+                }
+                if (response.status === 204) return;
+                return response.json();
+            }
+
+            async function cargarMisPedidos() {
+                try {
+                    const pedidos = await fetchAPI('/api/repartidor/mis-pedidos');
+                    pedidosContainer.innerHTML = '';
+
+                    if (pedidos.length === 0) {
+                        pedidosContainer.innerHTML = '<p class="no-pedidos">No tienes entregas pendientes. ¡Buen trabajo!</p>';
+                        return;
+                    }
+
+                    pedidos.forEach(p => {
+                        const card = document.createElement('div');
+                        card.className = 'pedido-card';
+
+                        let itemsHtml = '';
+                        p.items.forEach(item => {
+                            itemsHtml += `<li><strong>- ${item.nombre}</strong></li>`;
+                            const extras = [...(item.toppings || []), ...(item.jarabes || [])];
+                            if (extras.length > 0) {
+                                itemsHtml += '<ul style="padding-left: 15px;">';
+                                extras.forEach(extra => itemsHtml += `<li>+ ${extra.nombre}</li>`);
+                                itemsHtml += '</ul>';
+                            }
+                        });
+
+                        card.innerHTML = `
+                            <div class="pedido-card-header">
+                                <h3>Cliente: ${p.nombreCliente}</h3>
+                                <p>Dirección: ${p.direccionEntrega || 'No especificada'}</p>
+                            </div>
+                            <div class="pedido-card-body">
+                                <div class="info-row">
+                                    <strong>Teléfono:</strong>
+                                    <a href="tel:${p.telefonoCliente}">${p.telefonoCliente}</a>
+                                </div>
+                                <div class="info-row">
+                                    <strong>Mapa:</strong>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.direccionEntrega)}" target="_blank">Abrir en Google Maps</a>
+                                </div>
+                                <strong>Pedido:</strong>
+                                <ul class="items-list">${itemsHtml}</ul>
+                                <div class="total-section">Total a Cobrar: $${p.total.toFixed(2)}</div>
+                            </div>
+                            <div class="pedido-card-footer">
+                                <button class="action-btn" data-id="${p.id}">Finalizar Entrega</button>
+                            </div>
+                        `;
+                        pedidosContainer.appendChild(card);
+                    });
+
+                    document.querySelectorAll('.action-btn').forEach(btn => {
+                        btn.addEventListener('click', () => finalizarEntrega(btn.dataset.id));
+                    });
+
+                } catch (error) {
+                    pedidosContainer.innerHTML = `<p class="no-pedidos" style="color: red;">${error.message}</p>`;
+                }
+            }
+            
+            async function finalizarEntrega(pedidoId) {
+                const mensajePrompt = "Introduce el método de pago:\n1. Efectivo\n2. Tarjeta\n3. Transferencia\n\n4. Dejar Pendiente de Pago";
+                const eleccion = prompt(mensajePrompt);
+
+                if (eleccion === null || eleccion.trim() === '') return;
+
+                let metodoPago = 'No especificado';
+                let estatus = 'Pagado';
+
+                switch (eleccion.trim()) {
+                    case '1': metodoPago = 'Efectivo'; break;
+                    case '2': metodoPago = 'Tarjeta'; break;
+                    case '3': metodoPago = 'Transferencia'; break;
+                    case '4': 
+                        estatus = 'Pendiente de Pago';
+                        metodoPago = 'N/A';
+                        break;
+                    default:
+                        alert('Opción no válida. Por favor, introduce un número del 1 al 4.');
+                        return;
+                }
+                
+                if (!confirm(`¿Confirmas la entrega con estatus "${estatus}"?`)) return;
+
+                try {
+                    await fetchAPI(`/api/repartidor/finalizar-entrega/${pedidoId}`, {
+                        method: 'POST',
+                        body: JSON.stringify({ metodoPago, estatus })
+                    });
+                    alert('¡Entrega registrada con éxito!');
+                    cargarMisPedidos();
+                } catch (error) {
+                    alert('Error al registrar la entrega: ' + error.message);
+                }
+            }
+
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('token');
+                window.location.href = '/index.html';
+            });
+
+            cargarMisPedidos();
+        });
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// server.js - Versión Final Corregida y Mejorada
+// server.js - v8.1 (Backend con Lógica de Repartidores)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -51,31 +51,49 @@ const Producto = mongoose.model('Producto', createSchema({
 const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number, ...commonFields }));
 const Cliente = mongoose.model('Cliente', createSchema({ nombre: String, telefono: String, direccion: String, ...commonFields }));
+
+// == MEJORA REPARTIDOR: Se añade el rol 'repartidor' ==
 const Usuario = mongoose.model('Usuario', createSchema({ 
     username: { type: String, unique: true, required: true }, 
     password: { type: String, required: true }, 
-    role: { type: String, required: true }, 
+    role: { type: String, required: true, enum: ['seller', 'admin', 'repartidor'] },
     permissions: { type: userPermissionsSchema, default: () => ({}) },
     ...commonFields 
 }));
+
+// == MEJORA REPARTIDOR: Se añade info del repartidor a la venta ==
 const Venta = mongoose.model('Venta', createSchema({
     fecha: Date, clienteId: String, clienteNombre: String, items: Array,
     subtotal: Number, costoDomicilio: Number, total: Number, metodoPago: String,
-    vendedorId: String, vendedorUsername: String, estatus: String, ...commonFields
+    vendedorId: String, vendedorUsername: String, 
+    repartidorId: { type: String, default: null },
+    repartidorUsername: { type: String, default: null },
+    estatus: String, 
+    ...commonFields
 }));
+
 const AppConfig = mongoose.model('AppConfig', createSchema({
     logo_base64: { type: String },
     primary_color: { type: String, default: '#4f46e5' },
     accent_color: { type: String, default: '#FF85A2' }
 }));
+
+// == MEJORA REPARTIDOR: Se actualiza el modelo Pedido ==
 const Pedido = mongoose.model('Pedido', createSchema({
     nombreCliente: { type: String, required: true },
     telefonoCliente: { type: String, required: true },
+    direccionEntrega: { type: String },
     items: Array,
     total: Number,
-    estatus: { type: String, default: 'recibido' },
-    visto: { type: Boolean, default: false }
+    estatus: { 
+        type: String, 
+        default: 'recibido', 
+        enum: ['recibido', 'en_preparacion', 'listo', 'en_reparto', 'entregado', 'cancelado']
+    },
+    visto: { type: Boolean, default: false },
+    repartidorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null }
 }));
+
 
 // --- MIDDLEWARES DE SEGURIDAD ---
 function verificarToken(req, res, next) {
@@ -108,7 +126,7 @@ const tienePermiso = (seccion) => async (req, res, next) => {
 // --- RUTAS DE LA API ---
 const apiRouter = express.Router();
 const authRouter = express.Router();
-const publicApiRouter = express.Router(); // <-- Router para endpoints públicos
+const publicApiRouter = express.Router();
 const findActive = { $or: [{ status: 'activo' }, { status: { $exists: false } }] };
 
 // --- RUTAS DE AUTENTICACIÓN (Públicas) ---
@@ -136,25 +154,22 @@ publicApiRouter.get('/configuracion', async (req, res) => {
         res.json(config);
     } catch (error) { res.status(500).json({ error: 'Error al obtener la configuración.' }); }
 });
-
-// ** CORRECCIÓN: Se mueven las rutas del menú aquí, al router público y sin /menu **
 publicApiRouter.get('/productos', async (req, res) => res.json(await Producto.find(findActive)));
 publicApiRouter.get('/toppings', async (req, res) => res.json(await Topping.find(findActive)));
 publicApiRouter.get('/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
-
 publicApiRouter.post('/pedidos', async (req, res) => {
     try {
-        const { nombreCliente, telefonoCliente, items, total } = req.body;
+        const { nombreCliente, telefonoCliente, direccionEntrega, items, total } = req.body;
         if (!nombreCliente || !telefonoCliente || !items || !items.length) {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
-        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, items, total, visto: false });
+        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, items, total, visto: false });
         res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
     } catch (error) {
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
-app.use('/api', publicApiRouter); // Se registra el router público sin token
+app.use('/api', publicApiRouter);
 
 // --- RUTAS PRIVADAS (Protegidas por Token) ---
 apiRouter.use(verificarToken);
@@ -165,25 +180,53 @@ apiRouter.post('/configuracion', esAdmin, async (req, res) => {
 });
 
 const pedidosRouter = express.Router();
-pedidosRouter.get('/', tienePermiso('pedidos'), async (req, res) => res.json(await Pedido.find().sort({ createdAt: -1 })));
+pedidosRouter.get('/', tienePermiso('pedidos'), async (req, res) => {
+    const pedidos = await Pedido.find().populate('repartidorId', 'username').sort({ createdAt: -1 });
+    res.json(pedidos);
+});
 pedidosRouter.put('/:id', tienePermiso('pedidos'), async (req, res) => res.json(await Pedido.findByIdAndUpdate(req.params.id, { estatus: req.body.estatus }, { new: true })));
 pedidosRouter.delete('/:id', tienePermiso('pedidos'), async (req, res) => { await Pedido.findByIdAndDelete(req.params.id); res.status(204).send(); });
+
+// == MEJORA REPARTIDOR: Nueva ruta para asignar un repartidor ==
+pedidosRouter.post('/:id/asignar', tienePermiso('pedidos'), async (req, res) => {
+    try {
+        const { repartidorId } = req.body;
+        if (!repartidorId) {
+            return res.status(400).json({ error: 'Se requiere el ID del repartidor.' });
+        }
+        const pedido = await Pedido.findByIdAndUpdate(
+            req.params.id, 
+            { repartidorId: repartidorId, estatus: 'en_reparto' }, 
+            { new: true }
+        ).populate('repartidorId', 'username');
+        if (!pedido) {
+            return res.status(404).json({ error: 'Pedido no encontrado.' });
+        }
+        res.json(pedido);
+    } catch (error) {
+        console.error("Error al asignar repartidor:", error);
+        res.status(500).json({ error: 'Error interno al asignar repartidor.' });
+    }
+});
+
 pedidosRouter.post('/:id/convertir-a-venta', tienePermiso('pedidos'), async (req, res) => {
     try {
-        const pedido = await Pedido.findById(req.params.id);
+        const pedido = await Pedido.findById(req.params.id).populate('repartidorId', 'username');
         if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado.' });
 
         const nuevaVenta = await Venta.create({
             fecha: new Date(),
             clienteNombre: pedido.nombreCliente,
-            items: pedido.items.map(item => ({ nombre: item.nombre, total: item.precio, cantidad: 1 })), // Simplificado para el historial
+            items: pedido.items,
             subtotal: pedido.total,
             costoDomicilio: 0,
             total: pedido.total,
             metodoPago: 'Pedido Online',
-            estatus: 'Pagado',
+            estatus: 'Pagado', // Por defecto, si se convierte manualmente
             vendedorId: req.user.id,
             vendedorUsername: req.user.username,
+            repartidorId: pedido.repartidorId ? pedido.repartidorId.id : null,
+            repartidorUsername: pedido.repartidorId ? pedido.repartidorId.username : null,
         });
 
         await Pedido.findByIdAndDelete(req.params.id);
@@ -258,6 +301,17 @@ apiRouter.use('/ventas', ventasRouter);
 const usuariosRouter = express.Router();
 usuariosRouter.get('/', tienePermiso('usuarios'), async (req, res) => res.json(await Usuario.find(findActive).select('-password')));
 usuariosRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Usuario.find({ status: 'eliminado' }).select('-password')));
+
+// == MEJORA REPARTIDOR: Nueva ruta para obtener solo repartidores ==
+usuariosRouter.get('/repartidores', tienePermiso('pedidos'), async (req, res) => {
+    try {
+        const repartidores = await Usuario.find({ role: 'repartidor', ...findActive }).select('username');
+        res.json(repartidores);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener la lista de repartidores.' });
+    }
+});
+
 usuariosRouter.post('/', tienePermiso('usuarios'), async (req, res) => {
     const { username, password, role, permissions } = req.body;
     if (!username || !password || !role) return res.status(400).json({ error: 'Usuario, contraseña y rol son requeridos.' });

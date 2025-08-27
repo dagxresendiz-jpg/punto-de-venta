@@ -37,8 +37,8 @@
         .info-row a { text-decoration: none; color: var(--primary-color); word-break: break-all; }
         .items-list { list-style: none; padding-left: 1rem; font-size: 0.9em; }
         .total-section { text-align: right; font-size: 1.2rem; font-weight: 600; margin-top: 1rem; }
+        .pedido-card-footer { padding: 1rem; }
         
-        /* == MEJORA 2: ESTILOS PARA EL BOTÓN DESLIZANTE == */
         .slider-container {
             position: relative;
             width: 100%;
@@ -46,7 +46,9 @@
             background-color: var(--success-color);
             border-radius: 25px;
             overflow: hidden;
-            user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standard syntax */
             cursor: pointer;
         }
         .slider-knob {
@@ -108,7 +110,10 @@
             const repartidorLogo = document.getElementById('repartidor-logo');
 
             const token = localStorage.getItem('token');
-            if (!token) { window.location.href = '/index.html'; return; }
+            if (!token) {
+                window.location.href = '/index.html';
+                return;
+            }
 
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
@@ -218,9 +223,9 @@
                 let offsetX = 0;
 
                 const startDrag = (e) => {
+                    e.stopPropagation();
                     isDragging = true;
                     startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                    slider.style.transition = 'none';
                     knob.style.transition = 'none';
                 };
 
@@ -231,9 +236,10 @@
                     offsetX = currentX - startX;
                     const maxOffset = slider.offsetWidth - knob.offsetWidth;
                     
-                    if (offsetX > 0 && offsetX < maxOffset) {
-                        knob.style.transform = `translateX(${offsetX}px)`;
-                    }
+                    if (offsetX < 0) offsetX = 0;
+                    if (offsetX > maxOffset) offsetX = maxOffset;
+
+                    knob.style.transform = `translateX(${offsetX}px)`;
                 };
 
                 const endDrag = () => {
@@ -242,10 +248,21 @@
                     const maxOffset = slider.offsetWidth - knob.offsetWidth;
 
                     knob.style.transition = 'transform 0.3s ease';
-                    if (offsetX > maxOffset * 0.75) { // Si se desliza más del 75%
+                    if (offsetX > maxOffset * 0.7) {
                         knob.style.transform = `translateX(${maxOffset}px)`;
                         slider.classList.add('unlocked');
-                        finalizarEntrega(slider.dataset.id);
+                        
+                        knob.removeEventListener('mousedown', startDrag);
+                        knob.removeEventListener('touchstart', startDrag);
+                        document.removeEventListener('mousemove', onDrag);
+                        document.removeEventListener('mouseup', endDrag);
+                        document.removeEventListener('touchmove', onDrag);
+                        document.removeEventListener('touchend', endDrag);
+
+                        setTimeout(() => {
+                            finalizarEntrega(slider.dataset.id);
+                        }, 300);
+
                     } else {
                         knob.style.transform = `translateX(0px)`;
                     }
@@ -255,13 +272,54 @@
                 document.addEventListener('mousemove', onDrag);
                 document.addEventListener('mouseup', endDrag);
 
-                knob.addEventListener('touchstart', startDrag);
-                document.addEventListener('touchmove', onDrag);
+                knob.addEventListener('touchstart', startDrag, { passive: false });
+                document.addEventListener('touchmove', onDrag, { passive: false });
                 document.addEventListener('touchend', endDrag);
             }
 
             async function finalizarEntrega(pedidoId) {
-                // ... (código sin cambios)
+                const mensajePrompt = "Introduce el método de pago:\n1. Efectivo\n2. Tarjeta\n3. Transferencia\n\n4. Dejar Pendiente de Pago";
+                const eleccion = prompt(mensajePrompt);
+
+                if (eleccion === null || eleccion.trim() === '') {
+                    // Si el usuario cancela, recargamos para re-habilitar el slider
+                    cargarMisPedidos();
+                    return;
+                }
+
+                let metodoPago = 'No especificado';
+                let estatus = 'Pagado';
+
+                switch (eleccion.trim()) {
+                    case '1': metodoPago = 'Efectivo'; break;
+                    case '2': metodoPago = 'Tarjeta'; break;
+                    case '3': metodoPago = 'Transferencia'; break;
+                    case '4': 
+                        estatus = 'Pendiente de Pago';
+                        metodoPago = 'N/A';
+                        break;
+                    default:
+                        alert('Opción no válida. Por favor, introduce un número del 1 al 4.');
+                        cargarMisPedidos(); // Recargar para re-habilitar
+                        return;
+                }
+                
+                if (!confirm(`¿Confirmas la entrega con estatus "${estatus}"?`)) {
+                    cargarMisPedidos(); // Recargar si cancela la confirmación
+                    return;
+                }
+
+                try {
+                    await fetchAPI(`/api/repartidor/finalizar-entrega/${pedidoId}`, {
+                        method: 'POST',
+                        body: JSON.stringify({ metodoPago, estatus })
+                    });
+                    alert('¡Entrega registrada con éxito!');
+                    cargarMisPedidos();
+                } catch (error) {
+                    alert('Error al registrar la entrega: ' + error.message);
+                    cargarMisPedidos();
+                }
             }
 
             logoutBtn.addEventListener('click', () => {

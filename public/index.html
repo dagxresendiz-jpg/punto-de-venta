@@ -1175,7 +1175,7 @@
             const url = idVentaEditada ? `/api/ventas/${idVentaEditada}` : '/api/ventas';
             const metodo = idVentaEditada ? 'PUT' : 'POST';
 
-            const ventaGuardada = await fetchAPI(url, { method: metodo, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ventaData) });
+            const ventaGuardada = await fetchAPI(url, { method: metodo, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(ventaData) });
             alert(`Venta ${idVentaEditada ? 'actualizada' : 'guardada como ' + estatus} con éxito`);
             document.getElementById('ticket').textContent = generarTextoTicket(ventaGuardada);
             resetearFormularioCompleto();
@@ -1991,4 +1991,3 @@
   </script>
 </body>
 </html>
-

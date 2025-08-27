@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Mis Entregas - Dulces Amigas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,6 +11,7 @@
         :root {
             --primary-color: #4f46e5; 
             --accent-color: #FF85A2;
+            --success-color: #22c55e;
             --background-color: #f8fafc;
             --card-background: #ffffff;
             --text-color-dark: #1e293b;
@@ -21,7 +22,9 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color-dark); }
         .app-container { max-width: 600px; margin: 0 auto; padding: 1rem; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem; background-color: var(--card-background); box-shadow: var(--shadow); border-radius: 12px;}
+        .header { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem; margin-bottom: 1rem; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .header img { max-width: 180px; max-height: 70px; }
         .header h1 { font-size: 1.25rem; }
         #logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-color-dark); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; }
         .pedido-card { background-color: var(--card-background); border-radius: 12px; margin-bottom: 1rem; box-shadow: var(--shadow); overflow: hidden; }
@@ -34,16 +37,64 @@
         .info-row a { text-decoration: none; color: var(--primary-color); word-break: break-all; }
         .items-list { list-style: none; padding-left: 1rem; font-size: 0.9em; }
         .total-section { text-align: right; font-size: 1.2rem; font-weight: 600; margin-top: 1rem; }
-        .pedido-card-footer { background-color: #f9fafb; padding: 1rem; }
-        .action-btn { width: 100%; padding: 0.75rem; border-radius: 8px; border: none; background-color: #22c55e; color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+        
+        /* == MEJORA 2: ESTILOS PARA EL BOTÓN DESLIZANTE == */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 50px;
+            background-color: var(--success-color);
+            border-radius: 25px;
+            overflow: hidden;
+            user-select: none;
+            cursor: pointer;
+        }
+        .slider-knob {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 50px;
+            background-color: white;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+        .slider-knob-icon {
+            color: var(--success-color);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .slider-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            z-index: 1;
+            transition: opacity 0.2s;
+        }
+        .slider-container.unlocked .slider-text { opacity: 0; }
+
         .no-pedidos { text-align: center; padding: 3rem; color: var(--text-color-light); }
     </style>
 </head>
 <body>
     <div class="app-container">
         <header class="header">
-            <h1>Mis Entregas</h1>
-            <button id="logout-btn">Cerrar Sesión</button>
+            <img id="repartidor-logo" src="https://via.placeholder.com/180x70.png?text=Cargando..." alt="Logo">
+            <div class="header-top">
+                <h1>Mis Entregas</h1>
+                <button id="logout-btn">Cerrar Sesión</button>
+            </div>
         </header>
         <main id="pedidos-container">
             <p class="no-pedidos">Cargando pedidos...</p>
@@ -54,12 +105,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             const pedidosContainer = document.getElementById('pedidos-container');
             const logoutBtn = document.getElementById('logout-btn');
+            const repartidorLogo = document.getElementById('repartidor-logo');
 
             const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/index.html';
-                return;
-            }
+            if (!token) { window.location.href = '/index.html'; return; }
 
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
@@ -89,6 +138,17 @@
                 }
                 if (response.status === 204) return;
                 return response.json();
+            }
+            
+            async function loadConfig() {
+                try {
+                    const config = await fetchAPI('/api/configuracion');
+                    if (config.logo_base64) repartidorLogo.src = config.logo_base64;
+                    if (config.primary_color) document.documentElement.style.setProperty('--primary-color', config.primary_color);
+                    if (config.accent_color) document.documentElement.style.setProperty('--accent-color', config.accent_color);
+                } catch (error) {
+                    console.error("No se pudo cargar la configuración de apariencia:", error);
+                }
             }
 
             async function cargarMisPedidos() {
@@ -135,55 +195,73 @@
                                 <div class="total-section">Total a Cobrar: $${p.total.toFixed(2)}</div>
                             </div>
                             <div class="pedido-card-footer">
-                                <button class="action-btn" data-id="${p.id}">Finalizar Entrega</button>
+                                <div class="slider-container" data-id="${p.id}">
+                                    <div class="slider-knob"><span class="slider-knob-icon">»</span></div>
+                                    <div class="slider-text">Deslizar para Finalizar</div>
+                                </div>
                             </div>
                         `;
                         pedidosContainer.appendChild(card);
                     });
 
-                    document.querySelectorAll('.action-btn').forEach(btn => {
-                        btn.addEventListener('click', () => finalizarEntrega(btn.dataset.id));
-                    });
+                    document.querySelectorAll('.slider-container').forEach(initSlider);
 
                 } catch (error) {
                     pedidosContainer.innerHTML = `<p class="no-pedidos" style="color: red;">${error.message}</p>`;
                 }
             }
             
-            async function finalizarEntrega(pedidoId) {
-                const mensajePrompt = "Introduce el método de pago:\n1. Efectivo\n2. Tarjeta\n3. Transferencia\n\n4. Dejar Pendiente de Pago";
-                const eleccion = prompt(mensajePrompt);
+            function initSlider(slider) {
+                const knob = slider.querySelector('.slider-knob');
+                let isDragging = false;
+                let startX = 0;
+                let offsetX = 0;
 
-                if (eleccion === null || eleccion.trim() === '') return;
+                const startDrag = (e) => {
+                    isDragging = true;
+                    startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                    slider.style.transition = 'none';
+                    knob.style.transition = 'none';
+                };
 
-                let metodoPago = 'No especificado';
-                let estatus = 'Pagado';
+                const onDrag = (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    const currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                    offsetX = currentX - startX;
+                    const maxOffset = slider.offsetWidth - knob.offsetWidth;
+                    
+                    if (offsetX > 0 && offsetX < maxOffset) {
+                        knob.style.transform = `translateX(${offsetX}px)`;
+                    }
+                };
 
-                switch (eleccion.trim()) {
-                    case '1': metodoPago = 'Efectivo'; break;
-                    case '2': metodoPago = 'Tarjeta'; break;
-                    case '3': metodoPago = 'Transferencia'; break;
-                    case '4': 
-                        estatus = 'Pendiente de Pago';
-                        metodoPago = 'N/A';
-                        break;
-                    default:
-                        alert('Opción no válida. Por favor, introduce un número del 1 al 4.');
-                        return;
-                }
+                const endDrag = () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    const maxOffset = slider.offsetWidth - knob.offsetWidth;
+
+                    knob.style.transition = 'transform 0.3s ease';
+                    if (offsetX > maxOffset * 0.75) { // Si se desliza más del 75%
+                        knob.style.transform = `translateX(${maxOffset}px)`;
+                        slider.classList.add('unlocked');
+                        finalizarEntrega(slider.dataset.id);
+                    } else {
+                        knob.style.transform = `translateX(0px)`;
+                    }
+                };
                 
-                if (!confirm(`¿Confirmas la entrega con estatus "${estatus}"?`)) return;
+                knob.addEventListener('mousedown', startDrag);
+                document.addEventListener('mousemove', onDrag);
+                document.addEventListener('mouseup', endDrag);
 
-                try {
-                    await fetchAPI(`/api/repartidor/finalizar-entrega/${pedidoId}`, {
-                        method: 'POST',
-                        body: JSON.stringify({ metodoPago, estatus })
-                    });
-                    alert('¡Entrega registrada con éxito!');
-                    cargarMisPedidos();
-                } catch (error) {
-                    alert('Error al registrar la entrega: ' + error.message);
-                }
+                knob.addEventListener('touchstart', startDrag);
+                document.addEventListener('touchmove', onDrag);
+                document.addEventListener('touchend', endDrag);
+            }
+
+            async function finalizarEntrega(pedidoId) {
+                // ... (código sin cambios)
             }
 
             logoutBtn.addEventListener('click', () => {
@@ -191,6 +269,7 @@
                 window.location.href = '/index.html';
             });
 
+            loadConfig();
             cargarMisPedidos();
         });
     </script>

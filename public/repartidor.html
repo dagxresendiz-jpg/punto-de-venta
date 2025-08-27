@@ -19,15 +19,50 @@
             --border-color: #e2e8f0;
             --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
+        body.dark-mode {
+            --background-color: #1e293b;
+            --card-background: #334155;
+            --text-color-dark: #f1f5f9;
+            --text-color-light: #94a3b8;
+            --border-color: #475569;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color-dark); }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--background-color); 
+            color: var(--text-color-dark);
+            transition: background-color 0.3s, color 0.3s;
+        }
         .app-container { max-width: 600px; margin: 0 auto; padding: 1rem; }
-        .header { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem; margin-bottom: 1rem; }
+        .header { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 1rem; 
+            padding-bottom: 1rem; 
+            margin-bottom: 1rem; 
+            border-bottom: 1px solid var(--border-color);
+        }
         .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .header img { max-width: 180px; max-height: 70px; }
+        #repartidor-logo {
+            max-width: 180px;
+            max-height: 70px;
+            min-height: 70px;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        #repartidor-logo.loaded { opacity: 1; }
         .header h1 { font-size: 1.25rem; }
         #logout-btn { background: none; border: 1px solid var(--border-color); color: var(--text-color-dark); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; }
-        .pedido-card { background-color: var(--card-background); border-radius: 12px; margin-bottom: 1rem; box-shadow: var(--shadow); overflow: hidden; }
+        .pedido-card { 
+            background-color: var(--card-background); 
+            border-radius: 12px; 
+            margin-bottom: 1rem; 
+            box-shadow: var(--shadow); 
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
         .pedido-card-header { padding: 1rem; border-bottom: 1px solid var(--border-color); }
         .pedido-card-header h3 { margin: 0; }
         .pedido-card-header p { color: var(--text-color-light); font-size: 0.9em; }
@@ -38,7 +73,6 @@
         .items-list { list-style: none; padding-left: 1rem; font-size: 0.9em; }
         .total-section { text-align: right; font-size: 1.2rem; font-weight: 600; margin-top: 1rem; }
         .pedido-card-footer { padding: 1rem; }
-        
         .slider-container {
             position: relative;
             width: 100%;
@@ -46,9 +80,8 @@
             background-color: var(--success-color);
             border-radius: 25px;
             overflow: hidden;
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none; /* IE 10+ */
-            user-select: none; /* Standard syntax */
+            -webkit-user-select: none;
+            user-select: none;
             cursor: pointer;
         }
         .slider-knob {
@@ -65,11 +98,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             z-index: 2;
         }
-        .slider-knob-icon {
-            color: var(--success-color);
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
+        .slider-knob-icon { color: var(--success-color); font-size: 1.5rem; font-weight: bold; }
         .slider-text {
             position: absolute;
             top: 0;
@@ -85,14 +114,34 @@
             transition: opacity 0.2s;
         }
         .slider-container.unlocked .slider-text { opacity: 0; }
-
         .no-pedidos { text-align: center; padding: 3rem; color: var(--text-color-light); }
+        .theme-switch-wrapper { position: absolute; top: 1rem; right: 1rem; }
+        .theme-switch { display: inline-block; height: 26px; position: relative; width: 50px; }
+        .theme-switch input { display: none; }
+        .slider-theme { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 26px; }
+        .slider-theme:before { background-color: #fff; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; position: absolute; transition: .4s; border-radius: 50%; }
+        input:checked + .slider-theme { background-color: var(--primary-color); }
+        input:checked + .slider-theme:before { transform: translateX(24px); }
+        .slider-theme .sun, .slider-theme .moon { position: absolute; top: 50%; transform: translateY(-50%); }
+        .slider-theme .sun { left: 6px; opacity: 1; transition: opacity 0.2s; }
+        .slider-theme .moon { right: 6px; opacity: 0; transition: opacity 0.2s; }
+        input:checked + .slider-theme .sun { opacity: 0; }
+        input:checked + .slider-theme .moon { opacity: 1; }
     </style>
 </head>
 <body>
     <div class="app-container">
+        <div class="theme-switch-wrapper">
+            <label class="theme-switch" for="theme-toggle">
+                <input type="checkbox" id="theme-toggle" />
+                <div class="slider-theme">
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="yellow" viewBox="0 0 16 16"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>
+                </div>
+            </label>
+        </div>
         <header class="header">
-            <img id="repartidor-logo" src="https://via.placeholder.com/180x70.png?text=Cargando..." alt="Logo">
+            <img id="repartidor-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo">
             <div class="header-top">
                 <h1>Mis Entregas</h1>
                 <button id="logout-btn">Cerrar Sesión</button>
@@ -108,12 +157,10 @@
             const pedidosContainer = document.getElementById('pedidos-container');
             const logoutBtn = document.getElementById('logout-btn');
             const repartidorLogo = document.getElementById('repartidor-logo');
+            const themeToggle = document.getElementById('theme-toggle');
 
             const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/index.html';
-                return;
-            }
+            if (!token) { window.location.href = '/index.html'; return; }
 
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
@@ -127,6 +174,29 @@
                 localStorage.removeItem('token');
                 window.location.href = '/index.html';
                 return;
+            }
+            
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    document.body.classList.add('dark-mode');
+                    themeToggle.checked = true;
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    themeToggle.checked = false;
+                }
+            }
+
+            themeToggle.addEventListener('change', () => {
+                const theme = themeToggle.checked ? 'dark' : 'light';
+                localStorage.setItem('theme', theme);
+                applyTheme(theme);
+            });
+
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                applyTheme('dark');
             }
             
             async function fetchAPI(url, options = {}) {
@@ -148,11 +218,19 @@
             async function loadConfig() {
                 try {
                     const config = await fetchAPI('/api/configuracion');
-                    if (config.logo_base64) repartidorLogo.src = config.logo_base64;
+                    if (config.logo_base64) {
+                        repartidorLogo.src = config.logo_base64;
+                    } else {
+                        repartidorLogo.src = "https://via.placeholder.com/180x70.png?text=Dulces+Amigas";
+                    }
+                    repartidorLogo.classList.add('loaded');
+
                     if (config.primary_color) document.documentElement.style.setProperty('--primary-color', config.primary_color);
                     if (config.accent_color) document.documentElement.style.setProperty('--accent-color', config.accent_color);
                 } catch (error) {
                     console.error("No se pudo cargar la configuración de apariencia:", error);
+                    repartidorLogo.src = "https://via.placeholder.com/180x70.png?text=Error";
+                    repartidorLogo.classList.add('loaded');
                 }
             }
 
@@ -222,13 +300,6 @@
                 let startX = 0;
                 let offsetX = 0;
 
-                const startDrag = (e) => {
-                    e.stopPropagation();
-                    isDragging = true;
-                    startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                    knob.style.transition = 'none';
-                };
-
                 const onDrag = (e) => {
                     if (!isDragging) return;
                     e.preventDefault();
@@ -253,9 +324,9 @@
                         slider.classList.add('unlocked');
                         
                         knob.removeEventListener('mousedown', startDrag);
-                        knob.removeEventListener('touchstart', startDrag);
                         document.removeEventListener('mousemove', onDrag);
                         document.removeEventListener('mouseup', endDrag);
+                        knob.removeEventListener('touchstart', startDrag);
                         document.removeEventListener('touchmove', onDrag);
                         document.removeEventListener('touchend', endDrag);
 
@@ -268,13 +339,20 @@
                     }
                 };
                 
-                knob.addEventListener('mousedown', startDrag);
-                document.addEventListener('mousemove', onDrag);
-                document.addEventListener('mouseup', endDrag);
+                const startDrag = (e) => {
+                    e.stopPropagation();
+                    isDragging = true;
+                    startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                    knob.style.transition = 'none';
+                    
+                    document.addEventListener('mousemove', onDrag);
+                    document.addEventListener('mouseup', endDrag);
+                    document.addEventListener('touchmove', onDrag, { passive: false });
+                    document.addEventListener('touchend', endDrag);
+                };
 
+                knob.addEventListener('mousedown', startDrag);
                 knob.addEventListener('touchstart', startDrag, { passive: false });
-                document.addEventListener('touchmove', onDrag, { passive: false });
-                document.addEventListener('touchend', endDrag);
             }
 
             async function finalizarEntrega(pedidoId) {
@@ -282,7 +360,6 @@
                 const eleccion = prompt(mensajePrompt);
 
                 if (eleccion === null || eleccion.trim() === '') {
-                    // Si el usuario cancela, recargamos para re-habilitar el slider
                     cargarMisPedidos();
                     return;
                 }
@@ -300,12 +377,12 @@
                         break;
                     default:
                         alert('Opción no válida. Por favor, introduce un número del 1 al 4.');
-                        cargarMisPedidos(); // Recargar para re-habilitar
+                        cargarMisPedidos();
                         return;
                 }
                 
                 if (!confirm(`¿Confirmas la entrega con estatus "${estatus}"?`)) {
-                    cargarMisPedidos(); // Recargar si cancela la confirmación
+                    cargarMisPedidos();
                     return;
                 }
 

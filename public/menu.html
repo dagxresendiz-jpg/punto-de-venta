@@ -117,7 +117,7 @@
         #cart-total { text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--primary-color); margin-bottom: 1.5rem; }
         
         form label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        form input { display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; background-color: var(--card-background); color: var(--text-color-dark); }
+        form input, form select { display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; background-color: var(--card-background); color: var(--text-color-dark); }
         form button { width: 100%; padding: 0.75rem; border-radius: 8px; border: none; background-color: var(--accent-color); color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
         form button:hover { background-color: #f76c8c; }
         form button:disabled { background-color: #9ca3af; }
@@ -125,15 +125,18 @@
         .theme-switch-wrapper { position: absolute; top: 0; right: 0; }
         .theme-switch { display: inline-block; height: 26px; position: relative; width: 50px; }
         .theme-switch input { display: none; }
-        .slider { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 26px; }
-        .slider:before { background-color: #fff; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; position: absolute; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary-color); }
-        input:checked + .slider:before { transform: translateX(24px); }
-        .slider .sun, .slider .moon { position: absolute; top: 50%; transform: translateY(-50%); }
-        .slider .sun { left: 6px; opacity: 1; transition: opacity 0.2s; }
-        .slider .moon { right: 6px; opacity: 0; transition: opacity 0.2s; }
-        input:checked + .slider .sun { opacity: 0; }
-        input:checked + .slider .moon { opacity: 1; }
+        .slider-theme { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 26px; }
+        .slider-theme:before { background-color: #fff; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; position: absolute; transition: .4s; border-radius: 50%; }
+        input:checked + .slider-theme { background-color: var(--primary-color); }
+        input:checked + .slider-theme:before { transform: translateX(24px); }
+        .slider-theme .sun, .slider-theme .moon { position: absolute; top: 50%; transform: translateY(-50%); }
+        .slider-theme .sun { left: 6px; opacity: 1; transition: opacity 0.2s; }
+        .slider-theme .moon { right: 6px; opacity: 0; transition: opacity 0.2s; }
+        input:checked + .slider-theme .sun { opacity: 0; }
+        input:checked + .slider-theme .moon { opacity: 1; }
+
+        .phone-input-group { display: flex; align-items: center; gap: 0.5rem; }
+        .phone-input-group input:first-child { width: 70px; }
     </style>
 </head>
 <body>
@@ -142,7 +145,7 @@
             <div class="theme-switch-wrapper">
                 <label class="theme-switch" for="theme-toggle">
                     <input type="checkbox" id="theme-toggle" />
-                    <div class="slider">
+                    <div class="slider-theme">
                         <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="yellow" viewBox="0 0 16 16"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
                         <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>
                     </div>
@@ -177,13 +180,25 @@
             <p id="cart-total">Total del Pedido: $0.00</p>
             
             <form id="order-form">
-                <h3 style="margin-top: 2rem;">Tus Datos</h3>
+                <h3 style="margin-top: 2rem;">Tus Datos y Entrega</h3>
+                
                 <label for="nombreCliente">Tu Nombre:</label>
                 <input type="text" id="nombreCliente" required>
+
                 <label for="telefonoCliente">Tu Teléfono (WhatsApp):</label>
-                <input type="tel" id="telefonoCliente" required>
+                <div class="phone-input-group">
+                    <input type="text" id="phonePrefix" value="+52" required>
+                    <input type="tel" id="telefonoCliente" required placeholder="10 dígitos">
+                </div>
+
                 <label for="direccionEntrega">Dirección de Entrega:</label>
                 <input type="text" id="direccionEntrega" required>
+                
+                <label for="fechaEntrega">Selecciona el día de entrega:</label>
+                <select id="fechaEntrega" required>
+                    <option value="">Cargando fechas disponibles...</option>
+                </select>
+
                 <button type="submit" id="submit-order-btn">Realizar Pedido</button>
             </form>
         </div>
@@ -206,6 +221,9 @@
             const currentItemTotalEl = document.getElementById('current-item-total');
             const themeToggle = document.getElementById('theme-toggle');
             const menuLogo = document.getElementById('menu-logo');
+            const phonePrefixInput = document.getElementById('phonePrefix');
+            const telefonoClienteInput = document.getElementById('telefonoCliente');
+            const fechaEntregaSelect = document.getElementById('fechaEntrega');
 
             function applyTheme(theme) {
                 if (theme === 'dark') {
@@ -229,14 +247,24 @@
             } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                 applyTheme('dark');
             }
+            
+            function setupPhoneInput() {
+                phonePrefixInput.addEventListener('input', () => {
+                    phonePrefixInput.value = '+' + phonePrefixInput.value.replace(/[^\d]/g, '');
+                });
+                telefonoClienteInput.addEventListener('input', () => {
+                    telefonoClienteInput.value = telefonoClienteInput.value.replace(/[^\d]/g, '');
+                });
+            }
 
             async function fetchData() {
                 try {
-                    const [productosRes, toppingsRes, jarabesRes, configRes] = await Promise.all([
+                    const [productosRes, toppingsRes, jarabesRes, configRes, fechasRes] = await Promise.all([
                         fetch('/api/productos'),
                         fetch('/api/toppings'),
                         fetch('/api/jarabes'),
-                        fetch('/api/configuracion')
+                        fetch('/api/configuracion'),
+                        fetch('/api/fechas-entrega')
                     ]);
                     
                     if (!productosRes.ok || !toppingsRes.ok || !jarabesRes.ok) throw new Error("No se pudieron cargar los datos del menú.");
@@ -246,7 +274,6 @@
                     jarabes = await jarabesRes.json();
                     
                     const config = await configRes.json().catch(() => ({}));
-                    
                     if (config.logo_base64) {
                         menuLogo.src = config.logo_base64;
                     } else {
@@ -256,13 +283,34 @@
                     
                     if (config.primary_color) document.documentElement.style.setProperty('--primary-color', config.primary_color);
                     if (config.accent_color) document.documentElement.style.setProperty('--accent-color', config.accent_color);
+                    
+                    const fechasDisponibles = await fechasRes.json();
+                    renderFechas(fechasDisponibles);
 
                     renderMenu();
                 } catch (error) {
-                    console.error('Error al cargar el menú:', error);
+                    console.error('Error al cargar datos:', error);
                     productosContainer.innerHTML = `<p style="color: red;">${error.message}</p>`;
                     menuLogo.src = "https://via.placeholder.com/200x80.png?text=Error";
                     menuLogo.classList.add('loaded');
+                }
+            }
+
+            function renderFechas(fechas) {
+                fechaEntregaSelect.innerHTML = '<option value="">-- Elige una fecha --</option>';
+                if (fechas && fechas.length > 0) {
+                    fechas.forEach(fecha => {
+                        const dateObj = new Date(fecha.fecha);
+                        const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+                        const fechaFormateada = dateObj.toLocaleDateString('es-MX', opciones);
+                        
+                        const option = document.createElement('option');
+                        option.value = fecha.id;
+                        option.textContent = fechaFormateada;
+                        fechaEntregaSelect.appendChild(option);
+                    });
+                } else {
+                    fechaEntregaSelect.innerHTML = '<option value="">No hay fechas de entrega disponibles</option>';
                 }
             }
 
@@ -406,8 +454,9 @@
 
                 const orderData = {
                     nombreCliente: document.getElementById('nombreCliente').value,
-                    telefonoCliente: document.getElementById('telefonoCliente').value,
+                    telefonoCliente: phonePrefixInput.value + telefonoClienteInput.value,
                     direccionEntrega: document.getElementById('direccionEntrega').value,
+                    fechaEntregaId: fechaEntregaSelect.value,
                     items: carrito.map(item => {
                         const totalItem = item.producto.precio + 
                                          item.toppings.reduce((s,t) => s + t.precio, 0) +
@@ -441,7 +490,7 @@
                     carrito = [];
                     orderForm.reset();
                     renderCart();
-
+                    phonePrefixInput.value = "+52";
                 } catch (error) {
                     alert('Hubo un error al enviar tu pedido: ' + error.message);
                 } finally {
@@ -450,6 +499,7 @@
                 }
             });
 
+            setupPhoneInput();
             fetchData();
         });
     </script>

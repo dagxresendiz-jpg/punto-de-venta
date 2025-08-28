@@ -71,7 +71,7 @@
         .info-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
         .info-row strong { width: 80px; flex-shrink: 0; }
         .info-row a { display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--primary-color); word-break: break-all; }
-        .info-row a.whatsapp-link { color: var(--whatsapp-color); } /* Color específico para WhatsApp */
+        .info-row a.whatsapp-link { color: var(--whatsapp-color); }
         .info-row a svg { width: 16px; height: 16px; }
         .items-list { list-style: none; padding-left: 1rem; font-size: 0.9em; }
         .total-section { text-align: right; font-size: 1.2rem; font-weight: 600; margin-top: 1rem; }
@@ -262,7 +262,6 @@
                             }
                         });
 
-                        // == MEJORA WHATSAPP: Se crea el mensaje y la URL aquí ==
                         const mensajeWhatsapp = `¡Hola ${p.nombreCliente}! Tu pedido de Dulces Amigas ya va en camino.`;
                         const urlWhatsapp = `https://wa.me/${p.telefonoCliente}?text=${encodeURIComponent(mensajeWhatsapp)}`;
 
@@ -276,7 +275,6 @@
                                     <strong>Teléfono:</strong>
                                     <a href="tel:${p.telefonoCliente}">${p.telefonoCliente}</a>
                                 </div>
-                                <!-- == MEJORA WHATSAPP: Nuevo botón/enlace == -->
                                 <div class="info-row">
                                     <strong>WhatsApp:</strong>
                                     <a href="${urlWhatsapp}" target="_blank" class="whatsapp-link">
@@ -328,7 +326,7 @@
                     knob.style.transform = `translateX(${offsetX}px)`;
                 };
 
-                const endDrag = (e) => {
+                const endDrag = () => {
                     if (!isDragging) return;
                     isDragging = false;
                     const maxOffset = slider.offsetWidth - knob.offsetWidth;

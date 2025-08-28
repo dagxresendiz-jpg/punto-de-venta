@@ -1,4 +1,4 @@
-// server.js - v8.1.1 (Backend con Lógica y Rutas para Repartidores)
+// server.js - v8.4 (Backend con Gestión de Fechas de Entrega)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -76,6 +76,11 @@ const AppConfig = mongoose.model('AppConfig', createSchema({
     accent_color: { type: String, default: '#FF85A2' }
 }));
 
+const FechaEntrega = mongoose.model('FechaEntrega', createSchema({
+    fecha: { type: Date, required: true, unique: true },
+    activa: { type: Boolean, default: true }
+}));
+
 const Pedido = mongoose.model('Pedido', createSchema({
     nombreCliente: { type: String, required: true },
     telefonoCliente: { type: String, required: true },
@@ -88,7 +93,8 @@ const Pedido = mongoose.model('Pedido', createSchema({
         enum: ['recibido', 'en_preparacion', 'listo', 'en_reparto', 'entregado', 'cancelado']
     },
     visto: { type: Boolean, default: false },
-    repartidorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null }
+    repartidorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null },
+    fechaEntregaId: { type: mongoose.Schema.Types.ObjectId, ref: 'FechaEntrega' }
 }));
 
 
@@ -163,14 +169,24 @@ publicApiRouter.get('/toppings', async (req, res) => res.json(await Topping.find
 publicApiRouter.get('/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
 publicApiRouter.post('/pedidos', async (req, res) => {
     try {
-        const { nombreCliente, telefonoCliente, direccionEntrega, items, total } = req.body;
-        if (!nombreCliente || !telefonoCliente || !items || !items.length) {
+        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total } = req.body;
+        if (!nombreCliente || !telefonoCliente || !items || !items.length || !fechaEntregaId) {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
-        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, items, total, visto: false });
+        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, visto: false });
         res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
     } catch (error) {
         res.status(500).json({ error: 'Error al procesar el pedido.' });
+    }
+});
+publicApiRouter.get('/fechas-entrega', async (req, res) => {
+    try {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const fechas = await FechaEntrega.find({ activa: true, fecha: { $gte: hoy } }).sort({ fecha: 1 });
+        res.json(fechas);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener las fechas de entrega.' });
     }
 });
 app.use('/api', publicApiRouter);
@@ -233,7 +249,7 @@ apiRouter.post('/configuracion', esAdmin, async (req, res) => {
 
 const pedidosRouter = express.Router();
 pedidosRouter.get('/', tienePermiso('pedidos'), async (req, res) => {
-    const pedidos = await Pedido.find().populate('repartidorId', 'username').sort({ createdAt: -1 });
+    const pedidos = await Pedido.find().populate('repartidorId', 'username').populate('fechaEntregaId').sort({ createdAt: -1 });
     res.json(pedidos);
 });
 pedidosRouter.put('/:id', tienePermiso('pedidos'), async (req, res) => res.json(await Pedido.findByIdAndUpdate(req.params.id, { estatus: req.body.estatus }, { new: true })));
@@ -374,6 +390,47 @@ usuariosRouter.delete('/:id', tienePermiso('usuarios'), async (req, res) => {
 });
 usuariosRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndDelete(req.params.id); res.status(204).send(); });
 apiRouter.use('/usuarios', esAdmin, usuariosRouter);
+
+const fechasRouter = express.Router();
+fechasRouter.get('/', esAdmin, async (req, res) => {
+    res.json(await FechaEntrega.find().sort({ fecha: -1 }));
+});
+fechasRouter.post('/', esAdmin, async (req, res) => {
+    try {
+        const { fecha } = req.body;
+        const nuevaFecha = new Date(fecha);
+        nuevaFecha.setUTCHours(12, 0, 0, 0);
+        
+        const fechaExistente = await FechaEntrega.findOne({ fecha: nuevaFecha });
+        if (fechaExistente) {
+            return res.status(409).json({ error: 'Esta fecha ya ha sido agregada.' });
+        }
+        const fechaCreada = await FechaEntrega.create({ fecha: nuevaFecha });
+        res.status(201).json(fechaCreada);
+    } catch (error) {
+        res.status(400).json({ error: 'Error al crear la fecha de entrega.' });
+    }
+});
+fechasRouter.put('/:id/toggle', esAdmin, async (req, res) => {
+    try {
+        const fecha = await FechaEntrega.findById(req.params.id);
+        if (!fecha) return res.status(404).json({ error: 'Fecha no encontrada' });
+        fecha.activa = !fecha.activa;
+        await fecha.save();
+        res.json(fecha);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar la fecha.' });
+    }
+});
+fechasRouter.delete('/:id', esAdmin, async (req, res) => {
+    try {
+        await FechaEntrega.findByIdAndDelete(req.params.id);
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar la fecha.' });
+    }
+});
+apiRouter.use('/fechas-entrega', fechasRouter);
 
 // Usar el router principal de la API PRIVADA
 app.use('/api', apiRouter);

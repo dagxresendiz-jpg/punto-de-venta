@@ -199,6 +199,7 @@
             const payload = JSON.parse(atob(token.split('.')[1]));
             if (payload.role === 'repartidor') {
                 window.location.href = '/repartidor.html';
+                return; // Detener la ejecución del script aquí
             }
         } catch (e) {
             localStorage.removeItem('token');
@@ -207,7 +208,7 @@
 
       const style = document.createElement('style');
       style.setAttribute('data-flicker-guard', 'true');
-      const hasToken = !!localStorage.getItem('token'); // Re-evaluar por si se limpió
+      const hasToken = !!localStorage.getItem('token');
       if (hasToken) {
         style.textContent = '#login-container { display: none !important; } #app-wrapper { display: flex !important; }';
       } else {
@@ -2036,4 +2037,3 @@
   </script>
 </body>
 </html>
-

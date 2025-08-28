@@ -194,27 +194,36 @@
   <script>
     (function() {
       const token = localStorage.getItem('token');
+      let userRole = null;
+      let isValidToken = false;
+
       if (token) {
         try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            if (payload.role === 'repartidor') {
-                window.location.href = '/repartidor.html';
-                return; // Detener la ejecución del script aquí
-            }
-        } catch (e) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const expiration = payload.exp * 1000;
+          if (expiration > Date.now()) {
+            userRole = payload.role;
+            isValidToken = true;
+          } else {
             localStorage.removeItem('token');
+          }
+        } catch (e) {
+          localStorage.removeItem('token');
         }
       }
 
-      const style = document.createElement('style');
-      style.setAttribute('data-flicker-guard', 'true');
-      const hasToken = !!localStorage.getItem('token');
-      if (hasToken) {
-        style.textContent = '#login-container { display: none !important; } #app-wrapper { display: flex !important; }';
+      if (isValidToken && userRole === 'repartidor') {
+        window.location.replace('/repartidor.html');
       } else {
-        style.textContent = '#login-container { display: block !important; } #app-wrapper { display: none !important; }';
+        const style = document.createElement('style');
+        style.setAttribute('data-flicker-guard', 'true');
+        if (isValidToken) {
+          style.textContent = '#login-container { display: none !important; } #app-wrapper { display: flex !important; }';
+        } else {
+          style.textContent = '#login-container { display: block !important; } #app-wrapper { display: none !important; }';
+        }
+        document.head.appendChild(style);
       }
-      document.head.appendChild(style);
     })();
   </script>
 </head>
@@ -1919,6 +1928,69 @@
               await cargarProductos();
           } catch (err) {
               alert(`Error al cambiar estado: ${err.message}`);
+          }
+      }
+      
+      async function cargarFechasDeEntrega() {
+        try {
+            const fechas = await fetchAPI('/api/fechas-entrega');
+            const lista = document.getElementById('listaFechasEntrega');
+            lista.innerHTML = '';
+            fechas.forEach(fecha => {
+                const dateObj = new Date(fecha.fecha);
+                const opciones = { timeZone: 'UTC', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const fechaFormateada = dateObj.toLocaleDateString('es-MX', opciones);
+
+                const li = document.createElement('li');
+                li.className = `fecha-item ${!fecha.activa ? 'inactiva' : ''}`;
+                li.innerHTML = `
+                    <span>${fechaFormateada}</span>
+                    <div>
+                        <button onclick="window.app.toggleFecha('${fecha.id}')">${fecha.activa ? 'Desactivar' : 'Activar'}</button>
+                        <button class="btn-eliminar-item" onclick="window.app.eliminarFecha('${fecha.id}')">Eliminar</button>
+                    </div>
+                `;
+                lista.appendChild(li);
+            });
+        } catch (error) {
+            console.error("Error al cargar fechas de entrega:", error);
+        }
+      }
+
+      async function agregarFechaDeEntrega(e) {
+          e.preventDefault();
+          const fechaInput = document.getElementById('inputFecha');
+          const fecha = fechaInput.value;
+          if (!fecha) return;
+          try {
+              await fetchAPI('/api/fechas-entrega', {
+                  method: 'POST',
+                  body: JSON.stringify({ fecha })
+              });
+              fechaInput.value = '';
+              cargarFechasDeEntrega();
+          } catch (error) {
+              alert('Error al añadir la fecha: ' + error.message);
+          }
+      }
+      
+      async function toggleFecha(id) {
+          try {
+              await fetchAPI(`/api/fechas-entrega/${id}/toggle`, { method: 'PUT' });
+              cargarFechasDeEntrega();
+          } catch (error) {
+              alert('Error al cambiar el estado de la fecha: ' + error.message);
+          }
+      }
+
+      async function eliminarFecha(id) {
+          if (confirm('¿Estás seguro de que quieres eliminar esta fecha?')) {
+              try {
+                  await fetchAPI(`/api/fechas-entrega/${id}`, { method: 'DELETE' });
+                  cargarFechasDeEntrega();
+              } catch (error) {
+                  alert('Error al eliminar la fecha: ' + error.message);
+              }
           }
       }
 

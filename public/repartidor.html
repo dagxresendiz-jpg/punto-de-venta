@@ -34,6 +34,7 @@
             background-color: var(--background-color); 
             color: var(--text-color-dark);
             transition: background-color 0.3s, color 0.3s;
+            visibility: hidden; /* Oculto hasta que el script de seguridad decida */
         }
         .app-container { max-width: 600px; margin: 0 auto; padding: 1rem; }
         .header { 
@@ -131,6 +132,32 @@
         input:checked + .slider-theme .sun { opacity: 0; }
         input:checked + .slider-theme .moon { opacity: 1; }
     </style>
+    <script>
+      (function() {
+        const token = localStorage.getItem('token');
+        let userRole = null;
+        let isValidToken = false;
+
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const expiration = payload.exp * 1000;
+            if (expiration > Date.now()) {
+              userRole = payload.role;
+              isValidToken = true;
+            } else {
+              localStorage.removeItem('token');
+            }
+          } catch (e) {
+            localStorage.removeItem('token');
+          }
+        }
+
+        if (!isValidToken || userRole !== 'repartidor') {
+          window.location.replace('/index.html');
+        }
+      })();
+    </script>
 </head>
 <body>
     <div class="app-container">
@@ -163,20 +190,14 @@
             const themeToggle = document.getElementById('theme-toggle');
 
             const token = localStorage.getItem('token');
-            if (!token) { window.location.href = '/index.html'; return; }
-
+            // La seguridad ya se manejó en el script del head, aquí solo extraemos info
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
-                if (payload.role !== 'repartidor') {
-                    localStorage.removeItem('token');
-                    window.location.href = '/index.html';
-                    return;
-                }
                 document.querySelector('h1').textContent += ` (${payload.username})`;
             } catch (e) {
+                // No debería pasar si el script del head funcionó, pero por si acaso.
                 localStorage.removeItem('token');
                 window.location.href = '/index.html';
-                return;
             }
             
             function applyTheme(theme) {
@@ -416,7 +437,8 @@
                 localStorage.removeItem('token');
                 window.location.href = '/index.html';
             });
-
+            
+            document.body.style.visibility = 'visible'; // Hacemos visible el body ahora que sabemos que el usuario es correcto
             loadConfig();
             cargarMisPedidos();
         });

@@ -218,7 +218,7 @@
         const style = document.createElement('style');
         style.setAttribute('data-flicker-guard', 'true');
         const finalTokenStatus = !!localStorage.getItem('token');
-        if (finalTokenStatus) {
+        if (finalTokenStatus && userRole !== 'repartidor') {
           style.textContent = '#login-container { display: none !important; } #app-wrapper { display: flex !important; }';
         } else {
           style.textContent = '#login-container { display: block !important; } #app-wrapper { display: none !important; }';
@@ -368,6 +368,10 @@
                         <ul id="listaVentaActual"></ul>
                         <div id="totalVenta" style="font-weight:600; font-size: 1.2rem; margin-top: 1rem; text-align: right;">Total venta actual: $0.00</div>
                         <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
+                        
+                        <label for="fechaEntregaVenta">Fecha de Entrega (Opcional):</label>
+                        <select id="fechaEntregaVenta"></select>
+
                         <label for="metodoPago">Método de Pago:</label>
                         <select id="metodoPago">
                             <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
@@ -786,7 +790,7 @@
             
             const payload = JSON.parse(atob(token.split('.')[1]));
             if (payload.role === 'repartidor') {
-                window.location.href = '/repartidor.html';
+                window.location.replace('/repartidor.html');
                 return;
             }
 
@@ -1110,10 +1114,11 @@
       async function cargarOpcionesParaVenta() { 
         try {
             await Promise.all([ 
-                cargarDataParaSelector('/api/productos', 'ventaProducto', 'id', item => `${item.nombre} - $${item.precio.toFixed(2)}`), 
+                cargarDataParaSelector('/api/productos', 'ventaProducto', 'id', item => `${item.nombre} ${item.agotado ? '(Agotado)' : ''} - $${item.precio.toFixed(2)}`, true), 
                 cargarDataParaSelector('/api/clientes', 'ventaCliente', 'id', 'nombre'),
                 cargarDataParaBotones('/api/toppings', 'toppings-container'),
-                cargarDataParaBotones('/api/jarabes', 'jarabes-container') 
+                cargarDataParaBotones('/api/jarabes', 'jarabes-container'),
+                cargarDataParaSelector('/api/fechas-entrega', 'fechaEntregaVenta', 'id', fecha => new Date(fecha.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'}))
             ]);
             setupCollapsibles();
         } catch(e) {
@@ -1121,16 +1126,20 @@
         }
       }
       
-      async function cargarDataParaSelector(url, selectId, valueField, textField) {
+      async function cargarDataParaSelector(url, selectId, valueField, textField, checkAgotado = false) {
         try {
           const data = await fetchAPI(url);
           if (!data) return;
           const select = document.getElementById(selectId);
           const currentValue = select.value;
-          let optionsHtml = selectId === 'ventaCliente' ? '<option value="">Público General</option>' : '<option value="">-- Selecciona un producto --</option>';
+          let optionsHtml = `<option value="">-- Selecciona una opción --</option>`;
+          if (selectId === 'ventaCliente') optionsHtml = '<option value="">Público General</option>';
+          if (selectId === 'fechaEntregaVenta') optionsHtml = '<option value="">Entrega Inmediata</option>';
+          
           data.forEach(item => {
             let text = typeof textField === 'function' ? textField(item) : item[textField];
-            optionsHtml += `<option value="${item[valueField]}" data-precio="${item.precio || 0}">${text}</option>`;
+            const disabled = checkAgotado && item.agotado ? 'disabled' : '';
+            optionsHtml += `<option value="${item[valueField]}" data-precio="${item.precio || 0}" ${disabled}>${text}</option>`;
           });
           select.innerHTML = optionsHtml;
           select.value = currentValue;
@@ -1150,6 +1159,10 @@
                   button.dataset.id = item.id;
                   button.dataset.precio = item.precio;
                   button.dataset.nombre = item.nombre;
+                  if (item.agotado) {
+                      button.disabled = true;
+                      button.style.textDecoration = 'line-through';
+                  }
                   button.onclick = () => {
                       button.classList.toggle('selected');
                   };
@@ -1172,13 +1185,14 @@
       function agregarAVenta() {
         const productoSelect = document.getElementById('ventaProducto');
         if (!productoSelect.value) { alert('Selecciona un producto'); return; }
-        const productoNombre = productoSelect.options[productoSelect.selectedIndex].text.split(' - ')[0];
+        const productoNombre = productoSelect.options[productoSelect.selectedIndex].text.replace(/ \(Agotado\)/, '').split(' - ')[0];
         const cantidad = parseInt(document.getElementById('ventaCantidad').value) || 1;
-        const toppings = Array.from(document.querySelectorAll('#toppings-container .option-btn.selected')).map(btn => ({ nombre: btn.dataset.nombre }));
-        const jarabes = Array.from(document.querySelectorAll('#jarabes-container .option-btn.selected')).map(btn => ({ nombre: btn.dataset.nombre }));
+        const toppings = Array.from(document.querySelectorAll('#toppings-container .option-btn.selected')).map(btn => ({ nombre: btn.dataset.nombre, precio: parseFloat(btn.dataset.precio) }));
+        const jarabes = Array.from(document.querySelectorAll('#jarabes-container .option-btn.selected')).map(btn => ({ nombre: btn.dataset.nombre, precio: parseFloat(btn.dataset.precio) }));
         const nota = document.getElementById('ventaNota').value.trim();
-        let totalItem = (parseFloat(productoSelect.options[productoSelect.selectedIndex].dataset.precio) * cantidad) + 
-                        Array.from(document.querySelectorAll('.option-btn.selected')).reduce((acc, btn) => acc + parseFloat(btn.dataset.precio), 0);
+        let totalItem = (parseFloat(productoSelect.options[productoSelect.selectedIndex].dataset.precio) * cantidad);
+        totalItem += toppings.reduce((acc, item) => acc + item.precio, 0);
+        totalItem += jarabes.reduce((acc, item) => acc + item.precio, 0);
         
         ventaActual.push({ productoNombre, cantidad, toppings, jarabes, nota, total: totalItem });
         
@@ -1266,13 +1280,24 @@
         
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
         const total = ventaActual.reduce((acc, item) => acc + item.total, 0) + costoDomicilio;
+        const fechaEntregaId = document.getElementById('fechaEntregaVenta').value;
+        
+        const itemsParaPedido = ventaActual.map(v => ({
+            nombre: v.productoNombre,
+            toppings: v.toppings,
+            jarabes: v.jarabes,
+            total: v.total,
+            cantidad: v.cantidad,
+            nota: v.nota
+        }));
         
         const pedidoData = {
             nombreCliente: clienteData.nombre,
             telefonoCliente: clienteData.telefono,
             direccionEntrega: clienteData.direccion,
-            items: ventaActual,
-            total: total
+            items: itemsParaPedido,
+            total: total,
+            fechaEntregaId: fechaEntregaId || null
         };
 
         try {
@@ -1294,7 +1319,7 @@
         ventaActual.forEach((item, index) => {
           const li = document.createElement('li');
           const itemInfo = document.createElement('div');
-          itemInfo.innerHTML = `<span>${item.productoNombre} x${item.cantidad} - $${item.total.toFixed(2)}</span>`;
+          itemInfo.innerHTML = `<span>${item.cantidad}x ${item.productoNombre} - $${item.total.toFixed(2)}</span>`;
           const btnEliminar = document.createElement('button');
           btnEliminar.textContent = 'X';
           btnEliminar.className = 'btn-eliminar-item';
@@ -1337,6 +1362,7 @@
             c.nextElementSibling.style.maxHeight = '0px';
         });
         document.getElementById('metodoPago').value = "Efectivo";
+        document.getElementById('fechaEntregaVenta').value = "";
         document.getElementById('botones-finalizar-venta').style.display = 'flex';
         document.getElementById('btnActualizarVenta').style.display = 'none';
         mostrarVentaActual();
@@ -1699,7 +1725,8 @@
         let productosVendidos = {};
         ventas.forEach(venta => {
             venta.items.forEach(item => {
-                productosVendidos[item.productoNombre] = (productosVendidos[item.productoNombre] || 0) + item.cantidad;
+                const nombre = item.productoNombre || item.nombre;
+                productosVendidos[nombre] = (productosVendidos[nombre] || 0) + (item.cantidad || 1);
             });
         });
         actualizarGraficaCircular(Object.keys(productosVendidos), Object.values(productosVendidos));
@@ -1731,7 +1758,8 @@
           const resumenProductos = {}, resumenToppings = {}, resumenJarabes = {};
           ventas.forEach(venta => {
               venta.items.forEach(item => {
-                  resumenProductos[item.productoNombre] = (resumenProductos[item.productoNombre] || 0) + item.cantidad;
+                  const nombreProducto = item.productoNombre || item.nombre;
+                  resumenProductos[nombreProducto] = (resumenProductos[nombreProducto] || 0) + (item.cantidad || 1);
                   if (item.toppings) item.toppings.forEach(t => { resumenToppings[t.nombre] = (resumenToppings[t.nombre] || 0) + 1; });
                   if (item.jarabes) item.jarabes.forEach(j => { resumenJarabes[j.nombre] = (resumenJarabes[j.nombre] || 0) + 1; });
               });
@@ -1847,7 +1875,7 @@
 
             let itemsHtml = '';
             p.items.forEach(item => {
-                itemsHtml += `<li><strong>- ${item.nombre}</strong></li>`;
+                itemsHtml += `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong></li>`;
                 const extras = [...(item.toppings || []), ...(item.jarabes || [])];
                 if (extras.length > 0) {
                     itemsHtml += '<ul style="padding-left: 20px;">';
@@ -2146,9 +2174,13 @@
       }
       
       window.app = { 
-          toggleAgotado, cancelarPedido, cambiarEstatusPedido, 
-          convertirPedidoAVenta, asignarRepartidor,
-          toggleFecha, eliminarFecha
+          toggleAgotado, 
+          cancelarPedido, 
+          cambiarEstatusPedido, 
+          convertirPedidoAVenta, 
+          asignarRepartidor,
+          toggleFecha, 
+          eliminarFecha
       };
 
       await loadPublicConfig();

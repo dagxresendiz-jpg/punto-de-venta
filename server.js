@@ -1,4 +1,4 @@
-// server.js - v8.5.1 (Backend con "Agotado" para Toppings y Jarabes)
+// server.js - v8.6 (Backend con mejoras de Agotado y Fechas en Panel)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -359,7 +359,7 @@ ventasRouter.post('/', tienePermiso('pedidos'), (req, res, next) => {
 });
 ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => {
     try {
-        const { nombreCliente, telefonoCliente, direccionEntrega, items, total } = req.body;
+        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total } = req.body;
         if (!nombreCliente || !items || !items.length) {
             return res.status(400).json({ error: 'Faltan datos para crear el pedido.' });
         }
@@ -367,6 +367,7 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
             nombreCliente,
             telefonoCliente: telefonoCliente || 'N/A',
             direccionEntrega: direccionEntrega || 'Recoger en tienda',
+            fechaEntregaId: fechaEntregaId || null,
             items,
             total,
             visto: false

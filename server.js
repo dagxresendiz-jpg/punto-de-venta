@@ -1,4 +1,4 @@
-// server.js - v8.4 (Backend con Gestión de Fechas de Entrega)
+// server.js - v8.5.1 (Backend con "Agotado" para Toppings y Jarabes)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -48,8 +48,18 @@ const Producto = mongoose.model('Producto', createSchema({
     agotado: { type: Boolean, default: false },
     ...commonFields 
 }));
-const Topping = mongoose.model('Topping', createSchema({ nombre: String, precio: Number, ...commonFields }));
-const Jarabe = mongoose.model('Jarabe', createSchema({ nombre: String, precio: Number, ...commonFields }));
+const Topping = mongoose.model('Topping', createSchema({ 
+    nombre: String, 
+    precio: Number, 
+    agotado: { type: Boolean, default: false }, 
+    ...commonFields 
+}));
+const Jarabe = mongoose.model('Jarabe', createSchema({ 
+    nombre: String, 
+    precio: Number, 
+    agotado: { type: Boolean, default: false }, 
+    ...commonFields 
+}));
 const Cliente = mongoose.model('Cliente', createSchema({ nombre: String, telefono: String, direccion: String, ...commonFields }));
 
 const Usuario = mongoose.model('Usuario', createSchema({ 
@@ -318,30 +328,54 @@ const crearRutasCrud = (modelo, nombre, permiso) => {
     router.delete('/:id', tienePermiso(permiso), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
     router.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
     router.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
+
+    if (['Producto', 'Topping', 'Jarabe'].includes(nombre)) {
+        router.put('/:id/toggle-agotado', tienePermiso('gestion'), async (req, res) => {
+            try {
+                const item = await modelo.findById(req.params.id);
+                if (!item) return res.status(404).json({ error: `${nombre} no encontrado` });
+                item.agotado = !item.agotado;
+                await item.save();
+                res.json(item);
+            } catch (error) {
+                res.status(500).json({ error: `Error al actualizar el estado del ${nombre.toLowerCase()}.` });
+            }
+        });
+    }
     return router;
 };
 
-const productosRouter = crearRutasCrud(Producto, 'Producto', 'gestion');
-productosRouter.put('/:id/toggle-agotado', tienePermiso('gestion'), async (req, res) => {
-    try {
-        const producto = await Producto.findById(req.params.id);
-        if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
-        producto.agotado = !producto.agotado;
-        await producto.save();
-        res.json(producto);
-    } catch (error) { res.status(500).json({ error: 'Error al actualizar el estado del producto.' }); }
-});
-apiRouter.use('/productos', productosRouter);
+apiRouter.use('/productos', crearRutasCrud(Producto, 'Producto', 'gestion'));
 apiRouter.use('/toppings', crearRutasCrud(Topping, 'Topping', 'gestion'));
 apiRouter.use('/jarabes', crearRutasCrud(Jarabe, 'Jarabe', 'gestion'));
 apiRouter.use('/clientes', crearRutasCrud(Cliente, 'Cliente', 'clientes'));
 
 const ventasRouter = express.Router();
-ventasRouter.post('/', (req, res, next) => {
+ventasRouter.post('/', tienePermiso('pedidos'), (req, res, next) => {
     let nuevaVentaData = req.body;
     nuevaVentaData.vendedorId = req.user.id;
     nuevaVentaData.vendedorUsername = req.user.username;
     Venta.create(nuevaVentaData).then(venta => res.status(201).json(venta)).catch(next);
+});
+ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => {
+    try {
+        const { nombreCliente, telefonoCliente, direccionEntrega, items, total } = req.body;
+        if (!nombreCliente || !items || !items.length) {
+            return res.status(400).json({ error: 'Faltan datos para crear el pedido.' });
+        }
+        const nuevoPedido = await Pedido.create({
+            nombreCliente,
+            telefonoCliente: telefonoCliente || 'N/A',
+            direccionEntrega: direccionEntrega || 'Recoger en tienda',
+            items,
+            total,
+            visto: false
+        });
+        res.status(201).json({ message: 'Pedido enviado a cocina con éxito', pedido: nuevoPedido });
+    } catch (error) {
+        console.error("Error al crear pedido desde ventas:", error);
+        res.status(500).json({ error: 'Error al procesar el pedido.' });
+    }
 });
 ventasRouter.get('/', tienePermiso('historial'), async (req, res) => res.json(await Venta.find(findActive)));
 ventasRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));

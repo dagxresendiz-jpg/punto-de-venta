@@ -217,7 +217,8 @@
       } else {
         const style = document.createElement('style');
         style.setAttribute('data-flicker-guard', 'true');
-        if (isValidToken) {
+        const finalTokenStatus = !!localStorage.getItem('token');
+        if (finalTokenStatus) {
           style.textContent = '#login-container { display: none !important; } #app-wrapper { display: flex !important; }';
         } else {
           style.textContent = '#login-container { display: block !important; } #app-wrapper { display: none !important; }';
@@ -1304,8 +1305,7 @@
             }
             mostrarVentaActual(); 
           };
-          itemInfo.appendChild(btn
-Eliminar);
+          itemInfo.appendChild(btnEliminar);
           li.appendChild(itemInfo);
           if (item.nota) {
             const notaDiv = document.createElement('div');
@@ -1974,15 +1974,17 @@ Eliminar);
           }
       }
 
-      async function toggleAgotado(id) {
+      async function toggleAgotado(id, tipo = 'producto') {
           try {
-              await fetchAPI(`/api/productos/${id}/toggle-agotado`, { method: 'PUT' });
-              await cargarProductos();
+              await fetchAPI(`/api/${tipo}s/${id}/toggle-agotado`, { method: 'PUT' });
+              if (tipo === 'producto') await cargarProductos();
+              if (tipo === 'topping') await cargarToppings();
+              if (tipo === 'jarabe') await cargarJarabes();
           } catch (err) {
               alert(`Error al cambiar estado: ${err.message}`);
           }
       }
-      
+
       async function cargarFechasDeEntrega() {
         try {
             const fechas = await fetchAPI('/api/fechas-entrega');
@@ -2045,11 +2047,12 @@ Eliminar);
               }
           }
       }
-
+      
       function setupEventListeners() {
         document.getElementById('btnRegistrarPagado').addEventListener('click', () => registrarVenta('Pagado'));
         document.getElementById('btnRegistrarPendiente').addEventListener('click', () => registrarVenta('Pendiente de Pago'));
         document.getElementById('btnActualizarVenta').addEventListener('click', () => registrarVenta(null));
+        document.getElementById('btnEnviarACocina').addEventListener('click', enviarACocina);
         document.getElementById('filtroEstatus').addEventListener('change', cargarVentasHistorial);
         document.querySelectorAll('nav a').forEach(b => b.addEventListener('click', (e) => {
             e.preventDefault();

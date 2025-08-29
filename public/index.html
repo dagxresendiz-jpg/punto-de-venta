@@ -597,6 +597,7 @@
       let pedidosNuevosAnteriores = 0;
       const notificationSound = document.getElementById('notification-sound');
       const originalTitle = document.title;
+      let clientesCacheados = []; // Caché para clientes
       
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
@@ -1109,7 +1110,16 @@
       async function cargarProductos() { try { const data = await fetchAPI('/api/productos'); renderizarLista(data, 'Producto', ['nombre', 'precio']); } catch (e) { console.error(e); renderizarLista([], 'Producto', ['nombre', 'precio']); } }
       async function cargarToppings() { try { const data = await fetchAPI('/api/toppings'); renderizarLista(data, 'Topping', ['nombre', 'precio']); } catch (e) { console.error(e); renderizarLista([], 'Topping', ['nombre', 'precio']); } }
       async function cargarJarabes() { try { const data = await fetchAPI('/api/jarabes'); renderizarLista(data, 'Jarabe', ['nombre', 'precio']); } catch (e) { console.error(e); renderizarLista([], 'Jarabe', ['nombre', 'precio']); } }
-      async function cargarClientes() { try { const data = await fetchAPI('/api/clientes'); renderizarLista(data, 'Cliente', ['nombre', 'telefono']); } catch (e) { console.error(e); renderizarLista([], 'Cliente', ['nombre', 'telefono']); } }
+      async function cargarClientes() { 
+        try { 
+            const data = await fetchAPI('/api/clientes'); 
+            clientesCacheados = data; // Guardar en caché
+            renderizarLista(data, 'Cliente', ['nombre', 'telefono']); 
+        } catch (e) { 
+            console.error(e); 
+            renderizarLista([], 'Cliente', ['nombre', 'telefono']); 
+        } 
+      }
       
       async function cargarOpcionesParaVenta() { 
         try {
@@ -1130,6 +1140,9 @@
         try {
           const data = await fetchAPI(url);
           if (!data) return;
+
+          if(url === '/api/clientes') clientesCacheados = data; // Cachear clientes al cargar
+          
           const select = document.getElementById(selectId);
           const currentValue = select.value;
           let optionsHtml = `<option value="">-- Selecciona una opción --</option>`;
@@ -1267,14 +1280,13 @@
         };
 
         if (clienteId) {
-            try {
-                const cliente = await fetchAPI(`/api/clientes/${clienteId}`);
+            const cliente = clientesCacheados.find(c => c.id === clienteId);
+            if (cliente) {
                 clienteData.nombre = cliente.nombre;
                 clienteData.telefono = cliente.telefono || '';
                 clienteData.direccion = cliente.direccion || 'Recoger en tienda';
-            } catch (error) {
-                alert("No se pudieron obtener los datos del cliente seleccionado.");
-                return;
+            } else {
+                clienteData.nombre = clienteSelect.options[clienteSelect.selectedIndex].text;
             }
         }
         

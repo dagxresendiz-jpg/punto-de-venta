@@ -461,7 +461,7 @@
                 resetCurrentSelection();
             });
 
-            // ===== INICIO DE LA LÓGICA DE DIRECCIÓN CORREGIDA =====
+            // ===== INICIO DE LA LÓGICA DE DIRECCIÓN CORREGIDA Y ROBUSTA =====
             const cpInput = document.getElementById('codigoPostal');
             const coloniaSelect = document.getElementById('colonia');
             const ciudadInput = document.getElementById('ciudad');
@@ -485,25 +485,27 @@
                 if (cp.length !== 5) return;
 
                 try {
-                    const response = await fetch(`https://api.copomex.com/query/info_cp/${cp}?type=simplified&token=pruebas`);
+                    // La URL de la API ha sido actualizada a la versión recomendada que es más estable
+                    const response = await fetch(`https://api.copomex.com/query/info_cp/${cp}?token=pruebas`);
                     const data = await response.json();
 
                     // **INICIO DE LA CORRECCIÓN**
-                    // 1. Verificamos si 'data' es una lista (array) y si tiene contenido.
-                    if (!Array.isArray(data) || data.length === 0) {
-                        throw new Error('La respuesta de la API no es válida.');
+                    // 1. La API puede devolver un objeto de error directamente. Lo checamos primero.
+                    if (data.error) {
+                        throw new Error(data.error_message || 'Código Postal no encontrado');
                     }
-
-                    // 2. Extraemos el primer elemento de la lista, que contiene nuestros datos.
-                    const result = data[0];
                     
-                    // 3. Ahora sí, verificamos si hay un error DENTRO del objeto.
-                    if (result.error) {
-                        throw new Error(result.error_message || 'Código Postal no encontrado');
+                    // 2. La API a veces devuelve una lista (array) y a veces un solo objeto.
+                    //    Normalizamos la respuesta para siempre trabajar con el objeto de datos.
+                    const resultData = Array.isArray(data) ? data[0] : data;
+
+                    // 3. Verificamos que tengamos un resultado válido para procesar.
+                    if (!resultData || !resultData.response) {
+                        throw new Error("La respuesta de la API no tiene el formato esperado.");
                     }
 
-                    // 4. Extraemos la información del objeto 'response' dentro de 'result'.
-                    const { asentamiento, ciudad, estado } = result.response;
+                    // 4. Extraemos la información del objeto 'response'.
+                    const { asentamiento, ciudad, estado } = resultData.response;
                     // **FIN DE LA CORRECCIÓN**
                     
                     ciudadInput.value = ciudad || 'No disponible';
@@ -572,7 +574,7 @@
                 };
 
                 try {
-                    const response = await fetch('/api/pedridos', {
+                    const response = await fetch('/api/pedidos', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(orderData)

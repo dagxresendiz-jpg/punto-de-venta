@@ -312,11 +312,7 @@
                     renderFechas(fechasDisponibles);
                     renderMenu();
                 } catch (error) {
-                    console.error('Error al cargar datos:', error);
-                    // Comentamos las siguientes líneas para que no interfieran con la prueba de dirección
-                    // productosContainer.innerHTML = `<p style="color: red;">${error.message}</p>`;
-                    // menuLogo.src = "https://via.placeholder.com/200x80.png?text=Error";
-                    // menuLogo.classList.add('loaded');
+                    console.error('Error al cargar datos del menú (esto es normal si pruebas el archivo localmente):', error);
                 }
             }
 
@@ -465,7 +461,7 @@
                 resetCurrentSelection();
             });
 
-            // ===== INICIO DE LA LÓGICA DE DIRECCIÓN A PRUEBA DE CONFLICTOS =====
+            // ===== INICIO DE LA LÓGICA DE DIRECCIÓN CON LA API CONFIABLE =====
             const cpInput = document.getElementById('codigoPostal');
             const coloniaSelect = document.getElementById('colonia');
             const municipioInput = document.getElementById('municipio');
@@ -492,35 +488,39 @@
                 coloniaSelect.innerHTML = '<option>Buscando...</option>';
 
                 try {
-                    const cpApiResponse = await fetch(`https://api.copomex.com/query/info_cp/${cp}?token=pruebas`);
-                    const cpData = await cpApiResponse.json();
+                    const response = await fetch(`https://api.datamx.io/gp/api/v1/cp/${cp}`);
                     
-                    const cpResultData = Array.isArray(cpData) ? cpData[0] : cpData;
-
-                    if (!cpResultData || cpResultData.error || !cpResultData.response) {
-                        throw new Error(cpResultData.error_message || 'Código Postal no encontrado');
+                    if (!response.ok) {
+                        throw new Error('El código postal no fue encontrado.');
                     }
                     
-                    const { asentamiento, municipio, ciudad, estado } = cpResultData.response;
+                    const data = await response.json();
+
+                    if (!data.results || data.results.length === 0) {
+                        throw new Error('No se encontraron datos para este código postal.');
+                    }
                     
-                    municipioInput.value = municipio || 'No disponible';
-                    ciudadInput.value = ciudad || 'No disponible';
-                    estadoInput.value = estado || 'No disponible';
+                    const resultados = data.results;
+                    const primerResultado = resultados[0];
+                    
+                    municipioInput.value = primerResultado.d_mnpio || 'No disponible';
+                    ciudadInput.value = primerResultado.d_ciudad || 'No disponible';
+                    estadoInput.value = primerResultado.d_estado || 'No disponible';
 
                     coloniaSelect.innerHTML = '<option value="">-- Selecciona tu colonia --</option>';
 
-                    if (Array.isArray(asentamiento)) {
-                        asentamiento.forEach(nombreColonia => {
-                            const option = document.createElement('option');
-                            option.value = nombreColonia;
-                            option.textContent = nombreColonia;
-                            coloniaSelect.appendChild(option);
-                        });
-                    }
+                    const coloniasUnicas = [...new Set(resultados.map(entry => entry.d_asenta))];
+
+                    coloniasUnicas.forEach(nombreColonia => {
+                        const option = document.createElement('option');
+                        option.value = nombreColonia;
+                        option.textContent = nombreColonia;
+                        coloniaSelect.appendChild(option);
+                    });
                 } catch (error) {
                     console.error("Error al buscar el código postal:", error);
                     resetAddressFields();
-                    alert('No se pudo encontrar información para ese código postal. Por favor, verifícalo.');
+                    alert(error.message);
                 }
             }
 

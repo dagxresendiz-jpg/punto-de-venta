@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Esta es la línea crucial. Le dice al navegador que interprete los caracteres con acentos y 'ñ' correctamente. -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú - Dulces Amigas</title>
@@ -112,13 +113,13 @@
         .cart-item-details li { color: var(--text-color-light); font-size: 0.9em; }
         .cart-item-actions { display: flex; flex-direction: column; align-items: flex-end; }
         .cart-item-actions .price { font-weight: 600; margin-bottom: 0.5rem; }
-        .cart-item-actions button { background: none; border: none; color: var(--danger-color); cursor: pointer; font-size: 0.9em; }
+        .cart-item-actions button { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.9em; }
         
         #cart-total { text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--primary-color); margin-bottom: 1.5rem; }
         
         form label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
         form input, form select { display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; background-color: var(--card-background); color: var(--text-color-dark); }
-        form input[readonly] { background-color: #f1f5f9; } /* Estilo para campos de solo lectura */
+        form input[readonly] { background-color: #f1f5f9; cursor: not-allowed; }
         body.dark-mode form input[readonly] { background-color: #475569; }
         form button { width: 100%; padding: 0.75rem; border-radius: 8px; border: none; background-color: var(--accent-color); color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
         form button:hover { background-color: #f76c8c; }
@@ -194,7 +195,6 @@
                     <input type="tel" id="telefonoCliente" required placeholder="10 dígitos" maxlength="10">
                 </div>
                 
-                <!-- ===== INICIO DE LA SECCIÓN DE DIRECCIÓN MODIFICADA ===== -->
                 <label for="codigoPostal">Código Postal:</label>
                 <input type="tel" id="codigoPostal" required pattern="\d{5}" title="Ingresa un código postal de 5 dígitos" maxlength="5">
 
@@ -211,7 +211,6 @@
 
                 <label for="estado">Estado:</label>
                 <input type="text" id="estado" readonly required placeholder="Se llenará automáticamente">
-                <!-- ===== FIN DE LA SECCIÓN DE DIRECCIÓN MODIFICADA ===== -->
 
                 <label for="fechaEntrega">Selecciona el día de entrega:</label>
                 <select id="fechaEntrega" required>
@@ -229,7 +228,6 @@
             let carrito = [];
             let productos = [], toppings = [], jarabes = [];
 
-            // --- Referencias a elementos del DOM ---
             const productosContainer = document.getElementById('productos-container');
             const toppingsContainer = document.getElementById('toppings-container');
             const jarabesContainer = document.getElementById('jarabes-container');
@@ -245,7 +243,6 @@
             const telefonoClienteInput = document.getElementById('telefonoCliente');
             const fechaEntregaSelect = document.getElementById('fechaEntrega');
 
-            // --- Lógica del Tema (Oscuro/Claro) ---
             function applyTheme(theme) {
                 if (theme === 'dark') {
                     document.body.classList.add('dark-mode');
@@ -269,7 +266,6 @@
                 applyTheme('dark');
             }
             
-            // --- Lógica de Configuración del Teléfono ---
             function setupPhoneInput() {
                 const countryCodes = [
                     { name: 'México', code: '+52' }, { name: 'USA/Canadá', code: '+1' }, { name: 'España', code: '+34' },
@@ -289,7 +285,6 @@
                 });
             }
             
-            // --- Lógica para obtener datos del servidor ---
             async function fetchData() {
                 try {
                     const [productosRes, toppingsRes, jarabesRes, configRes, fechasRes] = await Promise.all([
@@ -322,7 +317,6 @@
                 }
             }
 
-            // --- Lógica de Renderizado (Fechas, Menú, Carrito) ---
             function renderFechas(fechas) {
                 fechaEntregaSelect.innerHTML = '<option value="">-- Elige una fecha --</option>';
                 if (fechas && fechas.length > 0) {
@@ -468,7 +462,6 @@
                 resetCurrentSelection();
             });
 
-            // ===== INICIO DE LA NUEVA LÓGICA DE AUTOCOMPLETADO DE DIRECCIÓN =====
             const cpInput = document.getElementById('codigoPostal');
             const coloniaSelect = document.getElementById('colonia');
             const ciudadInput = document.getElementById('ciudad');
@@ -477,10 +470,9 @@
             function setupAddressAutocomplete() {
                 let debounceTimer;
                 cpInput.addEventListener('input', () => {
-                    cpInput.value = cpInput.value.replace(/[^\d]/g, ''); // Solo números
+                    cpInput.value = cpInput.value.replace(/[^\d]/g, '');
                     clearTimeout(debounceTimer);
                     if (cpInput.value.length === 5) {
-                        // Espera 300ms después de que el usuario deja de escribir para hacer la llamada
                         debounceTimer = setTimeout(buscarCodigoPostal, 300);
                     } else {
                         resetAddressFields();
@@ -493,27 +485,32 @@
                 if (cp.length !== 5) return;
 
                 try {
-                    // Usamos una API gratuita que no requiere clave para este propósito
                     const response = await fetch(`https://api.copomex.com/query/info_cp/${cp}?type=simplified&token=pruebas`);
                     const data = await response.json();
 
-                    if (data.error) throw new Error(data.error_message);
+                    if (data.error) {
+                        throw new Error(data.error_message || 'Código Postal no encontrado');
+                    }
 
                     const { asentamiento, ciudad, estado } = data.response;
-                    ciudadInput.value = ciudad || 'N/A';
-                    estadoInput.value = estado || 'N/A';
+                    
+                    ciudadInput.value = ciudad || 'No disponible';
+                    estadoInput.value = estado || 'No disponible';
 
                     coloniaSelect.innerHTML = '<option value="">-- Selecciona tu colonia --</option>';
-                    asentamiento.forEach(col => {
-                        const option = document.createElement('option');
-                        option.value = col;
-                        option.textContent = col;
-                        coloniaSelect.appendChild(option);
-                    });
+
+                    if (Array.isArray(asentamiento)) {
+                        asentamiento.forEach(nombreColonia => {
+                            const option = document.createElement('option');
+                            option.value = nombreColonia;
+                            option.textContent = nombreColonia;
+                            coloniaSelect.appendChild(option);
+                        });
+                    }
                 } catch (error) {
                     console.error("Error al buscar el código postal:", error);
                     resetAddressFields();
-                    alert('Código Postal no encontrado. Por favor, verifícalo.');
+                    alert('No se pudo encontrar información para ese código postal. Por favor, verifícalo.');
                 }
             }
 
@@ -522,10 +519,7 @@
                 ciudadInput.value = '';
                 estadoInput.value = '';
             }
-            // ===== FIN DE LA NUEVA LÓGICA DE AUTOCOMPLETADO DE DIRECCIÓN =====
-
-
-            // --- Lógica de envío de Formulario con VALIDACIONES ---
+            
             orderForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
@@ -543,16 +537,17 @@
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Enviando...';
 
-                // Se construye la dirección completa a partir de los campos del formulario
                 const direccionCompleta = `Calle: ${document.getElementById('calleNumero').value}, Col. ${coloniaSelect.value}, C.P. ${cpInput.value}, ${ciudadInput.value}, ${estadoInput.value}`;
 
                 const orderData = {
                     nombreCliente: document.getElementById('nombreCliente').value,
                     telefonoCliente: phonePrefixSelect.value + telefonoClienteInput.value,
-                    direccionEntrega: direccionCompleta, // Se envía la dirección completa
+                    direccionEntrega: direccionCompleta,
                     fechaEntregaId: fechaEntregaSelect.value,
                     items: carrito.map(item => ({
-                        nombre: item.producto.nombre, precio: item.producto.precio, toppings: item.toppings,
+                        nombre: item.producto.nombre,
+                        precio: item.producto.precio,
+                        toppings: item.toppings,
                         jarabes: item.jarabes,
                         total: item.producto.precio + item.toppings.reduce((s,t) => s + t.precio, 0) + item.jarabes.reduce((s,j) => s + j.precio, 0)
                     })),
@@ -577,7 +572,7 @@
                     carrito = [];
                     orderForm.reset();
                     renderCart();
-                    resetAddressFields(); // Limpia los campos de dirección
+                    resetAddressFields();
                     phonePrefixSelect.value = "+52";
                 } catch (error) {
                     alert('Hubo un error al enviar tu pedido: ' + error.message);

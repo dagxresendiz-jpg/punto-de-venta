@@ -1280,15 +1280,9 @@
             alert('Agrega al menos un producto para enviar a cocina.');
             return;
         }
-
         const clienteSelect = document.getElementById('ventaCliente');
         const clienteId = clienteSelect.value;
-        let clienteData = {
-            nombre: 'Público General',
-            telefono: '',
-            direccion: 'Recoger en tienda'
-        };
-
+        let clienteData = { nombre: 'Público General', telefono: '', direccion: 'Recoger en tienda' };
         if (clienteId) {
             const cliente = clientesCacheados.find(c => c.id === clienteId);
             if (cliente) {
@@ -1299,20 +1293,17 @@
                 clienteData.nombre = clienteSelect.options[clienteSelect.selectedIndex].text;
             }
         }
-        
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
         const total = ventaActual.reduce((acc, item) => acc + item.total, 0) + costoDomicilio;
         const fechaEntregaId = document.getElementById('fechaEntregaVenta').value;
-        
         const itemsParaPedido = ventaActual.map(v => ({
             nombre: v.productoNombre,
-            toppings: v.toppings,
-            jarabes: v.jarabes,
+            toppings: v.toppings.map(t => t.nombre),
+            jarabes: v.jarabes.map(j => j.nombre),
             total: v.total,
             cantidad: v.cantidad,
             nota: v.nota
         }));
-        
         const pedidoData = {
             nombreCliente: clienteData.nombre,
             telefonoCliente: clienteData.telefono,
@@ -1321,12 +1312,8 @@
             total: total,
             fechaEntregaId: fechaEntregaId || null
         };
-
         try {
-            await fetchAPI('/api/ventas/crear-pedido', {
-                method: 'POST',
-                body: JSON.stringify(pedidoData)
-            });
+            await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
             alert('¡Pedido enviado a cocina con éxito!');
             resetearFormularioCompleto();
             mostrarSeccion('gestion-pedidos');
@@ -1901,14 +1888,13 @@
                 
                 const toppings = item.toppings || [];
                 const jarabes = item.jarabes || [];
-                
-                if (toppings.length > 0 || jarabes.length > 0) {
+                const extras = [...toppings, ...jarabes];
+
+                if (extras.length > 0) {
                     itemsHtml += '<ul style="padding-left: 20px;">';
-                    toppings.forEach(extraNombre => { // CORREGIDO: 'extra' es ahora 'extraNombre'
-                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${extraNombre}</li>`;
-                    });
-                    jarabes.forEach(extraNombre => { // CORREGIDO: 'extra' es ahora 'extraNombre'
-                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${extraNombre}</li>`;
+                    extras.forEach(extra => {
+                        const nombreExtra = typeof extra === 'object' ? extra.nombre : extra;
+                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${nombreExtra}</li>`;
                     });
                     itemsHtml += '</ul>';
                 }

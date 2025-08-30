@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- Esta es la línea crucial. Le dice al navegador que interprete los caracteres con acentos y 'ñ' correctamente. -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú - Dulces Amigas</title>
@@ -462,6 +461,7 @@
                 resetCurrentSelection();
             });
 
+            // ===== INICIO DE LA LÓGICA DE DIRECCIÓN CORREGIDA =====
             const cpInput = document.getElementById('codigoPostal');
             const coloniaSelect = document.getElementById('colonia');
             const ciudadInput = document.getElementById('ciudad');
@@ -488,11 +488,23 @@
                     const response = await fetch(`https://api.copomex.com/query/info_cp/${cp}?type=simplified&token=pruebas`);
                     const data = await response.json();
 
-                    if (data.error) {
-                        throw new Error(data.error_message || 'Código Postal no encontrado');
+                    // **INICIO DE LA CORRECCIÓN**
+                    // 1. Verificamos si 'data' es una lista (array) y si tiene contenido.
+                    if (!Array.isArray(data) || data.length === 0) {
+                        throw new Error('La respuesta de la API no es válida.');
                     }
 
-                    const { asentamiento, ciudad, estado } = data.response;
+                    // 2. Extraemos el primer elemento de la lista, que contiene nuestros datos.
+                    const result = data[0];
+                    
+                    // 3. Ahora sí, verificamos si hay un error DENTRO del objeto.
+                    if (result.error) {
+                        throw new Error(result.error_message || 'Código Postal no encontrado');
+                    }
+
+                    // 4. Extraemos la información del objeto 'response' dentro de 'result'.
+                    const { asentamiento, ciudad, estado } = result.response;
+                    // **FIN DE LA CORRECCIÓN**
                     
                     ciudadInput.value = ciudad || 'No disponible';
                     estadoInput.value = estado || 'No disponible';
@@ -519,6 +531,7 @@
                 ciudadInput.value = '';
                 estadoInput.value = '';
             }
+            // ===== FIN DE LA LÓGICA DE DIRECCIÓN =====
             
             orderForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -559,7 +572,7 @@
                 };
 
                 try {
-                    const response = await fetch('/api/pedidos', {
+                    const response = await fetch('/api/pedridos', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(orderData)

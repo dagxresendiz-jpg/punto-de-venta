@@ -1901,12 +1901,14 @@
                 
                 const toppings = item.toppings || [];
                 const jarabes = item.jarabes || [];
-                const extras = [...toppings, ...jarabes];
-
-                if (extras.length > 0) {
+                
+                if (toppings.length > 0 || jarabes.length > 0) {
                     itemsHtml += '<ul style="padding-left: 20px;">';
-                    extras.forEach(extra => {
-                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${extra.nombre}</li>`;
+                    toppings.forEach(extraNombre => { // CORREGIDO: 'extra' es ahora 'extraNombre'
+                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${extraNombre}</li>`;
+                    });
+                    jarabes.forEach(extraNombre => { // CORREGIDO: 'extra' es ahora 'extraNombre'
+                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${extraNombre}</li>`;
                     });
                     itemsHtml += '</ul>';
                 }

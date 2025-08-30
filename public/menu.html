@@ -493,7 +493,7 @@
                 try {
                     const response = await fetch(`https://api.copomex.com/query/info_cp/${cp}?token=pruebas`);
                     const data = await response.json();
-
+                    
                     const resultData = Array.isArray(data) ? data[0] : data;
 
                     if (!resultData || resultData.error || !resultData.response) {

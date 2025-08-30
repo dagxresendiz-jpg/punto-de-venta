@@ -46,6 +46,16 @@
     .pedido-card-header span { font-size: 0.8em; color: var(--text-color-light); }
     .pedido-card-body ul { list-style: none; padding: 0; margin: 0.5rem 0; }
     .pedido-card-body li { font-size: 0.9em; }
+    .pedido-card-nota {
+        font-style: italic;
+        font-size: 0.9em;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+        border-left: 3px solid var(--warning-color);
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--text-color-dark);
+        white-space: pre-wrap;
+    }
     .pedido-card-footer { border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
     .pedido-card-footer .total { font-weight: 600; }
     .pedido-actions { display: flex; gap: 0.5rem; flex-wrap: wrap;}
@@ -597,7 +607,7 @@
       let pedidosNuevosAnteriores = 0;
       const notificationSound = document.getElementById('notification-sound');
       const originalTitle = document.title;
-      let clientesCacheados = []; // Caché para clientes
+      let clientesCacheados = [];
       
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
@@ -1888,7 +1898,11 @@
             let itemsHtml = '';
             p.items.forEach(item => {
                 itemsHtml += `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong></li>`;
-                const extras = [...(item.toppings || []), ...(item.jarabes || [])];
+                
+                const toppings = item.toppings || [];
+                const jarabes = item.jarabes || [];
+                const extras = [...toppings, ...jarabes];
+
                 if (extras.length > 0) {
                     itemsHtml += '<ul style="padding-left: 20px;">';
                     extras.forEach(extra => {
@@ -1896,10 +1910,15 @@
                     });
                     itemsHtml += '</ul>';
                 }
+
+                if (item.nota && item.nota.trim() !== "") {
+                    itemsHtml += `<div class="pedido-card-nota" style="margin-left: 20px;">Nota producto: ${item.nota}</div>`;
+                }
             });
 
             const repartidorInfo = p.repartidorId && p.repartidorId.username ? `<div class="repartidor-info">Repartidor: ${p.repartidorId.username}</div>` : '';
             const fechaInfo = p.fechaEntregaId && p.fechaEntregaId.fecha ? `<div class="repartidor-info">Entregar: ${new Date(p.fechaEntregaId.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'})}</div>` : '';
+            const notaGeneralHtml = p.nota && p.nota.trim() !== "" ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.nota}</div>` : '';
 
             card.innerHTML = `
                 <div class="pedido-card-header">
@@ -1908,6 +1927,7 @@
                 </div>
                 <div class="pedido-card-body">
                     <ul>${itemsHtml}</ul>
+                    ${notaGeneralHtml} 
                     ${repartidorInfo}
                     ${fechaInfo}
                 </div>

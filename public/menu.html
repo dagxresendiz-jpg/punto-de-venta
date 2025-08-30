@@ -82,25 +82,9 @@
         .menu-item h4 { margin-bottom: 0.5rem; font-size: 1.1rem; }
         .menu-item p { color: var(--text-color-light); }
         
-        .add-to-cart-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1.5rem;
-            padding: 1rem;
-            background-color: var(--background-color);
-            border-radius: 8px;
-        }
+        .add-to-cart-section { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); }
         .add-to-cart-section span { font-size: 1.1rem; font-weight: 600; }
-        #add-to-cart-btn { 
-            padding: 0.75rem 1.5rem;
-            background-color: var(--primary-color); 
-            color: white; 
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-        }
+        #add-to-cart-btn { padding: 0.75rem 1.5rem; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
         #add-to-cart-btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
 
         .cart h3 { font-size: 1.25rem; }
@@ -110,6 +94,7 @@
         .cart-item-details strong { color: var(--text-color-dark); }
         .cart-item-details ul { list-style: none; padding-left: 1rem; margin-top: 0.5rem; }
         .cart-item-details li { color: var(--text-color-light); font-size: 0.9em; }
+        .cart-item-nota { font-style: italic; font-size: 0.8em; color: var(--text-color-light); margin-left: 1rem; margin-top: 0.25rem; }
         .cart-item-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; }
         .cart-item-actions .price { font-weight: 600; }
         .quantity-selector { display: flex; align-items: center; gap: 0.75rem; }
@@ -156,7 +141,7 @@
                 </label>
             </div>
             <img id="menu-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo del Negocio">
-            <h1>Nuestro Menú</h1>
+            <h1>Nuestro Menú (v9.0)</h1>
             <p style="color: var(--text-color-light);">Arma tus productos uno por uno y añádelos a tu pedido.</p>
         </div>
 
@@ -169,6 +154,11 @@
             <div id="toppings-container" class="menu-grid" style="margin-top: 1rem;"></div>
             <h4 style="margin-top: 1.5rem;">Jarabes</h4>
             <div id="jarabes-container" class="menu-grid" style="margin-top: 1rem;"></div>
+
+            <div style="margin-top: 1.5rem;">
+                <label for="notaProductoActual">Nota para este producto (opcional):</label>
+                <input type="text" id="notaProductoActual" placeholder="Ej. extra crujiente, sin fresa, etc.">
+            </div>
 
             <div class="add-to-cart-section">
                 <span id="current-item-total">Subtotal Producto: $0.00</span>
@@ -203,8 +193,8 @@
                     <option value="">Cargando fechas disponibles...</option>
                 </select>
 
-                <label for="notaPedido">Nota para tu pedido (opcional):</label>
-                <textarea id="notaPedido" rows="3" placeholder="Ej. Sin cebolla, tocar timbre B, etc."></textarea>
+                <label for="notaPedido">Nota GENERAL para tu pedido (opcional):</label>
+                <textarea id="notaPedido" rows="3" placeholder="Ej. Tocar el timbre B, entregar en recepción, etc."></textarea>
 
                 <button type="submit" id="submit-order-btn">Realizar Pedido</button>
             </form>
@@ -231,6 +221,7 @@
             const phonePrefixSelect = document.getElementById('phonePrefix');
             const telefonoClienteInput = document.getElementById('telefonoCliente');
             const fechaEntregaSelect = document.getElementById('fechaEntrega');
+            const notaProductoActualInput = document.getElementById('notaProductoActual');
 
             function applyTheme(theme) {
                 if (theme === 'dark') {
@@ -358,11 +349,9 @@
                     addToCartBtn.disabled = true;
                     return;
                 }
-
                 let subtotal = seleccionActual.producto.precio;
                 subtotal += seleccionActual.toppings.reduce((sum, t) => sum + t.precio, 0);
                 subtotal += seleccionActual.jarabes.reduce((sum, j) => sum + j.precio, 0);
-                
                 currentItemTotalEl.textContent = `Subtotal Producto: $${subtotal.toFixed(2)}`;
                 addToCartBtn.disabled = false;
             }
@@ -370,18 +359,21 @@
             function resetCurrentSelection() {
                 seleccionActual = { producto: null, toppings: [], jarabes: [] };
                 document.querySelectorAll('.menu-item.selected').forEach(el => el.classList.remove('selected'));
+                notaProductoActualInput.value = '';
                 updateCurrentItemTotal();
             }
 
-            function generarIdUnico(item) {
+            function generarIdUnico(item, nota) {
                 const toppingIds = item.toppings.map(t => t.id).sort().join('-');
                 const jarabeIds = item.jarabes.map(j => j.id).sort().join('-');
-                return `prod-${item.producto.id}_tops-${toppingIds}_jars-${jarabeIds}`;
+                return `prod-${item.producto.id}_tops-${toppingIds}_jars-${jarabeIds}_nota-${nota.replace(/\s+/g, '-')}`;
             }
 
             addToCartBtn.addEventListener('click', () => {
                 if (!seleccionActual.producto) return;
-                const idUnico = generarIdUnico(seleccionActual);
+                const notaDelProducto = notaProductoActualInput.value.trim();
+                const idUnico = generarIdUnico(seleccionActual, notaDelProducto);
+
                 if (carrito[idUnico]) {
                     carrito[idUnico].cantidad++;
                 } else {
@@ -390,7 +382,8 @@
                         toppings: [...seleccionActual.toppings],
                         jarabes: [...seleccionActual.jarabes],
                         cantidad: 1,
-                        id: idUnico
+                        id: idUnico,
+                        nota: notaDelProducto
                     };
                 }
                 renderCart();
@@ -403,10 +396,8 @@
                     cartTotalEl.textContent = 'Total del Pedido: $0.00';
                     return;
                 }
-
                 cartItemsEl.innerHTML = '';
                 let granTotal = 0;
-
                 for (const idUnico in carrito) {
                     const item = carrito[idUnico];
                     const precioUnitario = item.producto.precio + 
@@ -414,7 +405,6 @@
                                        item.jarabes.reduce((sum, j) => sum + j.precio, 0);
                     const subtotalItem = precioUnitario * item.cantidad;
                     granTotal += subtotalItem;
-
                     let extrasHTML = '';
                     if (item.toppings.length > 0 || item.jarabes.length > 0) {
                         extrasHTML += '<ul>';
@@ -422,12 +412,13 @@
                         item.jarabes.forEach(j => extrasHTML += `<li>+ ${j.nombre}</li>`);
                         extrasHTML += '</ul>';
                     }
-
+                    const notaItemHtml = item.nota ? `<div class="cart-item-nota">Nota: ${item.nota}</div>` : '';
                     const cartItemHTML = `
                         <div class="cart-item">
                             <div class="cart-item-details">
                                 <strong>${item.cantidad}x ${item.producto.nombre}</strong>
                                 ${extrasHTML}
+                                ${notaItemHtml}
                             </div>
                             <div class="cart-item-actions">
                                 <span class="price">$${subtotalItem.toFixed(2)}</span>
@@ -442,7 +433,6 @@
                     `;
                     cartItemsEl.innerHTML += cartItemHTML;
                 }
-                
                 cartTotalEl.textContent = `Total del Pedido: $${granTotal.toFixed(2)}`;
                 addCartEventListeners();
             }
@@ -463,7 +453,6 @@
                         renderCart();
                     });
                 });
-
                 document.querySelectorAll('.remove-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const id = btn.dataset.id;
@@ -474,46 +463,22 @@
             }
             
             function setupPhoneInput() {
-                const countryCodes = [
-                    { name: 'México', code: '+52' },
-                    { name: 'USA/Canadá', code: '+1' },
-                    { name: 'España', code: '+34' },
-                    { name: 'Argentina', code: '+54' },
-                    { name: 'Colombia', code: '+57' }
-                ];
-
-                countryCodes.forEach(country => {
-                    const option = document.createElement('option');
-                    option.value = country.code;
-                    option.textContent = `${country.name} (${country.code})`;
-                    if (country.code === '+52') {
-                        option.selected = true;
-                    }
-                    phonePrefixSelect.appendChild(option);
-                });
-
-                telefonoClienteInput.addEventListener('input', () => {
-                    telefonoClienteInput.value = telefonoClienteInput.value.replace(/[^\d]/g, '');
-                });
+                const countryCodes = [ { name: 'México', code: '+52' }, { name: 'USA/Canadá', code: '+1' }, { name: 'España', code: '+34' }, { name: 'Argentina', code: '+54' }, { name: 'Colombia', code: '+57' }];
+                countryCodes.forEach(country => { const option = document.createElement('option'); option.value = country.code; option.textContent = `${country.name} (${country.code})`; if (country.code === '+52') option.selected = true; phonePrefixSelect.appendChild(option); });
+                telefonoClienteInput.addEventListener('input', () => { telefonoClienteInput.value = telefonoClienteInput.value.replace(/[^\d]/g, ''); });
             }
             
             orderForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
                 if (Object.keys(carrito).length === 0) {
-                    alert('Tu pedido está vacío. Por favor, agrega al menos un producto.');
-                    return;
+                    alert('Tu pedido está vacío. Por favor, agrega al menos un producto.'); return;
                 }
-
                 if (telefonoClienteInput.value.length !== 10) {
                     alert('Por favor, ingresa un número de teléfono válido de 10 dígitos.');
-                    telefonoClienteInput.focus();
-                    return;
+                    telefonoClienteInput.focus(); return;
                 }
-
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Enviando...';
-
                 const orderData = {
                     nombreCliente: document.getElementById('nombreCliente').value,
                     telefonoCliente: phonePrefixSelect.value + telefonoClienteInput.value,
@@ -530,14 +495,8 @@
                     })),
                     total: cartTotalEl.textContent.replace('Total del Pedido: $', '')
                 };
-
                 try {
-                    const response = await fetch('/api/pedidos', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(orderData)
-                    });
-                    
+                    const response = await fetch('/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderData) });
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || 'Error desconocido del servidor.');
                     
@@ -553,8 +512,6 @@
                     submitBtn.textContent = 'Realizar Pedido';
                 }
             });
-
-            // --- INICIALIZACIÓN DE TODAS LAS FUNCIONES ---
             setupPhoneInput();
             fetchData();
         });

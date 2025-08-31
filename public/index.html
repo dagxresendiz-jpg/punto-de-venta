@@ -109,9 +109,9 @@
     .export-buttons button { padding: 0.4rem; font-size: 0.8em; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
     .export-buttons button svg { width: 18px; height: 18px; }
     form label { display: block; margin-bottom: 0.5rem; font-weight: 500; text-align: left; color: var(--text-color-dark); }
-    form input, form select { background-color: var(--form-control-bg); color: var(--text-color-dark); display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s, border-color 0.2s; }
+    form input, form select, form textarea { background-color: var(--form-control-bg); color: var(--text-color-dark); display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s, border-color 0.2s; }
     form input::placeholder { color: var(--text-color-light); opacity: 0.8; }
-    form input:focus, form select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px #c7d2fe; outline: none; }
+    form input:focus, form select:focus, form textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px #c7d2fe; outline: none; }
     form select:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
     .password-wrapper { position: relative; display: flex; align-items: center; }
     .password-wrapper input { padding-right: 3rem; }
@@ -386,6 +386,10 @@
                         <select id="metodoPago">
                             <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
                         </select>
+
+                        <label for="notaVentaGeneral">Nota General para el Pedido (opcional):</label>
+                        <textarea id="notaVentaGeneral" rows="2" placeholder="Ej: Tocar timbre B..."></textarea>
+
                         <div id="botones-accion-venta" style="margin-top: 1rem;">
                             <button id="btnEnviarACocina" style="width: 100%; margin-bottom: 1rem; background-color: var(--warning-color);">Enviar a Cocina</button>
                             <div id="botones-finalizar-venta" class="botones-grupo" style="display: flex; gap: 1rem;">
@@ -937,20 +941,25 @@
         if (!token) { showLogin(); throw new Error('No autenticado'); }
         const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...options.headers };
         const response = await fetch(url, { ...options, headers });
+        
         if (response.status === 204) return;
-        if (response.status === 401) { showLogin(); throw new Error('Sesión expirada.'); }
-        if (!response.ok) { 
-            const errorData = await response.json(); 
-            if (response.status === 403) {
-              console.error(`Acceso denegado a ${url}:`, errorData.error);
+        
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            const data = await response.json();
+            if (!response.ok) {
+                if (response.status === 401) { showLogin(); throw new Error('Sesión expirada.'); }
+                if (suppressError) { console.error(`Error en la petición a ${url}:`, data.error); return; }
+                throw new Error(data.error || `Error en la petición a ${url}`);
             }
-            if (suppressError) {
-                console.error(`Error en la petición a ${url}:`, errorData.error);
-                return;
-            }
-            throw new Error(errorData.error || `Error en la petición a ${url}`); 
+            return data;
+        } else {
+            console.error("Respuesta inesperada del servidor (no es JSON). Probablemente la sesión expiró.");
+            const text = await response.text();
+            console.error("Respuesta recibida:", text);
+            showLogin();
+            throw new Error('Sesión expirada. Por favor, inicia sesión de nuevo.');
         }
-        return response.json();
       }
       
       function initApp() {
@@ -1304,6 +1313,8 @@
             cantidad: v.cantidad,
             nota: v.nota
         }));
+        const notaGeneral = document.getElementById('notaVentaGeneral').value.trim();
+        
         const pedidoData = {
             nombreCliente: clienteData.nombre,
             telefonoCliente: clienteData.telefono,
@@ -1311,7 +1322,7 @@
             items: itemsParaPedido,
             total: total,
             fechaEntregaId: fechaEntregaId || null,
-            nota: ''
+            nota: notaGeneral
         };
         try {
             await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
@@ -1373,6 +1384,7 @@
         });
         document.getElementById('metodoPago').value = "Efectivo";
         document.getElementById('fechaEntregaVenta').value = "";
+        document.getElementById('notaVentaGeneral').value = "";
         document.getElementById('botones-finalizar-venta').style.display = 'flex';
         document.getElementById('btnActualizarVenta').style.display = 'none';
         mostrarVentaActual();
@@ -1383,7 +1395,7 @@
         venta.items.forEach((n, a) => {
           texto += `${a + 1}. ${n.nombre || n.productoNombre} x${n.cantidad || 1}\n`;
           if (n.toppings && n.toppings.length) texto += `   + Toppings: ${n.toppings.map(e => e.nombre).join(", ")}\n`;
-          if (n.jarabes && n.jarabes.length) texto += `   + Jarabes: ${n.jarabes.map(e => e.nombre).join(", ")}\n`;
+          if (n.jarabes && n.jarabes.length) texto += `   + Jarabes: ${n.jarabes.map(j => j.nombre).join(", ")}\n`;
           if (n.nota) texto += `   * Nota: ${n.nota}\n`;
           texto += `   Subtotal Item: $${n.total.toFixed(2)}\n\n`;
         });

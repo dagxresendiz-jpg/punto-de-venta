@@ -141,7 +141,7 @@
                 </label>
             </div>
             <img id="menu-logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo del Negocio">
-            <h1>Nuestro Menú (v9.0)</h1>
+            <h1>Nuestro Menú</h1>
             <p style="color: var(--text-color-light);">Arma tus productos uno por uno y añádelos a tu pedido.</p>
         </div>
 
@@ -349,9 +349,11 @@
                     addToCartBtn.disabled = true;
                     return;
                 }
+
                 let subtotal = seleccionActual.producto.precio;
                 subtotal += seleccionActual.toppings.reduce((sum, t) => sum + t.precio, 0);
                 subtotal += seleccionActual.jarabes.reduce((sum, j) => sum + j.precio, 0);
+                
                 currentItemTotalEl.textContent = `Subtotal Producto: $${subtotal.toFixed(2)}`;
                 addToCartBtn.disabled = false;
             }
@@ -479,12 +481,13 @@
                 }
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Enviando...';
+                
                 const orderData = {
                     nombreCliente: document.getElementById('nombreCliente').value,
                     telefonoCliente: phonePrefixSelect.value + telefonoClienteInput.value,
                     direccionEntrega: document.getElementById('direccionEntrega').value,
                     fechaEntregaId: document.getElementById('fechaEntrega').value,
-                    nota: document.getElementById('notaPedido').value,
+                    nota: document.getElementById('notaPedido').value.trim(),
                     items: Object.values(carrito).map(item => ({
                         nombre: item.producto.nombre,
                         cantidad: item.cantidad,
@@ -495,6 +498,7 @@
                     })),
                     total: cartTotalEl.textContent.replace('Total del Pedido: $', '')
                 };
+
                 try {
                     const response = await fetch('/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderData) });
                     const result = await response.json();

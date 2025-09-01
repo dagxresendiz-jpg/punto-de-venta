@@ -46,6 +46,16 @@
     .pedido-card-header span { font-size: 0.8em; color: var(--text-color-light); }
     .pedido-card-body ul { list-style: none; padding: 0; margin: 0.5rem 0; }
     .pedido-card-body li { font-size: 0.9em; }
+    .pedido-card-nota {
+        font-style: italic;
+        font-size: 0.9em;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+        border-left: 3px solid var(--warning-color);
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--text-color-dark);
+        white-space: pre-wrap;
+    }
     .pedido-card-footer { border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
     .pedido-card-footer .total { font-weight: 600; }
     .pedido-actions { display: flex; gap: 0.5rem; flex-wrap: wrap;}
@@ -99,9 +109,9 @@
     .export-buttons button { padding: 0.4rem; font-size: 0.8em; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
     .export-buttons button svg { width: 18px; height: 18px; }
     form label { display: block; margin-bottom: 0.5rem; font-weight: 500; text-align: left; color: var(--text-color-dark); }
-    form input, form select { background-color: var(--form-control-bg); color: var(--text-color-dark); display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s, border-color 0.2s; }
+    form input, form select, form textarea { background-color: var(--form-control-bg); color: var(--text-color-dark); display: block; width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s, border-color 0.2s; }
     form input::placeholder { color: var(--text-color-light); opacity: 0.8; }
-    form input:focus, form select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px #c7d2fe; outline: none; }
+    form input:focus, form select:focus, form textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px #c7d2fe; outline: none; }
     form select:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
     .password-wrapper { position: relative; display: flex; align-items: center; }
     .password-wrapper input { padding-right: 3rem; }
@@ -376,6 +386,10 @@
                         <select id="metodoPago">
                             <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
                         </select>
+
+                        <label for="notaVentaGeneral">Nota General para el Pedido (opcional):</label>
+                        <textarea id="notaVentaGeneral" rows="2" placeholder="Ej: Tocar timbre B..."></textarea>
+
                         <div id="botones-accion-venta" style="margin-top: 1rem;">
                             <button id="btnEnviarACocina" style="width: 100%; margin-bottom: 1rem; background-color: var(--warning-color);">Enviar a Cocina</button>
                             <div id="botones-finalizar-venta" class="botones-grupo" style="display: flex; gap: 1rem;">
@@ -597,7 +611,7 @@
       let pedidosNuevosAnteriores = 0;
       const notificationSound = document.getElementById('notification-sound');
       const originalTitle = document.title;
-      let clientesCacheados = []; // Caché para clientes
+      let clientesCacheados = [];
       
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
@@ -927,20 +941,25 @@
         if (!token) { showLogin(); throw new Error('No autenticado'); }
         const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...options.headers };
         const response = await fetch(url, { ...options, headers });
+        
         if (response.status === 204) return;
-        if (response.status === 401) { showLogin(); throw new Error('Sesión expirada.'); }
-        if (!response.ok) { 
-            const errorData = await response.json(); 
-            if (response.status === 403) {
-              console.error(`Acceso denegado a ${url}:`, errorData.error);
+        
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            const data = await response.json();
+            if (!response.ok) {
+                if (response.status === 401) { showLogin(); throw new Error('Sesión expirada.'); }
+                if (suppressError) { console.error(`Error en la petición a ${url}:`, data.error); return; }
+                throw new Error(data.error || `Error en la petición a ${url}`);
             }
-            if (suppressError) {
-                console.error(`Error en la petición a ${url}:`, errorData.error);
-                return;
-            }
-            throw new Error(errorData.error || `Error en la petición a ${url}`); 
+            return data;
+        } else {
+            console.error("Respuesta inesperada del servidor (no es JSON). Probablemente la sesión expiró.");
+            const text = await response.text();
+            console.error("Respuesta recibida:", text);
+            showLogin();
+            throw new Error('Sesión expirada. Por favor, inicia sesión de nuevo.');
         }
-        return response.json();
       }
       
       function initApp() {
@@ -1270,15 +1289,9 @@
             alert('Agrega al menos un producto para enviar a cocina.');
             return;
         }
-
         const clienteSelect = document.getElementById('ventaCliente');
         const clienteId = clienteSelect.value;
-        let clienteData = {
-            nombre: 'Público General',
-            telefono: '',
-            direccion: 'Recoger en tienda'
-        };
-
+        let clienteData = { nombre: 'Público General', telefono: '', direccion: 'Recoger en tienda' };
         if (clienteId) {
             const cliente = clientesCacheados.find(c => c.id === clienteId);
             if (cliente) {
@@ -1289,19 +1302,18 @@
                 clienteData.nombre = clienteSelect.options[clienteSelect.selectedIndex].text;
             }
         }
-        
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
         const total = ventaActual.reduce((acc, item) => acc + item.total, 0) + costoDomicilio;
         const fechaEntregaId = document.getElementById('fechaEntregaVenta').value;
-        
         const itemsParaPedido = ventaActual.map(v => ({
             nombre: v.productoNombre,
-            toppings: v.toppings,
-            jarabes: v.jarabes,
+            toppings: v.toppings.map(t => t.nombre),
+            jarabes: v.jarabes.map(j => j.nombre),
             total: v.total,
             cantidad: v.cantidad,
             nota: v.nota
         }));
+        const notaGeneral = document.getElementById('notaVentaGeneral').value.trim();
         
         const pedidoData = {
             nombreCliente: clienteData.nombre,
@@ -1309,14 +1321,11 @@
             direccionEntrega: clienteData.direccion,
             items: itemsParaPedido,
             total: total,
-            fechaEntregaId: fechaEntregaId || null
+            fechaEntregaId: fechaEntregaId || null,
+            nota: notaGeneral
         };
-
         try {
-            await fetchAPI('/api/ventas/crear-pedido', {
-                method: 'POST',
-                body: JSON.stringify(pedidoData)
-            });
+            await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
             alert('¡Pedido enviado a cocina con éxito!');
             resetearFormularioCompleto();
             mostrarSeccion('gestion-pedidos');
@@ -1375,6 +1384,7 @@
         });
         document.getElementById('metodoPago').value = "Efectivo";
         document.getElementById('fechaEntregaVenta').value = "";
+        document.getElementById('notaVentaGeneral').value = "";
         document.getElementById('botones-finalizar-venta').style.display = 'flex';
         document.getElementById('btnActualizarVenta').style.display = 'none';
         mostrarVentaActual();
@@ -1385,7 +1395,7 @@
         venta.items.forEach((n, a) => {
           texto += `${a + 1}. ${n.nombre || n.productoNombre} x${n.cantidad || 1}\n`;
           if (n.toppings && n.toppings.length) texto += `   + Toppings: ${n.toppings.map(e => e.nombre).join(", ")}\n`;
-          if (n.jarabes && n.jarabes.length) texto += `   + Jarabes: ${n.jarabes.map(e => e.nombre).join(", ")}\n`;
+          if (n.jarabes && n.jarabes.length) texto += `   + Jarabes: ${n.jarabes.map(j => j.nombre).join(", ")}\n`;
           if (n.nota) texto += `   * Nota: ${n.nota}\n`;
           texto += `   Subtotal Item: $${n.total.toFixed(2)}\n\n`;
         });
@@ -1888,18 +1898,28 @@
             let itemsHtml = '';
             p.items.forEach(item => {
                 itemsHtml += `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong></li>`;
-                const extras = [...(item.toppings || []), ...(item.jarabes || [])];
+                
+                const toppings = item.toppings || [];
+                const jarabes = item.jarabes || [];
+                const extras = [...toppings, ...jarabes];
+
                 if (extras.length > 0) {
                     itemsHtml += '<ul style="padding-left: 20px;">';
                     extras.forEach(extra => {
-                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${extra.nombre}</li>`;
+                        const nombreExtra = typeof extra === 'object' ? extra.nombre : extra;
+                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${nombreExtra}</li>`;
                     });
                     itemsHtml += '</ul>';
+                }
+
+                if (item.nota && item.nota.trim() !== "") {
+                    itemsHtml += `<div class="pedido-card-nota" style="margin-left: 20px;">Nota producto: ${item.nota}</div>`;
                 }
             });
 
             const repartidorInfo = p.repartidorId && p.repartidorId.username ? `<div class="repartidor-info">Repartidor: ${p.repartidorId.username}</div>` : '';
             const fechaInfo = p.fechaEntregaId && p.fechaEntregaId.fecha ? `<div class="repartidor-info">Entregar: ${new Date(p.fechaEntregaId.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'})}</div>` : '';
+            const notaGeneralHtml = p.nota && p.nota.trim() !== "" ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.nota}</div>` : '';
 
             card.innerHTML = `
                 <div class="pedido-card-header">
@@ -1908,6 +1928,7 @@
                 </div>
                 <div class="pedido-card-body">
                     <ul>${itemsHtml}</ul>
+                    ${notaGeneralHtml} 
                     ${repartidorInfo}
                     ${fechaInfo}
                 </div>

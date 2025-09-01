@@ -1305,24 +1305,29 @@
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
         const total = ventaActual.reduce((acc, item) => acc + item.total, 0) + costoDomicilio;
         const fechaEntregaId = document.getElementById('fechaEntregaVenta').value;
-        const itemsParaPedido = ventaActual.map(v => ({
+        
+        // MODIFICACIÓN NOTA: Cambiado el nombre de 'items' para que coincida con el backend
+        const itemsParaPedidoBackend = ventaActual.map(v => ({
             nombre: v.productoNombre,
-            toppings: v.toppings.map(t => t.nombre),
-            jarabes: v.jarabes.map(j => j.nombre),
-            total: v.total,
+            precio: v.total, // El backend simple solo necesita nombre y precio por item
             cantidad: v.cantidad,
-            nota: v.nota
+            nota: v.nota,
+            // Agregamos toppings y jarabes para una posible visualización más detallada
+            toppings: v.toppings.map(t => t.nombre),
+            jarabes: v.jarabes.map(j => j.nombre)
         }));
+
         const notaGeneral = document.getElementById('notaVentaGeneral').value.trim();
         
+        // MODIFICACIÓN NOTA: Cambiado 'nota' por 'notaGeneral' para que coincida con el backend.
         const pedidoData = {
             nombreCliente: clienteData.nombre,
             telefonoCliente: clienteData.telefono,
             direccionEntrega: clienteData.direccion,
-            items: itemsParaPedido,
+            items: itemsParaPedidoBackend,
             total: total,
             fechaEntregaId: fechaEntregaId || null,
-            nota: notaGeneral
+            notaGeneral: notaGeneral 
         };
         try {
             await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
@@ -1919,7 +1924,10 @@
 
             const repartidorInfo = p.repartidorId && p.repartidorId.username ? `<div class="repartidor-info">Repartidor: ${p.repartidorId.username}</div>` : '';
             const fechaInfo = p.fechaEntregaId && p.fechaEntregaId.fecha ? `<div class="repartidor-info">Entregar: ${new Date(p.fechaEntregaId.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'})}</div>` : '';
-            const notaGeneralHtml = p.nota && p.nota.trim() !== "" ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.nota}</div>` : '';
+            
+            // --- CAMBIO NOTA: AQUÍ ESTÁ LA LÍNEA MODIFICADA ---
+            // Se cambió p.nota por p.notaGeneral para que coincida con el backend.
+            const notaGeneralHtml = p.notaGeneral && p.notaGeneral.trim() !== "" ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.notaGeneral}</div>` : '';
 
             card.innerHTML = `
                 <div class="pedido-card-header">

@@ -203,8 +203,9 @@
                     <option value="">Cargando fechas disponibles...</option>
                 </select>
 
-                <label for="notaPedido">Nota para tu pedido (opcional):</label>
-                <textarea id="notaPedido" rows="3" placeholder="Ej. Sin cebolla, tocar timbre B, etc."></textarea>
+                <!-- CAMBIO NOTA-1: Cambiado el label y el id para que coincida con lo que espera el backend -->
+                <label for="notaGeneral">Nota para tu pedido (opcional):</label>
+                <textarea id="notaGeneral" rows="3" placeholder="Ej. Sin cebolla, tocar timbre B, etc."></textarea>
 
                 <button type="submit" id="submit-order-btn">Realizar Pedido</button>
             </form>
@@ -514,20 +515,33 @@
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Enviando...';
 
+                // CAMBIO NOTA-2: Modificamos el objeto que se envía para que coincida con la estructura del backend
+                const totalCalculado = parseFloat(cartTotalEl.textContent.replace('Total del Pedido: $', ''));
+                const itemsParaEnviar = Object.values(carrito).flatMap(item => {
+                    const precioUnitario = item.producto.precio + 
+                                       item.toppings.reduce((s,t) => s + t.precio, 0) + 
+                                       item.jarabes.reduce((s,j) => s + j.precio, 0);
+                    
+                    let nombreCompleto = item.producto.nombre;
+                    if (item.toppings.length > 0 || item.jarabes.length > 0) {
+                         nombreCompleto += ` (${[...item.toppings, ...item.jarabes].map(e => e.nombre).join(', ')})`;
+                    }
+                    
+                    // Devolvemos un array de objetos por cada cantidad
+                    return Array(item.cantidad).fill({
+                        nombre: nombreCompleto,
+                        precio: precioUnitario
+                    });
+                });
+
                 const orderData = {
                     nombreCliente: document.getElementById('nombreCliente').value,
                     telefonoCliente: phonePrefixSelect.value + telefonoClienteInput.value,
                     direccionEntrega: document.getElementById('direccionEntrega').value,
                     fechaEntregaId: document.getElementById('fechaEntrega').value,
-                    nota: document.getElementById('notaPedido').value,
-                    items: Object.values(carrito).map(item => ({
-                        nombre: item.producto.nombre,
-                        cantidad: item.cantidad,
-                        precio_unitario: (item.producto.precio + item.toppings.reduce((s,t) => s + t.precio, 0) + item.jarabes.reduce((s,j) => s + j.precio, 0)),
-                        toppings: item.toppings.map(t => t.nombre),
-                        jarabes: item.jarabes.map(j => j.nombre)
-                    })),
-                    total: cartTotalEl.textContent.replace('Total del Pedido: $', '')
+                    notaGeneral: document.getElementById('notaGeneral').value, // El id del textarea ya es 'notaGeneral'
+                    items: itemsParaEnviar,
+                    total: totalCalculado
                 };
 
                 try {

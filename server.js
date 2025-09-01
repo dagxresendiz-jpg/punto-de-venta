@@ -1,8 +1,8 @@
-// server.js - v8.7 (Backend con campo de Nota General para Pedidos)
+// server.js - v9.0 (Backend con Nota General en Pedidos y Filtro de Fechas en Ventas)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const bcrypt = require('bcryptjs'); 
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
@@ -91,11 +91,12 @@ const FechaEntrega = mongoose.model('FechaEntrega', createSchema({
     activa: { type: Boolean, default: true }
 }));
 
+// CAMBIO NOTA-1: Se añade 'notaGeneral' al modelo del Pedido.
 const Pedido = mongoose.model('Pedido', createSchema({
     nombreCliente: { type: String, required: true },
     telefonoCliente: { type: String, required: true },
     direccionEntrega: { type: String },
-    notaGeneral: { type: String, default: '' }, // <-- CAMBIO 1: Añadido el campo para la nota
+    notaGeneral: { type: String, default: '' },
     items: Array,
     total: Number,
     estatus: { 
@@ -180,12 +181,12 @@ publicApiRouter.get('/toppings', async (req, res) => res.json(await Topping.find
 publicApiRouter.get('/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
 publicApiRouter.post('/pedidos', async (req, res) => {
     try {
-        // CAMBIO 2: Añadimos 'notaGeneral' para recibirla del frontend
+        // CAMBIO NOTA-2: Recibimos 'notaGeneral' del cuerpo de la petición.
         const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, notaGeneral } = req.body;
         if (!nombreCliente || !telefonoCliente || !items || !items.length || !fechaEntregaId) {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
-        // CAMBIO 3: Guardamos la 'notaGeneral' en la base de datos
+        // CAMBIO NOTA-3: Guardamos 'notaGeneral' al crear el nuevo pedido.
         const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, notaGeneral, visto: false });
         res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
     } catch (error) {
@@ -381,7 +382,31 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
-ventasRouter.get('/', tienePermiso('historial'), async (req, res) => res.json(await Venta.find(findActive)));
+
+// CAMBIO HISTORIAL-1: La ruta de ventas ahora acepta filtros de fecha.
+ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
+    try {
+        const { fechaInicio, fechaFin } = req.query;
+        let filtro = { ...findActive };
+
+        if (fechaInicio && fechaFin) {
+            const inicio = new Date(fechaInicio);
+            inicio.setUTCHours(0, 0, 0, 0);
+
+            const fin = new Date(fechaFin);
+            fin.setUTCHours(23, 59, 59, 999);
+            
+            filtro.fecha = { $gte: inicio, $lte: fin };
+        }
+        
+        const ventas = await Venta.find(filtro).sort({ fecha: -1 });
+        res.json(ventas);
+    } catch (error) {
+        console.error("Error al obtener ventas:", error);
+        res.status(500).json({ error: 'Error al obtener historial de ventas.' });
+    }
+});
+
 ventasRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
 ventasRouter.put('/:id', tienePermiso('historial'), async (req, res) => res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 ventasRouter.delete('/:id', tienePermiso('historial'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });

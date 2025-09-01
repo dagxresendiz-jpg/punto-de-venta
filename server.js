@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // <-- ¡ESTA LÍNEA ES LA ÚNICA QUE CAMBIÓ!
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 

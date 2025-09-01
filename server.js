@@ -1,8 +1,8 @@
-// server.js - v8.6 (Backend con mejoras de Agotado y Fechas en Panel)
+// server.js - v8.7 (Backend con campo de Nota General para Pedidos)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const bcrypt = require('bcryptjs'); // <-- ¡ESTA LÍNEA ES LA ÚNICA QUE CAMBIÓ!
+const bcrypt = require('bcryptjs'); 
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
@@ -95,6 +95,7 @@ const Pedido = mongoose.model('Pedido', createSchema({
     nombreCliente: { type: String, required: true },
     telefonoCliente: { type: String, required: true },
     direccionEntrega: { type: String },
+    notaGeneral: { type: String, default: '' }, // <-- CAMBIO 1: Añadido el campo para la nota
     items: Array,
     total: Number,
     estatus: { 
@@ -179,11 +180,13 @@ publicApiRouter.get('/toppings', async (req, res) => res.json(await Topping.find
 publicApiRouter.get('/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
 publicApiRouter.post('/pedidos', async (req, res) => {
     try {
-        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total } = req.body;
+        // CAMBIO 2: Añadimos 'notaGeneral' para recibirla del frontend
+        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, notaGeneral } = req.body;
         if (!nombreCliente || !telefonoCliente || !items || !items.length || !fechaEntregaId) {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
-        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, visto: false });
+        // CAMBIO 3: Guardamos la 'notaGeneral' en la base de datos
+        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, notaGeneral, visto: false });
         res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
     } catch (error) {
         res.status(500).json({ error: 'Error al procesar el pedido.' });

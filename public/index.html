@@ -156,6 +156,10 @@
     #botones-periodo button { background-color: var(--card-background); color: var(--text-color-light); border: 1px solid var(--border-color); font-weight: 500; padding: 0.75rem 1rem; }
     #botones-periodo button:hover { background-color: var(--secondary-button-hover-bg); }
     #botones-periodo button.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+    #filtros-personalizados { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+    #filtros-personalizados > div { flex-grow: 1; }
+    #filtros-personalizados select { min-width: 120px; }
+    #filtros-personalizados button { flex-shrink: 0; }
     #resumen-ventas { white-space: pre-wrap; word-break: break-word; }
     #botones-finalizar-venta { display: flex; gap: 1rem; }
     #botones-finalizar-venta button { flex: 1; }
@@ -386,7 +390,7 @@
                         <select id="metodoPago">
                             <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
                         </select>
-
+                        
                         <label for="notaVentaGeneral">Nota General para el Pedido (opcional):</label>
                         <textarea id="notaVentaGeneral" rows="2" placeholder="Ej: Tocar timbre B..."></textarea>
 
@@ -485,7 +489,7 @@
             <div class="card-header"><h2>Historial de Ventas</h2></div>
             <div id="filtros-historial">
                 <div>
-                    <label>Período</label>
+                    <label>Período Rápido</label>
                     <div id="botones-periodo">
                         <button data-periodo="dia" class="active">Hoy</button>
                         <button data-periodo="semana">Semana</button>
@@ -509,6 +513,31 @@
                     <select id="filtroUsuario"></select>
                 </div>
             </div>
+            
+            <div class="card" style="margin-top: 1.5rem; background-color: var(--background-color);">
+                <h3>Búsqueda Específica</h3>
+                <div id="filtros-personalizados">
+                    <div>
+                        <label for="filtroDia">Ver un día específico:</label>
+                        <input type="date" id="filtroDia">
+                    </div>
+                    <div>
+                        <label for="filtroMes">Ver un mes específico:</label>
+                        <select id="filtroMes">
+                            <option value="">-- Mes --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filtroAnio">Año:</label>
+                        <select id="filtroAnio"></select>
+                    </div>
+                    <div>
+                        <button id="btnBuscarPersonalizado" class="btn-secondary">Buscar</button>
+                        <button id="btnLimpiarFiltros" class="btn-secondary">Limpiar</button>
+                    </div>
+                </div>
+            </div>
+
           </div>
           <div class="grid-container">
             <div class="card">
@@ -1305,29 +1334,24 @@
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
         const total = ventaActual.reduce((acc, item) => acc + item.total, 0) + costoDomicilio;
         const fechaEntregaId = document.getElementById('fechaEntregaVenta').value;
-        
-        // MODIFICACIÓN NOTA: Cambiado el nombre de 'items' para que coincida con el backend
-        const itemsParaPedidoBackend = ventaActual.map(v => ({
+        const itemsParaPedido = ventaActual.map(v => ({
             nombre: v.productoNombre,
-            precio: v.total, // El backend simple solo necesita nombre y precio por item
-            cantidad: v.cantidad,
-            nota: v.nota,
-            // Agregamos toppings y jarabes para una posible visualización más detallada
             toppings: v.toppings.map(t => t.nombre),
-            jarabes: v.jarabes.map(j => j.nombre)
+            jarabes: v.jarabes.map(j => j.nombre),
+            total: v.total,
+            cantidad: v.cantidad,
+            nota: v.nota
         }));
-
         const notaGeneral = document.getElementById('notaVentaGeneral').value.trim();
         
-        // MODIFICACIÓN NOTA: Cambiado 'nota' por 'notaGeneral' para que coincida con el backend.
         const pedidoData = {
             nombreCliente: clienteData.nombre,
             telefonoCliente: clienteData.telefono,
             direccionEntrega: clienteData.direccion,
-            items: itemsParaPedidoBackend,
+            items: itemsParaPedido,
             total: total,
             fechaEntregaId: fechaEntregaId || null,
-            notaGeneral: notaGeneral 
+            nota: notaGeneral
         };
         try {
             await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
@@ -1566,19 +1590,42 @@
       async function cargarVentasHistorial() {
         try {
           ventasEnMemoria = await fetchAPI('/api/ventas');
-          const periodo = document.querySelector('#botones-periodo button.active').dataset.periodo;
+          const periodoRapido = document.querySelector('#botones-periodo button.active')?.dataset.periodo;
           const clienteId = document.getElementById('filtroCliente').value;
           const usuarioId = document.getElementById('filtroUsuario').value;
           const estatus = document.getElementById('filtroEstatus').value;
+          const diaEspecifico = document.getElementById('filtroDia').value;
+          const mesEspecifico = document.getElementById('filtroMes').value;
+          const anioEspecifico = document.getElementById('filtroAnio').value;
           
-          const ahora = new Date();
-          let fechaInicio;
-          if (periodo === 'mes') { fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1); }
-          else if (periodo === 'semana') { fechaInicio = new Date(ahora); fechaInicio.setDate(ahora.getDate() - ahora.getDay() + (ahora.getDay() === 0 ? -6 : 1)); }
-          else { fechaInicio = new Date(ahora); }
-          fechaInicio.setHours(0, 0, 0, 0);
+          let ventasFiltradas = ventasEnMemoria;
 
-          let ventasFiltradas = ventasEnMemoria.filter(venta => new Date(venta.fecha) >= fechaInicio);
+          if (diaEspecifico) {
+              const fechaInicio = new Date(diaEspecifico + 'T00:00:00-06:00'); // Asumimos zona horaria de México central
+              const fechaFin = new Date(diaEspecifico + 'T23:59:59-06:00');
+              ventasFiltradas = ventasEnMemoria.filter(venta => {
+                  const fechaVenta = new Date(venta.fecha);
+                  return fechaVenta >= fechaInicio && fechaVenta <= fechaFin;
+              });
+          } else if (mesEspecifico !== "" && anioEspecifico) {
+              const mes = parseInt(mesEspecifico);
+              const anio = parseInt(anioEspecifico);
+              const fechaInicio = new Date(anio, mes, 1);
+              const fechaFin = new Date(anio, mes + 1, 0, 23, 59, 59);
+              ventasFiltradas = ventasEnMemoria.filter(venta => {
+                  const fechaVenta = new Date(venta.fecha);
+                  return fechaVenta >= fechaInicio && fechaVenta <= fechaFin;
+              });
+          } else if(periodoRapido) {
+              const ahora = new Date();
+              let fechaInicio;
+              if (periodoRapido === 'mes') { fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1); }
+              else if (periodoRapido === 'semana') { fechaInicio = new Date(ahora); fechaInicio.setDate(ahora.getDate() - ahora.getDay() + (ahora.getDay() === 0 ? -6 : 1)); }
+              else { fechaInicio = new Date(ahora); }
+              fechaInicio.setHours(0, 0, 0, 0);
+              ventasFiltradas = ventasEnMemoria.filter(venta => new Date(venta.fecha) >= fechaInicio);
+          }
+
           if (clienteId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.clienteId == clienteId); }
           if (usuarioId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.vendedorId == usuarioId); }
           if (estatus) { ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus); }
@@ -1596,33 +1643,14 @@
             if(estatusActual === 'Pendiente de Pago') estatusClass = 'status-pendiente';
             
             let accionesHTML = `
-              <button class="btn-editar-venta" data-id="${venta.id}" title="Editar Venta">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-              </button>
-              <button class="btn-reimprimir" data-id="${venta.id}" title="Reimprimir Ticket">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg>
-              </button>
-              <button class="btn-eliminar-venta" data-id="${venta.id}">X</button>
-            `;
+              <button class="btn-editar-venta" data-id="${venta.id}" title="Editar Venta"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>
+              <button class="btn-reimprimir" data-id="${venta.id}" title="Reimprimir Ticket"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg></button>
+              <button class="btn-eliminar-venta" data-id="${venta.id}">X</button>`;
             if (estatusActual === 'Pendiente de Pago') {
                 accionesHTML = `<button class="btn-marcar-pagado" data-id="${venta.id}">Marcar como Pagado</button>` + accionesHTML;
             }
 
-            tr.innerHTML = `
-              <td>${venta.id.slice(-6)}</td>
-              <td>${venta.vendedorUsername}</td>
-              <td>${venta.clienteNombre}</td>
-              <td>$${venta.total.toFixed(2)}</td>
-              <td>${venta.metodoPago || 'N/A'}</td>
-              <td>
-                <span class="status-badge ${estatusClass}">${estatusActual}</span>
-                <button class="btn-cambiar-estatus" data-id="${venta.id}" data-estatus="${estatusActual}" title="Cambiar Estatus">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-                </button>
-              </td>
-              <td>${new Date(venta.fecha).toLocaleString()}</td>
-              <td>${accionesHTML}</td>
-            `;
+            tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td><td><span class="status-badge ${estatusClass}">${estatusActual}</span><button class="btn-cambiar-estatus" data-id="${venta.id}" data-estatus="${estatusActual}" title="Cambiar Estatus"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button></td><td>${new Date(venta.fecha).toLocaleString()}</td><td>${accionesHTML}</td>`;
             tbody.appendChild(tr);
           });
           
@@ -1636,7 +1664,7 @@
           document.getElementById('totalPeriodoHistorial').textContent = `Total del Período Filtrado: $${totalPeriodo.toFixed(2)}`;
           prepararDatosParaGraficas(ventasFiltradas);
           generarResumen(ventasFiltradas);
-        } catch (e) { /* Error manejado en fetchAPI */ }
+        } catch (e) { console.error("Error al cargar historial:", e); }
       }
       
       async function cargarUsuariosParaFiltro() {
@@ -1924,10 +1952,7 @@
 
             const repartidorInfo = p.repartidorId && p.repartidorId.username ? `<div class="repartidor-info">Repartidor: ${p.repartidorId.username}</div>` : '';
             const fechaInfo = p.fechaEntregaId && p.fechaEntregaId.fecha ? `<div class="repartidor-info">Entregar: ${new Date(p.fechaEntregaId.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'})}</div>` : '';
-            
-            // --- CAMBIO NOTA: AQUÍ ESTÁ LA LÍNEA MODIFICADA ---
-            // Se cambió p.nota por p.notaGeneral para que coincida con el backend.
-            const notaGeneralHtml = p.notaGeneral && p.notaGeneral.trim() !== "" ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.notaGeneral}</div>` : '';
+            const notaGeneralHtml = p.nota && p.nota.trim() !== "" ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.nota}</div>` : '';
 
             card.innerHTML = `
                 <div class="pedido-card-header">

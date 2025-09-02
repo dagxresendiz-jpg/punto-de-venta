@@ -594,7 +594,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      let ventaActual = {}; // De array a objeto para manejar cantidades
+      let ventaActual = {}; 
       let miGraficaDeVentas, miGraficaDeProductos;
       let ventasEnMemoria = [];
       let ventasFiltradasGlobal = [];
@@ -1319,8 +1319,7 @@
             jarabes: v.jarabes.map(j => j.nombre),
             cantidad: v.cantidad,
             nota: v.nota,
-            // ===== CORRECCIÓN AQUÍ =====
-            total: v.precioUnitario * v.cantidad // Se añade el total de cada item
+            total: v.precioUnitario * v.cantidad
         }));
         
         const pedidoData = {
@@ -1332,8 +1331,10 @@
             fechaEntregaId: fechaEntregaId || null,
             nota: ""
         };
+
         try {
-            await fetchAPI('/api/pedidos', { method: 'POST', body: JSON.stringify(pedidoData) });
+            // ===== CORRECCIÓN AQUÍ: La URL del servidor era incorrecta =====
+            await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
             alert('¡Pedido enviado a cocina con éxito!');
             resetearFormularioCompleto();
             mostrarSeccion('gestion-pedidos');

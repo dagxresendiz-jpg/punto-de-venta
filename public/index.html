@@ -7,11 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- AÑADIMOS LA LIBRERÍA PARA EL CALENDARIO -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script> <!-- Traducción a español -->
-
+  <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -130,8 +128,13 @@
     .btn-secondary:hover { background-color: var(--secondary-button-hover-bg); }
     .btn-eliminar-item, .btn-eliminar-venta { background-color: var(--danger-color); color: white; }
     .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; }
-    #listaVentaActual { margin-bottom: 1rem; }
-    #listaVentaActual li { flex-direction: column; align-items: stretch; }
+    #listaVentaActual { list-style: none; padding: 0; margin-bottom: 1rem; }
+    .list-item-venta { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); }
+    .list-item-details { display: flex; flex-direction: column; gap: 0.25rem; }
+    .list-item-nota { font-style: italic; font-size: 0.8em; color: var(--text-color-light); }
+    .quantity-selector-venta { display: flex; align-items: center; gap: 0.5rem; }
+    .quantity-btn-venta { background: none; border: 1px solid var(--border-color); color: var(--text-color-dark); cursor: pointer; font-size: 0.8rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .remove-btn-venta { background-color: var(--danger-color); color: white; border: none; font-size: 0.8rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; }
     #opcion-domicilio { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; }
     #opcion-domicilio > div { display: flex; align-items: center; gap: 0.5rem; }
     #opcion-domicilio input[type="checkbox"] { width: auto; margin: 0; }
@@ -378,16 +381,12 @@
                         <ul id="listaVentaActual"></ul>
                         <div id="totalVenta" style="font-weight:600; font-size: 1.2rem; margin-top: 1rem; text-align: right;">Total venta actual: $0.00</div>
                         <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
-                        
                         <label for="fechaEntregaVenta">Fecha de Entrega (Opcional):</label>
                         <select id="fechaEntregaVenta"></select>
-
                         <label for="metodoPago">Método de Pago:</label>
                         <select id="metodoPago">
                             <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
                         </select>
-                        <label for="notaVentaGeneral">Nota General para el Pedido (opcional):</label>
-                        <textarea id="notaVentaGeneral" rows="2" placeholder="Ej: Tocar timbre B..."></textarea>
                         <div id="botones-accion-venta" style="margin-top: 1rem;">
                             <button id="btnEnviarACocina" style="width: 100%; margin-bottom: 1rem; background-color: var(--warning-color);">Enviar a Cocina</button>
                             <div id="botones-finalizar-venta" class="botones-grupo" style="display: flex; gap: 1rem;">
@@ -482,56 +481,27 @@
           <div class="card">
             <div class="card-header"><h2>Historial de Ventas</h2></div>
             <div id="filtros-historial">
-                <div>
-                    <label>Período Rápido</label>
-                    <div id="botones-periodo">
-                        <button data-periodo="dia" class="active">Hoy</button>
-                        <button data-periodo="semana">Semana</button>
-                        <button data-periodo="mes">Mes</button>
-                    </div>
-                </div>
-                <div>
-                    <label for="filtroEstatus">Filtrar por Estatus</label>
-                    <select id="filtroEstatus">
-                        <option value="">Todos</option>
-                        <option value="Pagado">Pagado</option>
-                        <option value="Pendiente de Pago">Pendiente de Pago</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="filtroCliente">Filtrar por Cliente</label>
-                    <select id="filtroCliente"></select>
-                </div>
-                <div id="filtro-usuario-container">
-                    <label for="filtroUsuario">Filtrar por Vendedor</label>
-                    <select id="filtroUsuario"></select>
-                </div>
+              <div>
+                <label for="filtroFecha">Filtrar por Fecha</label>
+                <input type="text" id="filtroFecha" placeholder="Selecciona una fecha o rango">
+              </div>
+              <div>
+                <label for="filtroEstatus">Filtrar por Estatus</label>
+                <select id="filtroEstatus">
+                  <option value="">Todos</option>
+                  <option value="Pagado">Pagado</option>
+                  <option value="Pendiente de Pago">Pendiente de Pago</option>
+                </select>
+              </div>
+              <div>
+                <label for="filtroCliente">Filtrar por Cliente</label>
+                <select id="filtroCliente"></select>
+              </div>
+              <div id="filtro-usuario-container">
+                <label for="filtroUsuario">Filtrar por Vendedor</label>
+                <select id="filtroUsuario"></select>
+              </div>
             </div>
-            
-            <div class="card" style="margin-top: 1.5rem; background-color: var(--background-color);">
-                <h3>Búsqueda Específica</h3>
-                <div id="filtros-personalizados">
-                    <div>
-                        <label for="filtroDia">Ver un día específico:</label>
-                        <input type="date" id="filtroDia">
-                    </div>
-                    <div>
-                        <label for="filtroMes">Ver un mes específico:</label>
-                        <select id="filtroMes">
-                            <option value="">-- Mes --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="filtroAnio">Año:</label>
-                        <select id="filtroAnio"></select>
-                    </div>
-                    <div>
-                        <button id="btnBuscarPersonalizado" class="btn-secondary">Buscar</button>
-                        <button id="btnLimpiarFiltros" class="btn-secondary">Limpiar</button>
-                    </div>
-                </div>
-            </div>
-
           </div>
           <div class="grid-container">
             <div class="card">
@@ -624,7 +594,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      let ventaActual = [];
+      let ventaActual = {}; // MODIFICADO: De array a objeto para manejar cantidades
       let miGraficaDeVentas, miGraficaDeProductos;
       let ventasEnMemoria = [];
       let ventasFiltradasGlobal = [];
@@ -1020,7 +990,7 @@
             'gestion-fechas': () => cargarFechasDeEntrega(),
             'gestion-clientes': () => cargarClientes(),
             'gestion-usuarios': () => cargarUsuarios(),
-            'historial-ventas': () => { poblarSelectoresFecha(); cargarClientesParaFiltro(); cargarUsuariosParaFiltro(); cargarVentasHistorial(); },
+            'historial-ventas': () => { inicializarSelectorFecha(); cargarClientesParaFiltro(); cargarUsuariosParaFiltro(); },
             'papelera-reciclaje': () => cargarPapelera(),
           };
           cargarMap[id]?.();
@@ -1237,6 +1207,15 @@
           });
       }
 
+      // MODIFICADO: Nueva función para crear ID único para cada item
+      function generarIdVenta(item) {
+          const toppingNombres = item.toppings.map(t => t.nombre).sort().join('-');
+          const jarabeNombres = item.jarabes.map(j => j.nombre).sort().join('-');
+          const nota = item.nota || '';
+          return `prod-${item.productoNombre.replace(/\s+/g, '-')}_tops-${toppingNombres}_jars-${jarabeNombres}_nota-${nota.replace(/\s+/g, '-')}`;
+      }
+      
+      // MODIFICADO: Lógica para agrupar productos iguales
       function agregarAVenta() {
         const productoSelect = document.getElementById('ventaProducto');
         if (!productoSelect.value) { alert('Selecciona un producto'); return; }
@@ -1245,13 +1224,20 @@
         const toppings = Array.from(document.querySelectorAll('#toppings-container .option-btn.selected')).map(btn => ({ nombre: btn.dataset.nombre, precio: parseFloat(btn.dataset.precio) }));
         const jarabes = Array.from(document.querySelectorAll('#jarabes-container .option-btn.selected')).map(btn => ({ nombre: btn.dataset.nombre, precio: parseFloat(btn.dataset.precio) }));
         const nota = document.getElementById('ventaNota').value.trim();
-        let totalItem = (parseFloat(productoSelect.options[productoSelect.selectedIndex].dataset.precio) * cantidad);
-        totalItem += toppings.reduce((acc, item) => acc + item.precio, 0);
-        totalItem += jarabes.reduce((acc, item) => acc + item.precio, 0);
+        let precioUnitario = parseFloat(productoSelect.options[productoSelect.selectedIndex].dataset.precio);
+        precioUnitario += toppings.reduce((acc, item) => acc + item.precio, 0);
+        precioUnitario += jarabes.reduce((acc, item) => acc + item.precio, 0);
+
+        const nuevoItem = { productoNombre, toppings, jarabes, nota, precioUnitario };
+        const idUnico = generarIdVenta(nuevoItem);
+
+        if (ventaActual[idUnico]) {
+            ventaActual[idUnico].cantidad += cantidad;
+        } else {
+            ventaActual[idUnico] = { ...nuevoItem, cantidad: cantidad, id: idUnico };
+        }
         
-        ventaActual.push({ productoNombre, cantidad, toppings, jarabes, nota, total: totalItem });
-        
-        if (ventaActual.length > 0) {
+        if (Object.keys(ventaActual).length > 0) {
             document.getElementById('ventaCliente').disabled = true;
         }
 
@@ -1268,13 +1254,15 @@
         [btnPagado, btnPendiente, btnActualizar].forEach(btn => btn.disabled = true);
         
         try {
-            if (ventaActual.length === 0) {
+            // MODIFICADO: Comprobar si el objeto está vacío
+            if (Object.keys(ventaActual).length === 0) {
                 alert('Agrega al menos un producto a la venta');
                 return;
             }
             const clienteSelect = document.getElementById('ventaCliente');
             const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
-            const subtotal = ventaActual.reduce((a, i) => a + i.total, 0);
+            // MODIFICADO: Calcular subtotal desde el objeto
+            const subtotal = Object.values(ventaActual).reduce((a, i) => a + (i.precioUnitario * i.cantidad), 0);
             
             const idVentaEditada = document.getElementById('idVenta').value;
             const ventaOriginal = idVentaEditada ? ventasEnMemoria.find(v => v.id === idVentaEditada) : {};
@@ -1283,7 +1271,8 @@
                 fecha: new Date().toISOString(), 
                 clienteId: clienteSelect.value || null,
                 clienteNombre: clienteSelect.value ? clienteSelect.options[clienteSelect.selectedIndex].text : 'Público General',
-                items: ventaActual, 
+                // MODIFICADO: Enviar los valores del objeto
+                items: Object.values(ventaActual), 
                 subtotal: subtotal, 
                 costoDomicilio: costoDomicilio, 
                 total: subtotal + costoDomicilio,
@@ -1308,7 +1297,8 @@
       }
 
       async function enviarACocina() {
-        if (ventaActual.length === 0) {
+        // MODIFICADO: Comprobar si el objeto está vacío
+        if (Object.keys(ventaActual).length === 0) {
             alert('Agrega al menos un producto para enviar a cocina.');
             return;
         }
@@ -1326,18 +1316,20 @@
             }
         }
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
-        const total = ventaActual.reduce((acc, item) => acc + item.total, 0) + costoDomicilio;
+        // MODIFICADO: Calcular total desde el objeto
+        const total = Object.values(ventaActual).reduce((acc, item) => acc + (item.precioUnitario * item.cantidad), 0) + costoDomicilio;
         const fechaEntregaId = document.getElementById('fechaEntregaVenta').value;
-        const itemsParaPedido = ventaActual.map(v => ({
+        
+        // MODIFICADO: Mapear los valores del objeto
+        const itemsParaPedido = Object.values(ventaActual).map(v => ({
             nombre: v.productoNombre,
             toppings: v.toppings.map(t => t.nombre),
             jarabes: v.jarabes.map(j => j.nombre),
-            total: v.total,
             cantidad: v.cantidad,
             nota: v.nota
         }));
-        const notaGeneral = document.getElementById('notaVentaGeneral').value.trim();
         
+        // MODIFICADO: Se eliminó la nota general. Se envía una nota vacía.
         const pedidoData = {
             nombreCliente: clienteData.nombre,
             telefonoCliente: clienteData.telefono,
@@ -1345,10 +1337,10 @@
             items: itemsParaPedido,
             total: total,
             fechaEntregaId: fechaEntregaId || null,
-            nota: notaGeneral
+            nota: "" 
         };
         try {
-            await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
+            await fetchAPI('/api/pedidos', { method: 'POST', body: JSON.stringify(pedidoData) });
             alert('¡Pedido enviado a cocina con éxito!');
             resetearFormularioCompleto();
             mostrarSeccion('gestion-pedidos');
@@ -1357,44 +1349,85 @@
         }
       }
 
+      // MODIFICADO: Renderizar la lista desde el objeto, con controles de cantidad
       function mostrarVentaActual() {
         const lista = document.getElementById('listaVentaActual');
         lista.innerHTML = '';
-        ventaActual.forEach((item, index) => {
-          const li = document.createElement('li');
-          const itemInfo = document.createElement('div');
-          itemInfo.innerHTML = `<span>${item.cantidad}x ${item.productoNombre} - $${item.total.toFixed(2)}</span>`;
-          const btnEliminar = document.createElement('button');
-          btnEliminar.textContent = 'X';
-          btnEliminar.className = 'btn-eliminar-item';
-          btnEliminar.onclick = () => { 
-            ventaActual.splice(index, 1); 
-            if (ventaActual.length === 0 && !document.getElementById('idVenta').value) {
-                document.getElementById('ventaCliente').disabled = false;
+        
+        for (const idUnico in ventaActual) {
+            const item = ventaActual[idUnico];
+            const li = document.createElement('li');
+            li.className = 'list-item-venta';
+            
+            const itemDetails = document.createElement('div');
+            itemDetails.className = 'list-item-details';
+            itemDetails.innerHTML = `<span>${item.cantidad}x ${item.productoNombre} - $${(item.precioUnitario * item.cantidad).toFixed(2)}</span>`;
+            if (item.nota) {
+                itemDetails.innerHTML += `<span class="list-item-nota">Nota: ${item.nota}</span>`;
             }
-            mostrarVentaActual(); 
-          };
-          itemInfo.appendChild(btnEliminar);
-          li.appendChild(itemInfo);
-          if (item.nota) {
-            const notaDiv = document.createElement('div');
-            notaDiv.textContent = `Nota: ${item.nota}`;
-            li.appendChild(notaDiv);
-          }
-          lista.appendChild(li);
-        });
+            
+            const quantitySelector = document.createElement('div');
+            quantitySelector.className = 'quantity-selector-venta';
+            quantitySelector.innerHTML = `
+                <button class="quantity-btn-venta" data-id="${idUnico}" data-action="decrease">-</button>
+                <span>${item.cantidad}</span>
+                <button class="quantity-btn-venta" data-id="${idUnico}" data-action="increase">+</button>
+                <button class="remove-btn-venta" data-id="${idUnico}">X</button>
+            `;
+            
+            li.appendChild(itemDetails);
+            li.appendChild(quantitySelector);
+            lista.appendChild(li);
+        }
+        
+        addVentaEventListeners();
         actualizarTotalVenta();
       }
 
+      // MODIFICADO: Nueva función para manejar los clics en los controles
+      function addVentaEventListeners() {
+          document.querySelectorAll('.quantity-btn-venta').forEach(btn => {
+              btn.addEventListener('click', () => {
+                  const id = btn.dataset.id;
+                  const action = btn.dataset.action;
+                  if (!ventaActual[id]) return;
+                  if (action === 'increase') {
+                      ventaActual[id].cantidad++;
+                  } else if (action === 'decrease') {
+                      ventaActual[id].cantidad--;
+                      if (ventaActual[id].cantidad <= 0) {
+                          delete ventaActual[id];
+                      }
+                  }
+                  if (Object.keys(ventaActual).length === 0 && !document.getElementById('idVenta').value) {
+                      document.getElementById('ventaCliente').disabled = false;
+                  }
+                  mostrarVentaActual();
+              });
+          });
+
+          document.querySelectorAll('.remove-btn-venta').forEach(btn => {
+              btn.addEventListener('click', () => {
+                  const id = btn.dataset.id;
+                  delete ventaActual[id];
+                  if (Object.keys(ventaActual).length === 0 && !document.getElementById('idVenta').value) {
+                      document.getElementById('ventaCliente').disabled = false;
+                  }
+                  mostrarVentaActual();
+              });
+          });
+      }
+
       function actualizarTotalVenta() {
-        const subtotalVenta = ventaActual.reduce((acc, item) => acc + item.total, 0);
+        // MODIFICADO: Calcular total desde el objeto
+        const subtotalVenta = Object.values(ventaActual).reduce((acc, item) => acc + (item.precioUnitario * item.cantidad), 0);
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
         const totalFinal = subtotalVenta + costoDomicilio;
         document.getElementById('totalVenta').textContent = `Total Venta: $${totalFinal.toFixed(2)}`;
       }
 
       function resetearFormularioCompleto() {
-        ventaActual = [];
+        ventaActual = {}; // MODIFICADO: Resetear a objeto vacío
         document.getElementById('formVenta').reset();
         document.getElementById('ventaCliente').disabled = false;
         document.getElementById('idVenta').value = '';
@@ -1407,7 +1440,7 @@
         });
         document.getElementById('metodoPago').value = "Efectivo";
         document.getElementById('fechaEntregaVenta').value = "";
-        document.getElementById('notaVentaGeneral').value = "";
+        // MODIFICADO: Se elimina el reseteo del campo de nota general
         document.getElementById('botones-finalizar-venta').style.display = 'flex';
         document.getElementById('btnActualizarVenta').style.display = 'none';
         mostrarVentaActual();
@@ -1415,12 +1448,14 @@
 
       function generarTextoTicket(venta) {
         let texto = `--- Ticket Dulces Amigas ---\nFecha: ${new Date(venta.fecha).toLocaleString()}\nCliente: ${venta.clienteNombre}\nAtendido por: ${venta.vendedorUsername}\n\n`;
-        venta.items.forEach((n, a) => {
+        (venta.items || []).forEach((n, a) => {
           texto += `${a + 1}. ${n.nombre || n.productoNombre} x${n.cantidad || 1}\n`;
-          if (n.toppings && n.toppings.length) texto += `   + Toppings: ${n.toppings.map(e => e.nombre).join(", ")}\n`;
-          if (n.jarabes && n.jarabes.length) texto += `   + Jarabes: ${n.jarabes.map(j => j.nombre).join(", ")}\n`;
+          const toppings = n.toppings || [];
+          const jarabes = n.jarabes || [];
+          if (toppings.length) texto += `   + Toppings: ${toppings.map(e => e.nombre || e).join(", ")}\n`;
+          if (jarabes.length) texto += `   + Jarabes: ${jarabes.map(j => j.nombre || j).join(", ")}\n`;
           if (n.nota) texto += `   * Nota: ${n.nota}\n`;
-          texto += `   Subtotal Item: $${n.total.toFixed(2)}\n\n`;
+          texto += `   Subtotal Item: $${(n.total || (n.precioUnitario * n.cantidad)).toFixed(2)}\n\n`;
         });
         texto += `---------------------------\nSubtotal: $${venta.subtotal.toFixed(2)}\n`;
         if (venta.costoDomicilio > 0) texto += `Domicilio: $${venta.costoDomicilio.toFixed(2)}\n`;
@@ -1568,7 +1603,16 @@
           resetearFormularioCompleto();
           document.getElementById('idVenta').value = venta.id;
           document.getElementById('ventaCliente').value = venta.clienteId || '';
-          ventaActual = venta.items.map(item => ({...item}));
+          
+          // MODIFICADO: Reconstruir el objeto ventaActual desde la venta a editar
+          ventaActual = (venta.items || []).reduce((acc, item) => {
+              const idUnico = generarIdVenta(item);
+              // Asumimos que el item guardado ya tiene el precio unitario correcto
+              const precioUnitario = (item.total || 0) / (item.cantidad || 1);
+              acc[idUnico] = { ...item, precioUnitario, id: idUnico };
+              return acc;
+          }, {});
+          
           mostrarVentaActual();
 
           document.getElementById('ventaCliente').disabled = true;
@@ -1581,51 +1625,48 @@
         }
       }
 
+      function inicializarSelectorFecha() {
+          flatpickr("#filtroFecha", {
+              mode: "range",
+              dateFormat: "d/m/Y",
+              locale: "es",
+              onChange: function(selectedDates, dateStr, instance) {
+                  cargarVentasHistorial();
+              },
+              onReady: function(selectedDates, dateStr, instance){
+                instance.setDate(new Date());
+              }
+          });
+      }
+      
       async function cargarVentasHistorial() {
         try {
           ventasEnMemoria = await fetchAPI('/api/ventas');
-          const periodoRapido = document.querySelector('#botones-periodo button.active')?.dataset.periodo;
+          const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
+          const fechasSeleccionadas = selectorFecha.selectedDates;
           const clienteId = document.getElementById('filtroCliente').value;
           const usuarioId = document.getElementById('filtroUsuario').value;
           const estatus = document.getElementById('filtroEstatus').value;
-          const diaEspecifico = document.getElementById('filtroDia').value;
-          const mesEspecifico = document.getElementById('filtroMes').value;
-          const anioEspecifico = document.getElementById('filtroAnio').value;
           
           let ventasFiltradas = ventasEnMemoria;
 
-          if (diaEspecifico) {
-              const fechaInicio = new Date(diaEspecifico + 'T00:00:00-06:00'); 
-              const fechaFin = new Date(diaEspecifico + 'T23:59:59-06:00');
-              ventasFiltradas = ventasEnMemoria.filter(venta => {
-                  const fechaVenta = new Date(venta.fecha);
-                  return fechaVenta >= fechaInicio && fechaVenta <= fechaFin;
-              });
-          } else if (mesEspecifico !== "" && anioEspecifico) {
-              const mes = parseInt(mesEspecifico);
-              const anio = parseInt(anioEspecifico);
-              const fechaInicio = new Date(anio, mes, 1);
-              const fechaFin = new Date(anio, mes + 1, 0, 23, 59, 59);
-              ventasFiltradas = ventasEnMemoria.filter(venta => {
-                  const fechaVenta = new Date(venta.fecha);
-                  return fechaVenta >= fechaInicio && fechaVenta <= fechaFin;
-              });
-          } else if(periodoRapido) {
-              const ahora = new Date();
-              let fechaInicio;
-              if (periodoRapido === 'mes') { fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1); }
-              else if (periodoRapido === 'semana') { fechaInicio = new Date(ahora); fechaInicio.setDate(ahora.getDate() - ahora.getDay() + (ahora.getDay() === 0 ? -6 : 1)); }
-              else { fechaInicio = new Date(ahora); }
+          if (fechasSeleccionadas.length > 0) {
+              const fechaInicio = fechasSeleccionadas[0];
+              const fechaFin = fechasSeleccionadas.length > 1 ? fechasSeleccionadas[1] : fechasSeleccionadas[0];
               fechaInicio.setHours(0, 0, 0, 0);
-              ventasFiltradas = ventasEnMemoria.filter(venta => new Date(venta.fecha) >= fechaInicio);
+              fechaFin.setHours(23, 59, 59, 999);
+              ventasFiltradas = ventasEnMemoria.filter(venta => {
+                  const fechaVenta = new Date(venta.fecha);
+                  return fechaVenta >= fechaInicio && fechaVenta <= fechaFin;
+              });
           }
-
+          
           if (clienteId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.clienteId == clienteId); }
           if (usuarioId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.vendedorId == usuarioId); }
           if (estatus) { ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus); }
           
           ventasFiltradasGlobal = ventasFiltradas;
-
+          
           const tbody = document.getElementById('tablaVentasBody');
           tbody.innerHTML = '';
           ventasFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
@@ -2135,29 +2176,11 @@
           }
       }
       
-      function poblarSelectoresFecha() {
-          const filtroMes = document.getElementById('filtroMes');
-          const filtroAnio = document.getElementById('filtroAnio');
-          const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-          
-          filtroMes.innerHTML = '<option value="">-- Mes --</option>';
-          meses.forEach((mes, index) => {
-              filtroMes.innerHTML += `<option value="${index}">${mes}</option>`;
-          });
-
-          const anioActual = new Date().getFullYear();
-          filtroAnio.innerHTML = '';
-          for (let i = anioActual; i >= anioActual - 5; i--) {
-              filtroAnio.innerHTML += `<option value="${i}">${i}</option>`;
-          }
-      }
-      
       function setupEventListeners() {
         document.getElementById('btnRegistrarPagado').addEventListener('click', () => registrarVenta('Pagado'));
         document.getElementById('btnRegistrarPendiente').addEventListener('click', () => registrarVenta('Pendiente de Pago'));
         document.getElementById('btnActualizarVenta').addEventListener('click', () => registrarVenta(null));
         document.getElementById('btnEnviarACocina').addEventListener('click', enviarACocina);
-        document.getElementById('filtroEstatus').addEventListener('change', cargarVentasHistorial);
         document.querySelectorAll('nav a').forEach(b => b.addEventListener('click', (e) => {
             e.preventDefault();
             mostrarSeccion(b.dataset.seccion);
@@ -2193,27 +2216,11 @@
           actualizarTotalVenta();
         });
         document.getElementById('costoDomicilio').addEventListener('input', actualizarTotalVenta);
-        document.querySelectorAll('#botones-periodo button').forEach(button => {
-          button.addEventListener('click', () => {
-            document.querySelector('#botones-periodo button.active').classList.remove('active');
-            button.classList.add('active');
-            document.getElementById('filtroDia').value = '';
-            document.getElementById('filtroMes').value = '';
-            cargarVentasHistorial();
-          });
-        });
-        document.getElementById('btnBuscarPersonalizado').addEventListener('click', () => {
-            document.querySelectorAll('#botones-periodo button').forEach(b => b.classList.remove('active'));
-            cargarVentasHistorial();
-        });
-        document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
-            document.getElementById('filtroDia').value = '';
-            document.getElementById('filtroMes').value = '';
-            document.querySelector('#botones-periodo button[data-periodo="dia"]').classList.add('active');
-            cargarVentasHistorial();
-        });
+        
+        document.getElementById('filtroEstatus').addEventListener('change', cargarVentasHistorial);
         document.getElementById('filtroCliente').addEventListener('change', cargarVentasHistorial);
         document.getElementById('filtroUsuario').addEventListener('change', cargarVentasHistorial);
+        
         document.getElementById('btnGenerarReporte').addEventListener('click', generarReportePDF);
         document.getElementById('btnGenerarPDF').addEventListener('click', () => {
           const ticketElement = document.getElementById('ticket');

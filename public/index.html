@@ -594,7 +594,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      let ventaActual = {}; // MODIFICADO: De array a objeto para manejar cantidades
+      let ventaActual = {}; // De array a objeto para manejar cantidades
       let miGraficaDeVentas, miGraficaDeProductos;
       let ventasEnMemoria = [];
       let ventasFiltradasGlobal = [];
@@ -1207,7 +1207,6 @@
           });
       }
 
-      // MODIFICADO: Nueva función para crear ID único para cada item
       function generarIdVenta(item) {
           const toppingNombres = item.toppings.map(t => t.nombre).sort().join('-');
           const jarabeNombres = item.jarabes.map(j => j.nombre).sort().join('-');
@@ -1215,7 +1214,6 @@
           return `prod-${item.productoNombre.replace(/\s+/g, '-')}_tops-${toppingNombres}_jars-${jarabeNombres}_nota-${nota.replace(/\s+/g, '-')}`;
       }
       
-      // MODIFICADO: Lógica para agrupar productos iguales
       function agregarAVenta() {
         const productoSelect = document.getElementById('ventaProducto');
         if (!productoSelect.value) { alert('Selecciona un producto'); return; }
@@ -1254,14 +1252,12 @@
         [btnPagado, btnPendiente, btnActualizar].forEach(btn => btn.disabled = true);
         
         try {
-            // MODIFICADO: Comprobar si el objeto está vacío
             if (Object.keys(ventaActual).length === 0) {
                 alert('Agrega al menos un producto a la venta');
                 return;
             }
             const clienteSelect = document.getElementById('ventaCliente');
             const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
-            // MODIFICADO: Calcular subtotal desde el objeto
             const subtotal = Object.values(ventaActual).reduce((a, i) => a + (i.precioUnitario * i.cantidad), 0);
             
             const idVentaEditada = document.getElementById('idVenta').value;
@@ -1271,7 +1267,6 @@
                 fecha: new Date().toISOString(), 
                 clienteId: clienteSelect.value || null,
                 clienteNombre: clienteSelect.value ? clienteSelect.options[clienteSelect.selectedIndex].text : 'Público General',
-                // MODIFICADO: Enviar los valores del objeto
                 items: Object.values(ventaActual), 
                 subtotal: subtotal, 
                 costoDomicilio: costoDomicilio, 
@@ -1297,7 +1292,6 @@
       }
 
       async function enviarACocina() {
-        // MODIFICADO: Comprobar si el objeto está vacío
         if (Object.keys(ventaActual).length === 0) {
             alert('Agrega al menos un producto para enviar a cocina.');
             return;
@@ -1316,20 +1310,19 @@
             }
         }
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
-        // MODIFICADO: Calcular total desde el objeto
         const total = Object.values(ventaActual).reduce((acc, item) => acc + (item.precioUnitario * item.cantidad), 0) + costoDomicilio;
         const fechaEntregaId = document.getElementById('fechaEntregaVenta').value;
         
-        // MODIFICADO: Mapear los valores del objeto
         const itemsParaPedido = Object.values(ventaActual).map(v => ({
             nombre: v.productoNombre,
             toppings: v.toppings.map(t => t.nombre),
             jarabes: v.jarabes.map(j => j.nombre),
             cantidad: v.cantidad,
-            nota: v.nota
+            nota: v.nota,
+            // ===== CORRECCIÓN AQUÍ =====
+            total: v.precioUnitario * v.cantidad // Se añade el total de cada item
         }));
         
-        // MODIFICADO: Se eliminó la nota general. Se envía una nota vacía.
         const pedidoData = {
             nombreCliente: clienteData.nombre,
             telefonoCliente: clienteData.telefono,
@@ -1337,7 +1330,7 @@
             items: itemsParaPedido,
             total: total,
             fechaEntregaId: fechaEntregaId || null,
-            nota: "" 
+            nota: ""
         };
         try {
             await fetchAPI('/api/pedidos', { method: 'POST', body: JSON.stringify(pedidoData) });
@@ -1349,7 +1342,6 @@
         }
       }
 
-      // MODIFICADO: Renderizar la lista desde el objeto, con controles de cantidad
       function mostrarVentaActual() {
         const lista = document.getElementById('listaVentaActual');
         lista.innerHTML = '';
@@ -1384,7 +1376,6 @@
         actualizarTotalVenta();
       }
 
-      // MODIFICADO: Nueva función para manejar los clics en los controles
       function addVentaEventListeners() {
           document.querySelectorAll('.quantity-btn-venta').forEach(btn => {
               btn.addEventListener('click', () => {
@@ -1419,7 +1410,6 @@
       }
 
       function actualizarTotalVenta() {
-        // MODIFICADO: Calcular total desde el objeto
         const subtotalVenta = Object.values(ventaActual).reduce((acc, item) => acc + (item.precioUnitario * item.cantidad), 0);
         const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
         const totalFinal = subtotalVenta + costoDomicilio;
@@ -1427,7 +1417,7 @@
       }
 
       function resetearFormularioCompleto() {
-        ventaActual = {}; // MODIFICADO: Resetear a objeto vacío
+        ventaActual = {};
         document.getElementById('formVenta').reset();
         document.getElementById('ventaCliente').disabled = false;
         document.getElementById('idVenta').value = '';
@@ -1440,7 +1430,6 @@
         });
         document.getElementById('metodoPago').value = "Efectivo";
         document.getElementById('fechaEntregaVenta').value = "";
-        // MODIFICADO: Se elimina el reseteo del campo de nota general
         document.getElementById('botones-finalizar-venta').style.display = 'flex';
         document.getElementById('btnActualizarVenta').style.display = 'none';
         mostrarVentaActual();
@@ -1604,10 +1593,8 @@
           document.getElementById('idVenta').value = venta.id;
           document.getElementById('ventaCliente').value = venta.clienteId || '';
           
-          // MODIFICADO: Reconstruir el objeto ventaActual desde la venta a editar
           ventaActual = (venta.items || []).reduce((acc, item) => {
               const idUnico = generarIdVenta(item);
-              // Asumimos que el item guardado ya tiene el precio unitario correcto
               const precioUnitario = (item.total || 0) / (item.cantidad || 1);
               acc[idUnico] = { ...item, precioUnitario, id: idUnico };
               return acc;

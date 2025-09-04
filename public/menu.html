@@ -515,20 +515,21 @@
                 submitBtn.textContent = 'Enviando...';
 
                 const totalCalculado = parseFloat(cartTotalEl.textContent.replace('Total del Pedido: $', ''));
-                const itemsParaEnviar = Object.values(carrito).flatMap(item => {
+                
+                // ===== CORRECCIÓN AQUÍ: Cambiamos la estructura de los items =====
+                const itemsParaEnviar = Object.values(carrito).map(item => {
                     const precioUnitario = item.producto.precio + 
-                                       item.toppings.reduce((s,t) => s + t.precio, 0) + 
-                                       item.jarabes.reduce((s,j) => s + j.precio, 0);
-                    
-                    let nombreCompleto = item.producto.nombre;
-                    if (item.toppings.length > 0 || item.jarabes.length > 0) {
-                         nombreCompleto += ` (${[...item.toppings, ...item.jarabes].map(e => e.nombre).join(', ')})`;
-                    }
-                    
-                    return Array(item.cantidad).fill({
-                        nombre: nombreCompleto,
-                        precio: precioUnitario
-                    });
+                                       item.toppings.reduce((sum, t) => sum + t.precio, 0) + 
+                                       item.jarabes.reduce((sum, j) => sum + j.precio, 0);
+
+                    return {
+                        nombre: item.producto.nombre,
+                        toppings: item.toppings.map(t => t.nombre),
+                        jarabes: item.jarabes.map(j => j.nombre),
+                        cantidad: item.cantidad,
+                        nota: "", // El menú no tiene notas por producto, se envía vacío
+                        total: precioUnitario * item.cantidad
+                    };
                 });
 
                 const orderData = {
@@ -536,8 +537,7 @@
                     telefonoCliente: phonePrefixSelect.value + telefonoClienteInput.value,
                     direccionEntrega: document.getElementById('direccionEntrega').value,
                     fechaEntregaId: document.getElementById('fechaEntrega').value,
-                    // ===== CORRECCIÓN AQUÍ: La propiedad debe llamarse 'nota' y no 'notaGeneral' =====
-                    nota: document.getElementById('notaGeneral').value, 
+                    nota: document.getElementById('notaGeneral').value,
                     items: itemsParaEnviar,
                     total: totalCalculado
                 };

@@ -269,7 +269,7 @@
                     jarabes = await jarabesRes.json();
                     
                     const config = await configRes.json().catch(() => ({}));
-                    if (config.logo_base64) menuLogo.src = config.logo_base64;
+                    if (config.logo_base_64) menuLogo.src = config.logo_base_64;
                     else menuLogo.src = "https://via.placeholder.com/200x80.png?text=Dulces+Amigas";
                     menuLogo.classList.add('loaded');
                     
@@ -536,8 +536,8 @@
                     telefonoCliente: phonePrefixSelect.value + telefonoClienteInput.value,
                     direccionEntrega: document.getElementById('direccionEntrega').value,
                     fechaEntregaId: document.getElementById('fechaEntrega').value,
-                    // ===== CORRECCIÓN AQUÍ: El nombre de la propiedad debe ser 'nota' =====
-                    nota: document.getElementById('notaGeneral').value,
+                    // ===== CORRECCIÓN AQUÍ: La propiedad debe llamarse 'nota' y no 'notaGeneral' =====
+                    nota: document.getElementById('notaGeneral').value, 
                     items: itemsParaEnviar,
                     total: totalCalculado
                 };

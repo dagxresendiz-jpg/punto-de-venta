@@ -1,4 +1,4 @@
-// server.js - v9.0 (Backend con Nota General en Pedidos y Filtro de Fechas en Ventas)
+// server.js - v9.1 (Backend con Nota General Corregida y Unificada)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -91,12 +91,12 @@ const FechaEntrega = mongoose.model('FechaEntrega', createSchema({
     activa: { type: Boolean, default: true }
 }));
 
-// CAMBIO NOTA-1: Se añade 'notaGeneral' al modelo del Pedido.
+// ===== CORRECCIÓN 1: Se renombra 'notaGeneral' a 'nota' para que coincida en todos lados =====
 const Pedido = mongoose.model('Pedido', createSchema({
     nombreCliente: { type: String, required: true },
     telefonoCliente: { type: String, required: true },
     direccionEntrega: { type: String },
-    notaGeneral: { type: String, default: '' },
+    nota: { type: String, default: '' }, // Campo renombrado
     items: Array,
     total: Number,
     estatus: { 
@@ -181,15 +181,16 @@ publicApiRouter.get('/toppings', async (req, res) => res.json(await Topping.find
 publicApiRouter.get('/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
 publicApiRouter.post('/pedidos', async (req, res) => {
     try {
-        // CAMBIO NOTA-2: Recibimos 'notaGeneral' del cuerpo de la petición.
-        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, notaGeneral } = req.body;
+        // ===== CORRECCIÓN 2: Se recibe 'nota' en lugar de 'notaGeneral' =====
+        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota } = req.body;
         if (!nombreCliente || !telefonoCliente || !items || !items.length || !fechaEntregaId) {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
-        // CAMBIO NOTA-3: Guardamos 'notaGeneral' al crear el nuevo pedido.
-        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, notaGeneral, visto: false });
+        // ===== CORRECCIÓN 3: Se guarda el campo 'nota' al crear el pedido =====
+        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota, visto: false });
         res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
     } catch (error) {
+        console.error("Error al crear pedido desde el menú:", error);
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
@@ -361,9 +362,11 @@ ventasRouter.post('/', tienePermiso('pedidos'), (req, res, next) => {
     nuevaVentaData.vendedorUsername = req.user.username;
     Venta.create(nuevaVentaData).then(venta => res.status(201).json(venta)).catch(next);
 });
+
+// ===== MEJORA: Añadido el campo 'nota' para que se guarde también desde el punto de venta =====
 ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => {
     try {
-        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total } = req.body;
+        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota } = req.body;
         if (!nombreCliente || !items || !items.length) {
             return res.status(400).json({ error: 'Faltan datos para crear el pedido.' });
         }
@@ -374,6 +377,7 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
             fechaEntregaId: fechaEntregaId || null,
             items,
             total,
+            nota: nota || '', // Se guarda la nota si existe
             visto: false
         });
         res.status(201).json({ message: 'Pedido enviado a cocina con éxito', pedido: nuevoPedido });
@@ -383,7 +387,6 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
     }
 });
 
-// CAMBIO HISTORIAL-1: La ruta de ventas ahora acepta filtros de fecha.
 ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
     try {
         const { fechaInicio, fechaFin } = req.query;

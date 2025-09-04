@@ -145,7 +145,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <div class="header" id="header-container">
             <div class="theme-switch-wrapper">
                 <label class="theme-switch" for="theme-toggle">
                     <input type="checkbox" id="theme-toggle" />
@@ -232,6 +232,26 @@
             const telefonoClienteInput = document.getElementById('telefonoCliente');
             const fechaEntregaSelect = document.getElementById('fechaEntrega');
 
+            // ===== PROTECCIÓN DEL LOGO =====
+            const headerContainer = document.getElementById('header-container');
+            const observer = new MutationObserver((mutationsList) => {
+                for(const mutation of mutationsList) {
+                    if (mutation.type === 'childList') {
+                        let logoExists = false;
+                        headerContainer.childNodes.forEach(node => {
+                            if (node.id === 'menu-logo') {
+                                logoExists = true;
+                            }
+                        });
+                        if (!logoExists) {
+                            headerContainer.insertBefore(menuLogo, headerContainer.firstChild);
+                        }
+                    }
+                }
+            });
+            observer.observe(headerContainer, { childList: true });
+            // ===== FIN DE LA PROTECCIÓN =====
+
             function applyTheme(theme) {
                 if (theme === 'dark') {
                     document.body.classList.add('dark-mode');
@@ -269,7 +289,7 @@
                     jarabes = await jarabesRes.json();
                     
                     const config = await configRes.json().catch(() => ({}));
-                    if (config.logo_base_64) menuLogo.src = config.logo_base_64;
+                    if (config.logo_base64) menuLogo.src = config.logo_base64;
                     else menuLogo.src = "https://via.placeholder.com/200x80.png?text=Dulces+Amigas";
                     menuLogo.classList.add('loaded');
                     
@@ -516,18 +536,16 @@
 
                 const totalCalculado = parseFloat(cartTotalEl.textContent.replace('Total del Pedido: $', ''));
                 
-                // ===== CORRECCIÓN AQUÍ: Cambiamos la estructura de los items =====
                 const itemsParaEnviar = Object.values(carrito).map(item => {
                     const precioUnitario = item.producto.precio + 
                                        item.toppings.reduce((sum, t) => sum + t.precio, 0) + 
                                        item.jarabes.reduce((sum, j) => sum + j.precio, 0);
-
                     return {
                         nombre: item.producto.nombre,
                         toppings: item.toppings.map(t => t.nombre),
                         jarabes: item.jarabes.map(j => j.nombre),
                         cantidad: item.cantidad,
-                        nota: "", // El menú no tiene notas por producto, se envía vacío
+                        nota: "",
                         total: precioUnitario * item.cantidad
                     };
                 });

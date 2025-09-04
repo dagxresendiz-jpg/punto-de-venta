@@ -1,4 +1,4 @@
-// server.js - v9.1 (Backend con Nota General Corregida y Unificada)
+// server.js - v9.2 (Backend con Validación de Productos Agotados)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -91,12 +91,11 @@ const FechaEntrega = mongoose.model('FechaEntrega', createSchema({
     activa: { type: Boolean, default: true }
 }));
 
-// ===== CORRECCIÓN 1: Se renombra 'notaGeneral' a 'nota' para que coincida en todos lados =====
 const Pedido = mongoose.model('Pedido', createSchema({
     nombreCliente: { type: String, required: true },
     telefonoCliente: { type: String, required: true },
     direccionEntrega: { type: String },
-    nota: { type: String, default: '' }, // Campo renombrado
+    nota: { type: String, default: '' },
     items: Array,
     total: Number,
     estatus: { 
@@ -181,12 +180,32 @@ publicApiRouter.get('/toppings', async (req, res) => res.json(await Topping.find
 publicApiRouter.get('/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
 publicApiRouter.post('/pedidos', async (req, res) => {
     try {
-        // ===== CORRECCIÓN 2: Se recibe 'nota' en lugar de 'notaGeneral' =====
         const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota } = req.body;
         if (!nombreCliente || !telefonoCliente || !items || !items.length || !fechaEntregaId) {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
-        // ===== CORRECCIÓN 3: Se guarda el campo 'nota' al crear el pedido =====
+        
+        // ===== VALIDACIÓN DE SEGURIDAD CONTRA PRODUCTOS AGOTADOS =====
+        for (const item of items) {
+            const productoDB = await Producto.findOne({ nombre: item.nombre, ...findActive });
+            if (productoDB && productoDB.agotado) {
+                return res.status(400).json({ error: `El producto "${item.nombre}" está agotado y no se puede pedir.` });
+            }
+            for (const toppingNombre of item.toppings) {
+                const toppingDB = await Topping.findOne({ nombre: toppingNombre, ...findActive });
+                if (toppingDB && toppingDB.agotado) {
+                    return res.status(400).json({ error: `El topping "${toppingNombre}" está agotado y no se puede pedir.` });
+                }
+            }
+            for (const jarabeNombre of item.jarabes) {
+                const jarabeDB = await Jarabe.findOne({ nombre: jarabeNombre, ...findActive });
+                if (jarabeDB && jarabeDB.agotado) {
+                    return res.status(400).json({ error: `El jarabe "${jarabeNombre}" está agotado y no se puede pedir.` });
+                }
+            }
+        }
+        // ===== FIN DE LA VALIDACIÓN =====
+
         const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota, visto: false });
         res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
     } catch (error) {
@@ -363,7 +382,6 @@ ventasRouter.post('/', tienePermiso('pedidos'), (req, res, next) => {
     Venta.create(nuevaVentaData).then(venta => res.status(201).json(venta)).catch(next);
 });
 
-// ===== MEJORA: Añadido el campo 'nota' para que se guarde también desde el punto de venta =====
 ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => {
     try {
         const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota } = req.body;
@@ -377,7 +395,7 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
             fechaEntregaId: fechaEntregaId || null,
             items,
             total,
-            nota: nota || '', // Se guarda la nota si existe
+            nota: nota || '',
             visto: false
         });
         res.status(201).json({ message: 'Pedido enviado a cocina con éxito', pedido: nuevoPedido });

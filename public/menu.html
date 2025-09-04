@@ -203,7 +203,6 @@
                     <option value="">Cargando fechas disponibles...</option>
                 </select>
 
-                <!-- CAMBIO NOTA-1: Cambiado el label y el id para que coincida con lo que espera el backend -->
                 <label for="notaGeneral">Nota para tu pedido (opcional):</label>
                 <textarea id="notaGeneral" rows="3" placeholder="Ej. Sin cebolla, tocar timbre B, etc."></textarea>
 
@@ -515,7 +514,6 @@
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Enviando...';
 
-                // CAMBIO NOTA-2: Modificamos el objeto que se envía para que coincida con la estructura del backend
                 const totalCalculado = parseFloat(cartTotalEl.textContent.replace('Total del Pedido: $', ''));
                 const itemsParaEnviar = Object.values(carrito).flatMap(item => {
                     const precioUnitario = item.producto.precio + 
@@ -527,7 +525,6 @@
                          nombreCompleto += ` (${[...item.toppings, ...item.jarabes].map(e => e.nombre).join(', ')})`;
                     }
                     
-                    // Devolvemos un array de objetos por cada cantidad
                     return Array(item.cantidad).fill({
                         nombre: nombreCompleto,
                         precio: precioUnitario
@@ -539,7 +536,8 @@
                     telefonoCliente: phonePrefixSelect.value + telefonoClienteInput.value,
                     direccionEntrega: document.getElementById('direccionEntrega').value,
                     fechaEntregaId: document.getElementById('fechaEntrega').value,
-                    notaGeneral: document.getElementById('notaGeneral').value, // El id del textarea ya es 'notaGeneral'
+                    // ===== CORRECCIÓN AQUÍ: El nombre de la propiedad debe ser 'nota' =====
+                    nota: document.getElementById('notaGeneral').value,
                     items: itemsParaEnviar,
                     total: totalCalculado
                 };
@@ -567,7 +565,6 @@
                 }
             });
 
-            // --- INICIALIZACIÓN DE TODAS LAS FUNCIONES ---
             setupPhoneInput();
             fetchData();
         });

@@ -990,7 +990,12 @@
             'gestion-fechas': () => cargarFechasDeEntrega(),
             'gestion-clientes': () => cargarClientes(),
             'gestion-usuarios': () => cargarUsuarios(),
-            'historial-ventas': () => { inicializarSelectorFecha(); cargarClientesParaFiltro(); cargarUsuariosParaFiltro(); },
+            'historial-ventas': () => { 
+                inicializarSelectorFecha(); 
+                cargarClientesParaFiltro(); 
+                cargarUsuariosParaFiltro();
+                cargarVentasHistorial(); // Carga el historial inmediatamente
+            },
             'papelera-reciclaje': () => cargarPapelera(),
           };
           cargarMap[id]?.();
@@ -1510,7 +1515,7 @@
 
         const body = { username, role, permissions };
         if (password) {
-            body.password = password;
+            body.password = await bcrypt.hash(password, 10);
         }
 
         const metodo = id ? 'PUT' : 'POST';
@@ -1592,10 +1597,8 @@
           document.getElementById('idVenta').value = venta.id;
           document.getElementById('ventaCliente').value = venta.clienteId || '';
           
-          // ===== CORRECCIÓN AQUÍ: Se recalcula el precio unitario correctamente =====
           ventaActual = (venta.items || []).reduce((acc, item) => {
               const idUnico = generarIdVenta(item);
-              // Si el item ya tiene precioUnitario, lo usamos. Si no, lo calculamos.
               const precioUnitario = item.precioUnitario || ((item.total || 0) / (item.cantidad || 1));
               
               acc[idUnico] = { ...item, precioUnitario, id: idUnico };

@@ -24,7 +24,7 @@
       --background-color: #f8fafc; --card-background: #ffffff; --text-color-dark: #1e293b; 
       --text-color-light: #64748b; --border-color: #e2e8f0;
       --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      --form-control-bg: #ffffff; --collapsible-bg: #f1f59; --table-header-bg: #f8fafc;
+      --form-control-bg: #ffffff; --collapsible-bg: #f1f5f9; --table-header-bg: #f8fafc;
       --secondary-button-bg: #f1f5f9; --secondary-button-text: #1e293b; --secondary-button-hover-bg: #e2e8f0;
     }
     body.dark-mode {
@@ -381,16 +381,18 @@
                         <ul id="listaVentaActual"></ul>
                         <div id="totalVenta" style="font-weight:600; font-size: 1.2rem; margin-top: 1rem; text-align: right;">Total venta actual: $0.00</div>
                         <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
+                        
                         <label for="fechaEntregaVenta">Fecha de Entrega (Opcional):</label>
                         <select id="fechaEntregaVenta"></select>
+
                         <label for="metodoPago">Método de Pago:</label>
                         <select id="metodoPago">
                             <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
                         </select>
-                        
+
                         <label for="notaVentaGeneral">Nota General para el Pedido (opcional):</label>
-                        <textarea id="notaVentaGeneral" rows="2" placeholder="Ej: Tocar timbre B..."></textarea>
-                        
+                        <input type="text" id="notaVentaGeneral" placeholder="Ej: Tocar timbre B...">
+
                         <div id="botones-accion-venta" style="margin-top: 1rem;">
                             <button id="btnEnviarACocina" style="width: 100%; margin-bottom: 1rem; background-color: var(--warning-color);">Enviar a Cocina</button>
                             <div id="botones-finalizar-venta" class="botones-grupo" style="display: flex; gap: 1rem;">
@@ -998,7 +1000,6 @@
                 inicializarSelectorFecha(); 
                 cargarClientesParaFiltro(); 
                 cargarUsuariosParaFiltro();
-                cargarVentasHistorial();
             },
             'papelera-reciclaje': () => cargarPapelera(),
           };
@@ -1331,7 +1332,6 @@
             total: v.precioUnitario * v.cantidad
         }));
         
-        // Se lee la nota del nuevo campo del panel
         const notaGeneral = document.getElementById('notaVentaGeneral').value.trim();
         
         const pedidoData = {
@@ -1341,7 +1341,7 @@
             items: itemsParaPedido,
             total: total,
             fechaEntregaId: fechaEntregaId || null,
-            nota: notaGeneral // Se envía el campo correcto, que ahora se llama 'nota' en el backend
+            nota: notaGeneral
         };
         try {
             await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
@@ -1630,13 +1630,9 @@
               mode: "range",
               dateFormat: "d/m/Y",
               locale: "es",
+              defaultDate: "today",
               onChange: function(selectedDates, dateStr, instance) {
                   cargarVentasHistorial();
-              },
-              onReady: function(selectedDates, dateStr, instance){
-                // ===== ¡AQUÍ ESTÁ LA CORRECCIÓN! =====
-                // Al estar listo, establece la fecha de hoy Y dispara el onChange para cargar los datos
-                instance.setDate(new Date(), true); 
               }
           });
       }
@@ -1961,7 +1957,7 @@
             card.className = 'pedido-card';
 
             let itemsHtml = '';
-            p.items.forEach(item => {
+            (p.items || []).forEach(item => {
                 itemsHtml += `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong></li>`;
                 
                 const toppings = item.toppings || [];
@@ -1985,8 +1981,6 @@
             const repartidorInfo = p.repartidorId && p.repartidorId.username ? `<div class="repartidor-info">Repartidor: ${p.repartidorId.username}</div>` : '';
             const fechaInfo = p.fechaEntregaId && p.fechaEntregaId.fecha ? `<div class="repartidor-info">Entregar: ${new Date(p.fechaEntregaId.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'})}</div>` : '';
             
-            // ===== ¡AQUÍ ESTÁ LA CORRECCIÓN! =====
-            // Se lee 'p.nota' (que es el nombre que viene del servidor) y se muestra si existe.
             const notaGeneralHtml = p.nota && p.nota.trim() !== "" ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.nota}</div>` : '';
 
             card.innerHTML = `

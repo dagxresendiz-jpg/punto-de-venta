@@ -75,8 +75,9 @@
         .info-row a { display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--primary-color); word-break: break-all; }
         .info-row a.whatsapp-link { color: var(--whatsapp-color); }
         .info-row a svg { width: 16px; height: 16px; }
-        .items-list { list-style: none; padding-left: 1rem; font-size: 0.9em; }
-        .nota-general {
+        .items-list { list-style: none; padding-left: 0; font-size: 0.9em; }
+        .items-list > li { margin-bottom: 0.5rem; }
+        .nota-general, .nota-producto {
             font-style: italic;
             padding: 0.75rem;
             margin-top: 1rem;
@@ -84,6 +85,12 @@
             background-color: rgba(245, 158, 11, 0.1);
             color: var(--text-color-dark);
             white-space: pre-wrap;
+        }
+        .nota-producto {
+            margin-top: 0.5rem;
+            margin-left: 1rem;
+            font-size: 0.85em;
+            padding: 0.5rem;
         }
         .total-section { text-align: right; font-size: 1.2rem; font-weight: 600; margin-top: 1rem; }
         .pedido-card-footer { padding: 1rem; }
@@ -282,20 +289,30 @@
 
                         let itemsHtml = '';
                         (p.items || []).forEach(item => {
-                            itemsHtml += `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong></li>`;
+                            // Construir el HTML para cada item
+                            let itemHtmlIndividual = `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong>`;
+                            
                             const extras = [...(item.toppings || []), ...(item.jarabes || [])];
                             if (extras.length > 0) {
-                                itemsHtml += '<ul style="padding-left: 15px;">';
+                                itemHtmlIndividual += '<ul style="padding-left: 15px;">';
                                 extras.forEach(extra => {
                                     const extraName = typeof extra === 'object' ? extra.nombre : extra;
-                                    itemsHtml += `<li>+ ${extraName}</li>`;
+                                    itemHtmlIndividual += `<li>+ ${extraName}</li>`;
                                 });
-                                itemsHtml += '</ul>';
+                                itemHtmlIndividual += '</ul>';
                             }
+                            
+                            // ===== ¡AQUÍ ESTÁ LA CORRECCIÓN! =====
+                            // Se revisa si este item específico tiene una nota
+                            if (item.nota && item.nota.trim() !== '') {
+                                itemHtmlIndividual += `<div class="nota-producto"><strong>Nota producto:</strong> ${item.nota}</div>`;
+                            }
+                            
+                            itemHtmlIndividual += `</li>`;
+                            itemsHtml += itemHtmlIndividual;
                         });
-                        
-                        // ===== ¡AQUÍ ESTÁ LA CORRECCIÓN DEFINITIVA! =====
-                        // Se lee 'p.nota' (que es el nombre que viene del servidor) y se muestra si existe.
+
+                        // Se lee 'p.nota' (que es el nombre que viene del servidor para la nota general) y se muestra si existe.
                         const notaGeneralHtml = p.nota && p.nota.trim() !== ''
                             ? `<div class="nota-general"><strong>Nota General:</strong> ${p.nota}</div>`
                             : '';

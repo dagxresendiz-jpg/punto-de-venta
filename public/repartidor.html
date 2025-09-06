@@ -35,7 +35,7 @@
             background-color: var(--background-color); 
             color: var(--text-color-dark);
             transition: background-color 0.3s, color 0.3s;
-            visibility: hidden; /* Oculto hasta que el script de seguridad decida */
+            visibility: hidden;
         }
         .app-container { max-width: 600px; margin: 0 auto; padding: 1rem; }
         .header { 
@@ -143,11 +143,55 @@
         .slider-theme:before { background-color: #fff; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; position: absolute; transition: .4s; border-radius: 50%; }
         input:checked + .slider-theme { background-color: var(--primary-color); }
         input:checked + .slider-theme:before { transform: translateX(24px); }
-        .slider-theme .sun, .slider-theme .moon { position: absolute; top: 50%; transform: translateY(-50%); }
-        .slider-theme .sun { left: 6px; opacity: 1; transition: opacity 0.2s; }
-        .slider-theme .moon { right: 6px; opacity: 0; transition: opacity 0.2s; }
-        input:checked + .slider-theme .sun { opacity: 0; }
-        input:checked + .slider-theme .moon { opacity: 1; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: var(--card-background);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+        .modal-content h3 { margin-bottom: 1.5rem; }
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .payment-btn {
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            background-color: var(--card-background);
+            color: var(--text-color-dark);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .payment-btn.selected {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .modal-actions { display: flex; gap: 1rem; }
+        .modal-actions button { flex: 1; }
+        #confirm-payment-btn { background-color: var(--success-color); color: white; }
+        #cancel-payment-btn { background-color: var(--border-color); color: var(--text-color-dark); }
     </style>
     <script>
       (function() {
@@ -177,14 +221,13 @@
     </script>
 </head>
 <body>
+    <audio id="notification-sound-repartidor" src="/sounds/notification.mp3" preload="auto"></audio>
+
     <div class="app-container">
         <div class="theme-switch-wrapper">
             <label class="theme-switch" for="theme-toggle">
                 <input type="checkbox" id="theme-toggle" />
-                <div class="slider-theme">
-                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="yellow" viewBox="0 0 16 16"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
-                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>
-                </div>
+                <div class="slider-theme"></div>
             </label>
         </div>
         <header class="header">
@@ -198,6 +241,23 @@
             <p class="no-pedidos">Cargando pedidos...</p>
         </main>
     </div>
+    
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <h3>Confirmar Entrega</h3>
+            <p style="margin-bottom: 1rem;">Selecciona el método de pago recibido:</p>
+            <div class="payment-options">
+                <button class="payment-btn" data-method="Efectivo" data-status="Pagado">Efectivo</button>
+                <button class="payment-btn" data-method="Tarjeta" data-status="Pagado">Tarjeta</button>
+                <button class="payment-btn" data-method="Transferencia" data-status="Pagado">Transferencia</button>
+                <button class="payment-btn" data-method="N/A" data-status="Pendiente de Pago" style="border-color: var(--warning-color);">Dejar Pendiente</button>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-payment-btn">Cancelar</button>
+                <button id="confirm-payment-btn" disabled>Confirmar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -205,6 +265,16 @@
             const logoutBtn = document.getElementById('logout-btn');
             const repartidorLogo = document.getElementById('repartidor-logo');
             const themeToggle = document.getElementById('theme-toggle');
+            const notificationSound = document.getElementById('notification-sound-repartidor');
+            
+            const paymentModal = document.getElementById('payment-modal');
+            const paymentOptions = document.querySelectorAll('.payment-btn');
+            const confirmPaymentBtn = document.getElementById('confirm-payment-btn');
+            const cancelPaymentBtn = document.getElementById('cancel-payment-btn');
+            
+            let pedidosActuales = 0;
+            let pollingIntervalId = null;
+            let selectedPayment = { method: null, status: null, pedidoId: null };
 
             const token = localStorage.getItem('token');
             try {
@@ -289,9 +359,7 @@
 
                         let itemsHtml = '';
                         (p.items || []).forEach(item => {
-                            // Construir el HTML para cada item
                             let itemHtmlIndividual = `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong>`;
-                            
                             const extras = [...(item.toppings || []), ...(item.jarabes || [])];
                             if (extras.length > 0) {
                                 itemHtmlIndividual += '<ul style="padding-left: 15px;">';
@@ -301,18 +369,13 @@
                                 });
                                 itemHtmlIndividual += '</ul>';
                             }
-                            
-                            // ===== ¡AQUÍ ESTÁ LA CORRECCIÓN! =====
-                            // Se revisa si este item específico tiene una nota
                             if (item.nota && item.nota.trim() !== '') {
                                 itemHtmlIndividual += `<div class="nota-producto"><strong>Nota producto:</strong> ${item.nota}</div>`;
                             }
-                            
                             itemHtmlIndividual += `</li>`;
                             itemsHtml += itemHtmlIndividual;
                         });
-
-                        // Se lee 'p.nota' (que es el nombre que viene del servidor para la nota general) y se muestra si existe.
+                        
                         const notaGeneralHtml = p.nota && p.nota.trim() !== ''
                             ? `<div class="nota-general"><strong>Nota General:</strong> ${p.nota}</div>`
                             : '';
@@ -388,7 +451,7 @@
                     const maxOffset = slider.offsetWidth - knob.offsetWidth;
 
                     knob.style.transition = 'transform 0.3s ease';
-                    if (offsetX > maxOffset * 0.7) {
+                    if (offsetX > maxOffset * 0.8) {
                         knob.style.transform = `translateX(${maxOffset}px)`;
                         slider.classList.add('unlocked');
                         
@@ -399,9 +462,7 @@
                         document.removeEventListener('touchmove', onDrag);
                         document.removeEventListener('touchend', endDrag);
 
-                        setTimeout(() => {
-                            finalizarEntrega(slider.dataset.id);
-                        }, 300);
+                        abrirModalDePago(slider.dataset.id);
 
                     } else {
                         knob.style.transform = `translateX(0px)`;
@@ -424,58 +485,85 @@
                 knob.addEventListener('touchstart', startDrag, { passive: false });
             }
 
-            async function finalizarEntrega(pedidoId) {
-                const mensajePrompt = "Introduce el método de pago:\n1. Efectivo\n2. Tarjeta\n3. Transferencia\n\n4. Dejar Pendiente de Pago";
-                const eleccion = prompt(mensajePrompt);
+            function abrirModalDePago(pedidoId) {
+                selectedPayment.pedidoId = pedidoId;
+                paymentModal.style.display = 'flex';
+            }
 
-                if (eleccion === null || eleccion.trim() === '') {
-                    cargarMisPedidos();
-                    return;
-                }
+            function cerrarModalDePago() {
+                paymentModal.style.display = 'none';
+                paymentOptions.forEach(btn => btn.classList.remove('selected'));
+                confirmPaymentBtn.disabled = true;
+                selectedPayment = { method: null, status: null, pedidoId: null };
+                cargarMisPedidos(); // Recargar por si el usuario cancela
+            }
+            
+            paymentOptions.forEach(button => {
+                button.addEventListener('click', () => {
+                    paymentOptions.forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                    selectedPayment.method = button.dataset.method;
+                    selectedPayment.status = button.dataset.status;
+                    confirmPaymentBtn.disabled = false;
+                });
+            });
 
-                let metodoPago = 'No especificado';
-                let estatus = 'Pagado';
-
-                switch (eleccion.trim()) {
-                    case '1': metodoPago = 'Efectivo'; break;
-                    case '2': metodoPago = 'Tarjeta'; break;
-                    case '3': metodoPago = 'Transferencia'; break;
-                    case '4': 
-                        estatus = 'Pendiente de Pago';
-                        metodoPago = 'N/A';
-                        break;
-                    default:
-                        alert('Opción no válida. Por favor, introduce un número del 1 al 4.');
-                        cargarMisPedidos();
-                        return;
-                }
-                
-                if (!confirm(`¿Confirmas la entrega con estatus "${estatus}"?`)) {
-                    cargarMisPedidos();
-                    return;
-                }
+            cancelPaymentBtn.addEventListener('click', cerrarModalDePago);
+            
+            confirmPaymentBtn.addEventListener('click', async () => {
+                if (!selectedPayment.method || !selectedPayment.status || !selectedPayment.pedidoId) return;
 
                 try {
-                    await fetchAPI(`/api/repartidor/finalizar-entrega/${pedidoId}`, {
+                    await fetchAPI(`/api/repartidor/finalizar-entrega/${selectedPayment.pedidoId}`, {
                         method: 'POST',
-                        body: JSON.stringify({ metodoPago, estatus })
+                        body: JSON.stringify({ metodoPago: selectedPayment.method, estatus: selectedPayment.status })
                     });
                     alert('¡Entrega registrada con éxito!');
-                    cargarMisPedidos();
+                    cerrarModalDePago();
                 } catch (error) {
                     alert('Error al registrar la entrega: ' + error.message);
-                    cargarMisPedidos();
+                    cerrarModalDePago();
                 }
-            }
+            });
 
             logoutBtn.addEventListener('click', () => {
                 localStorage.removeItem('token');
                 window.location.href = '/index.html';
             });
             
+            async function verificarNuevosPedidosAsignados() {
+                try {
+                    const data = await fetchAPI('/api/repartidor/mis-pedidos/contador');
+                    const count = data ? data.count : 0;
+                    
+                    if (pedidosActuales > 0 && count > pedidosActuales) {
+                        notificationSound.play().catch(e => console.log("Se necesita interacción para reproducir sonido."));
+                        alert("¡Te han asignado un nuevo pedido!");
+                        cargarMisPedidos();
+                    }
+                    pedidosActuales = count;
+                } catch (error) {
+                    console.error("Error en el polling de repartidor:", error);
+                    if (error.message.includes('Sesión expirada')) {
+                        clearInterval(pollingIntervalId);
+                    }
+                }
+            }
+
+            function iniciarPollingRepartidor() {
+                if (pollingIntervalId) clearInterval(pollingIntervalId);
+                
+                fetchAPI('/api/repartidor/mis-pedidos/contador').then(data => {
+                    pedidosActuales = data ? data.count : 0;
+                });
+
+                pollingIntervalId = setInterval(verificarNuevosPedidosAsignados, 15000);
+            }
+
             document.body.style.visibility = 'visible';
             loadConfig();
             cargarMisPedidos();
+            iniciarPollingRepartidor();
         });
     </script>
 </body>

@@ -1,4 +1,4 @@
-// server.js - v9.2 (Backend con Validación de Productos Agotados)
+// server.js - v9.6 (Backend con Notificaciones para Repartidor)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -185,26 +185,28 @@ publicApiRouter.post('/pedidos', async (req, res) => {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
         
-        // ===== VALIDACIÓN DE SEGURIDAD CONTRA PRODUCTOS AGOTADOS =====
         for (const item of items) {
             const productoDB = await Producto.findOne({ nombre: item.nombre, ...findActive });
             if (productoDB && productoDB.agotado) {
                 return res.status(400).json({ error: `El producto "${item.nombre}" está agotado y no se puede pedir.` });
             }
-            for (const toppingNombre of item.toppings) {
-                const toppingDB = await Topping.findOne({ nombre: toppingNombre, ...findActive });
-                if (toppingDB && toppingDB.agotado) {
-                    return res.status(400).json({ error: `El topping "${toppingNombre}" está agotado y no se puede pedir.` });
+            if (item.toppings) {
+                for (const toppingNombre of item.toppings) {
+                    const toppingDB = await Topping.findOne({ nombre: toppingNombre, ...findActive });
+                    if (toppingDB && toppingDB.agotado) {
+                        return res.status(400).json({ error: `El topping "${toppingNombre}" está agotado.` });
+                    }
                 }
             }
-            for (const jarabeNombre of item.jarabes) {
-                const jarabeDB = await Jarabe.findOne({ nombre: jarabeNombre, ...findActive });
-                if (jarabeDB && jarabeDB.agotado) {
-                    return res.status(400).json({ error: `El jarabe "${jarabeNombre}" está agotado y no se puede pedir.` });
+            if (item.jarabes) {
+                for (const jarabeNombre of item.jarabes) {
+                    const jarabeDB = await Jarabe.findOne({ nombre: jarabeNombre, ...findActive });
+                    if (jarabeDB && jarabeDB.agotado) {
+                        return res.status(400).json({ error: `El jarabe "${jarabeNombre}" está agotado.` });
+                    }
                 }
             }
         }
-        // ===== FIN DE LA VALIDACIÓN =====
 
         const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota, visto: false });
         res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
@@ -234,6 +236,17 @@ repartidorRouter.get('/mis-pedidos', async (req, res) => {
         res.json(pedidosAsignados);
     } catch (error) {
         res.status(500).json({ error: 'Error al obtener tus pedidos asignados.' });
+    }
+});
+
+// ===== NUEVA RUTA PARA NOTIFICACIONES DE REPARTIDOR =====
+repartidorRouter.get('/mis-pedidos/contador', async (req, res) => {
+    try {
+        const count = await Pedido.countDocuments({ repartidorId: req.user.id, estatus: 'en_reparto' });
+        res.json({ count });
+    } catch (error) {
+        console.error("Error al contar pedidos de repartidor:", error);
+        res.status(500).json({ error: 'Error al verificar pedidos.' });
     }
 });
 
@@ -404,7 +417,6 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
-
 ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
     try {
         const { fechaInicio, fechaFin } = req.query;
@@ -427,7 +439,6 @@ ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
         res.status(500).json({ error: 'Error al obtener historial de ventas.' });
     }
 });
-
 ventasRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
 ventasRouter.put('/:id', tienePermiso('historial'), async (req, res) => res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 ventasRouter.delete('/:id', tienePermiso('historial'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });

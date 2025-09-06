@@ -13,6 +13,7 @@
             --accent-color: #FF85A2;
             --success-color: #22c55e;
             --whatsapp-color: #25D366;
+            --warning-color: #f59e0b;
             --background-color: #f8fafc;
             --card-background: #ffffff;
             --text-color-dark: #1e293b;
@@ -75,6 +76,15 @@
         .info-row a.whatsapp-link { color: var(--whatsapp-color); }
         .info-row a svg { width: 16px; height: 16px; }
         .items-list { list-style: none; padding-left: 1rem; font-size: 0.9em; }
+        .nota-general {
+            font-style: italic;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            border-left: 4px solid var(--warning-color);
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--text-color-dark);
+            white-space: pre-wrap;
+        }
         .total-section { text-align: right; font-size: 1.2rem; font-weight: 600; margin-top: 1rem; }
         .pedido-card-footer { padding: 1rem; }
         .slider-container {
@@ -190,12 +200,10 @@
             const themeToggle = document.getElementById('theme-toggle');
 
             const token = localStorage.getItem('token');
-            // La seguridad ya se manejó en el script del head, aquí solo extraemos info
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 document.querySelector('h1').textContent += ` (${payload.username})`;
             } catch (e) {
-                // No debería pasar si el script del head funcionó, pero por si acaso.
                 localStorage.removeItem('token');
                 window.location.href = '/index.html';
             }
@@ -273,18 +281,31 @@
                         card.className = 'pedido-card';
 
                         let itemsHtml = '';
+                        // --- INICIO DE CORRECCIONES Y MEJORAS ---
                         p.items.forEach(item => {
-                            itemsHtml += `<li><strong>- ${item.nombre}</strong></li>`;
+                            // MEJORA: Añadir la cantidad del producto
+                            itemsHtml += `<li><strong>- ${item.cantidad || 1}x ${item.nombre}</strong></li>`;
+                            
+                            // CORRECCIÓN: Unir toppings y jarabes en un solo array de extras.
+                            // Esto es más seguro si uno de los dos no existe.
                             const extras = [...(item.toppings || []), ...(item.jarabes || [])];
+                            
                             if (extras.length > 0) {
                                 itemsHtml += '<ul style="padding-left: 15px;">';
-                                extras.forEach(extra => itemsHtml += `<li>+ ${extra.nombre}</li>`);
+                                // CORRECCIÓN: 'extra' es un string, no un objeto. No se usa 'extra.nombre'.
+                                extras.forEach(extra => itemsHtml += `<li>+ ${extra}</li>`);
                                 itemsHtml += '</ul>';
                             }
                         });
 
+                        // MEJORA: Añadir la nota general del pedido si existe.
+                        const notaGeneralHtml = p.notaGeneral && p.notaGeneral.trim() !== ''
+                            ? `<div class="nota-general"><strong>Nota General:</strong> ${p.notaGeneral}</div>`
+                            : '';
+                        // --- FIN DE CORRECCIONES Y MEJORAS ---
+
                         const mensajeWhatsapp = `¡Hola ${p.nombreCliente}! Tu pedido de Dulces Amigas ya va en camino.`;
-                        const urlWhatsapp = `https://wa.me/${p.telefonoCliente}?text=${encodeURIComponent(mensajeWhatsapp)}`;
+                        const urlWhatsapp = `https://wa.me/${p.telefonoCliente.replace(/\D/g, '')}?text=${encodeURIComponent(mensajeWhatsapp)}`;
 
                         card.innerHTML = `
                             <div class="pedido-card-header">
@@ -309,6 +330,7 @@
                                 </div>
                                 <strong>Pedido:</strong>
                                 <ul class="items-list">${itemsHtml}</ul>
+                                ${notaGeneralHtml}
                                 <div class="total-section">Total a Cobrar: $${p.total.toFixed(2)}</div>
                             </div>
                             <div class="pedido-card-footer">

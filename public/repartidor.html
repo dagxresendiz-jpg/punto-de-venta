@@ -251,9 +251,9 @@
                 try {
                     const config = await fetchAPI('/api/configuracion');
                     if (config.logo_base64) {
-                        repartidor-logo.src = config.logo_base64;
+                        repartidorLogo.src = config.logo_base64;
                     } else {
-                        repartidor-logo.src = "https://via.placeholder.com/180x70.png?text=Dulces+Amigas";
+                        repartidorLogo.src = "https://via.placeholder.com/180x70.png?text=Dulces+Amigas";
                     }
                     repartidorLogo.classList.add('loaded');
 
@@ -261,7 +261,7 @@
                     if (config.accent_color) document.documentElement.style.setProperty('--accent-color', config.accent_color);
                 } catch (error) {
                     console.error("No se pudo cargar la configuración de apariencia:", error);
-                    repartidor-logo.src = "https://via.placeholder.com/180x70.png?text=Error";
+                    repartidorLogo.src = "https://via.placeholder.com/180x70.png?text=Error";
                     repartidorLogo.classList.add('loaded');
                 }
             }
@@ -283,11 +283,7 @@
                         let itemsHtml = '';
                         (p.items || []).forEach(item => {
                             itemsHtml += `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong></li>`;
-                            
-                            const toppings = item.toppings || [];
-                            const jarabes = item.jarabes || [];
-                            const extras = [...toppings, ...jarabes];
-
+                            const extras = [...(item.toppings || []), ...(item.jarabes || [])];
                             if (extras.length > 0) {
                                 itemsHtml += '<ul style="padding-left: 15px;">';
                                 extras.forEach(extra => {
@@ -297,8 +293,8 @@
                                 itemsHtml += '</ul>';
                             }
                         });
-
-                        // ===== ¡AQUÍ ESTÁ LA CORRECCIÓN DEFINITIVA! =====
+                        
+                        // ===== CORRECCIÓN DEFINITIVA =====
                         // Se lee 'p.nota' (que es el nombre que viene del servidor) y se muestra si existe.
                         const notaGeneralHtml = p.nota && p.nota.trim() !== ''
                             ? `<div class="nota-general"><strong>Nota General:</strong> ${p.nota}</div>`

@@ -192,6 +192,8 @@
     input:checked + .slider:before { transform: translateX(24px); }
     .fecha-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.5rem; }
     .fecha-item.inactiva { background-color: #f1f5f9; color: var(--text-color-light); text-decoration: line-through; }
+    .form-row { display: flex; gap: 1rem; align-items: center; } /* Para alinear Fecha y Método de Pago */
+    .form-group { flex: 1; } /* Para que cada grupo ocupe espacio equitativo */
 
     @media (max-width: 992px) {
       .menu-toggle { display: block; }
@@ -382,16 +384,20 @@
                         <div id="totalVenta" style="font-weight:600; font-size: 1.2rem; margin-top: 1rem; text-align: right;">Total venta actual: $0.00</div>
                         <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
                         
-                        <label for="fechaEntregaVenta">Fecha de Entrega (Opcional):</label>
-                        <select id="fechaEntregaVenta"></select>
-
-                        <label for="metodoPago">Método de Pago:</label>
-                        <select id="metodoPago">
-                            <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
-                        </select>
-
-                        <!-- CORRECCIÓN DISEÑO: Se cambia <textarea> por <input> -->
-                        <label for="notaVentaGeneral">Nota General para el Pedido (opcional):</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fechaEntregaVenta">Fecha de Entrega (Opcional):</label>
+                                <select id="fechaEntregaVenta"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="metodoPago">Método de Pago:</label>
+                                <select id="metodoPago">
+                                    <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <label for="notaVentaGeneral">Nota para el Pedido (opcional):</label>
                         <input type="text" id="notaVentaGeneral" placeholder="Ej: Es para un regalo, tocar timbre B...">
 
                         <div id="botones-accion-venta" style="margin-top: 1rem;">
@@ -1631,11 +1637,12 @@
               mode: "range",
               dateFormat: "d/m/Y",
               locale: "es",
-              defaultDate: "today", // ===== CORRECCIÓN DE FILTRO: Se establece hoy por defecto
+              defaultDate: "today",
               onChange: function(selectedDates, dateStr, instance) {
-                  // Cuando cambia la fecha (incluso al cargar), se llama a cargarVentasHistorial
-                  cargarVentasHistorial();
-              }
+                  if(selectedDates.length > 0) { // Solo cargar si hay una fecha seleccionada
+                    cargarVentasHistorial();
+                  }
+              },
           });
       }
       
@@ -1650,15 +1657,11 @@
           let url = '/api/ventas?';
           if (fechasSeleccionadas.length > 0) {
               const fechaInicio = fechasSeleccionadas[0];
-              // ===== CORRECCIÓN DE FILTRO: Se asegura que si solo hay una fecha, el rango sea de ese único día
-              const fechaFin = fechasSeleccionadas.length > 1 ? fechasSeleccionadas[1] : fechasSeleccionadas[0];
+              const fechaFin = fechasSeleccionadas.length > 1 ? fechasSeleccionadas[1] : fechaInicio;
               
-              // Formatear fechas a YYYY-MM-DD para la URL sin problemas de zona horaria
-              const tzOffsetInicio = fechaInicio.getTimezoneOffset() * 60000;
-              const isoInicio = new Date(fechaInicio.getTime() - tzOffsetInicio).toISOString().split('T')[0];
-
-              const tzOffsetFin = fechaFin.getTimezoneOffset() * 60000;
-              const isoFin = new Date(fechaFin.getTime() - tzOffsetFin).toISOString().split('T')[0];
+              const tzOffset = new Date().getTimezoneOffset() * 60000;
+              const isoInicio = new Date(fechaInicio.getTime() - tzOffset).toISOString().split('T')[0];
+              const isoFin = new Date(fechaFin.getTime() - tzOffset).toISOString().split('T')[0];
 
               url += `fechaInicio=${isoInicio}&fechaFin=${isoFin}`;
           }
@@ -1867,7 +1870,7 @@
       function generarReportePDF() {
           const textoResumen = document.getElementById('resumen-ventas').textContent;
           const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
-          const filtros = `Período: ${document.querySelector('#botones-periodo button.active').textContent}, Cliente: ${document.getElementById('filtroCliente').options[document.getElementById('filtroCliente').selectedIndex].text}, Vendedor: ${document.getElementById('filtroUsuario').options[document.getElementById('filtroUsuario').selectedIndex].text}`;
+          const filtros = `Período: ${document.getElementById('filtroFecha').value}, Cliente: ${document.getElementById('filtroCliente').options[document.getElementById('filtroCliente').selectedIndex].text}, Vendedor: ${document.getElementById('filtroUsuario').options[document.getElementById('filtroUsuario').selectedIndex].text}`;
           const { jsPDF } = window.jspdf;
           const pdf = new jsPDF();
           pdf.setFontSize(18);

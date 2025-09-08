@@ -390,8 +390,9 @@
                             <option value="Efectivo">Efectivo</option> <option value="Tarjeta">Tarjeta</option> <option value="Transferencia">Transferencia</option>
                         </select>
 
+                        <!-- CORRECCIÓN DISEÑO: Se cambia <textarea> por <input> -->
                         <label for="notaVentaGeneral">Nota General para el Pedido (opcional):</label>
-                        <input type="text" id="notaVentaGeneral" placeholder="Ej: Tocar timbre B...">
+                        <input type="text" id="notaVentaGeneral" placeholder="Ej: Es para un regalo, tocar timbre B...">
 
                         <div id="botones-accion-venta" style="margin-top: 1rem;">
                             <button id="btnEnviarACocina" style="width: 100%; margin-bottom: 1rem; background-color: var(--warning-color);">Enviar a Cocina</button>
@@ -1630,8 +1631,9 @@
               mode: "range",
               dateFormat: "d/m/Y",
               locale: "es",
-              defaultDate: "today",
+              defaultDate: "today", // ===== CORRECCIÓN DE FILTRO: Se establece hoy por defecto
               onChange: function(selectedDates, dateStr, instance) {
+                  // Cuando cambia la fecha (incluso al cargar), se llama a cargarVentasHistorial
                   cargarVentasHistorial();
               }
           });
@@ -1647,9 +1649,18 @@
           
           let url = '/api/ventas?';
           if (fechasSeleccionadas.length > 0) {
-              const fechaInicio = fechasSeleccionadas[0].toISOString().split('T')[0];
-              const fechaFin = (fechasSeleccionadas[1] || fechasSeleccionadas[0]).toISOString().split('T')[0];
-              url += `fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+              const fechaInicio = fechasSeleccionadas[0];
+              // ===== CORRECCIÓN DE FILTRO: Se asegura que si solo hay una fecha, el rango sea de ese único día
+              const fechaFin = fechasSeleccionadas.length > 1 ? fechasSeleccionadas[1] : fechasSeleccionadas[0];
+              
+              // Formatear fechas a YYYY-MM-DD para la URL sin problemas de zona horaria
+              const tzOffsetInicio = fechaInicio.getTimezoneOffset() * 60000;
+              const isoInicio = new Date(fechaInicio.getTime() - tzOffsetInicio).toISOString().split('T')[0];
+
+              const tzOffsetFin = fechaFin.getTimezoneOffset() * 60000;
+              const isoFin = new Date(fechaFin.getTime() - tzOffsetFin).toISOString().split('T')[0];
+
+              url += `fechaInicio=${isoInicio}&fechaFin=${isoFin}`;
           }
 
           ventasEnMemoria = await fetchAPI(url);

@@ -398,7 +398,6 @@
                             </div>
                         </div>
                         
-                        <!-- CORRECCIÓN DISEÑO: Se cambia <textarea> por <input> -->
                         <label for="notaVentaGeneral">Nota para el Pedido (opcional):</label>
                         <input type="text" id="notaVentaGeneral" placeholder="Ej: Es para un regalo, tocar timbre B...">
 
@@ -1536,7 +1535,7 @@
         }
 
         const metodo = id ? 'PUT' : 'POST';
-        const url = id ? `/api/usuarios/${id}` : '/api/usuarios';
+        const url = id ? `/api/usuarios/${id}` : `/api/usuarios`;
 
         try {
             await fetchAPI(url, { method: metodo, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
@@ -1648,6 +1647,9 @@
           });
       }
       
+      // ============================================
+      // INICIO DEL CÓDIGO CORREGIDO
+      // ============================================
       async function cargarVentasHistorial() {
         try {
           const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
@@ -1661,9 +1663,9 @@
               const fechaInicio = fechasSeleccionadas[0];
               const fechaFin = fechasSeleccionadas.length > 1 ? fechasSeleccionadas[1] : fechaInicio;
               
-              const tzOffset = new Date().getTimezoneOffset() * 60000;
-              const isoInicio = new Date(fechaInicio.getTime() - tzOffset).toISOString().split('T')[0];
-              const isoFin = new Date(fechaFin.getTime() - tzOffset).toISOString().split('T')[0];
+              // CORRECCIÓN: Usar la utilidad de formato de flatpickr para evitar errores de zona horaria.
+              const isoInicio = selectorFecha.formatDate(fechaInicio, "Y-m-d");
+              const isoFin = selectorFecha.formatDate(fechaFin, "Y-m-d");
 
               url += `fechaInicio=${isoInicio}&fechaFin=${isoFin}`;
           }
@@ -1710,6 +1712,9 @@
           generarResumen(ventasFiltradas);
         } catch (e) { console.error("Error al cargar historial:", e); }
       }
+      // ============================================
+      // FIN DEL CÓDIGO CORREGIDO
+      // ============================================
       
       async function cargarUsuariosParaFiltro() {
         try {

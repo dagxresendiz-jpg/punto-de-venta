@@ -398,6 +398,7 @@
                             </div>
                         </div>
                         
+                        <!-- CORRECCIÓN DISEÑO: Se cambia <textarea> por <input> -->
                         <label for="notaVentaGeneral">Nota para el Pedido (opcional):</label>
                         <input type="text" id="notaVentaGeneral" placeholder="Ej: Es para un regalo, tocar timbre B...">
 
@@ -1638,7 +1639,7 @@
               mode: "range",
               dateFormat: "d/m/Y",
               locale: "es",
-              defaultDate: "today", 
+              defaultDate: "today",
               onChange: function(selectedDates, dateStr, instance) {
                   if(selectedDates.length > 0) {
                     cargarVentasHistorial();

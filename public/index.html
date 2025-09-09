@@ -85,7 +85,26 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color-dark); -webkit-font-smoothing: antialiased; }
     .app-wrapper { display: flex; min-height: 100vh; }
-    .sidebar { width: 250px; background-color: var(--card-background); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 1.5rem 1rem; transition: transform 0.3s ease; }
+    /*
+      ============================================
+      INICIO DE LA CORRECCIÓN
+      ============================================
+    */
+    .sidebar { 
+        width: 250px; 
+        background-color: var(--card-background); 
+        border-right: 1px solid var(--border-color); 
+        display: flex; 
+        flex-direction: column; 
+        padding: 1.5rem 1rem; 
+        transition: transform 0.3s ease; 
+        overflow-y: auto; /* <-- ESTA LÍNEA ES LA SOLUCIÓN */
+    }
+    /*
+      ============================================
+      FIN DE LA CORRECCIÓN
+      ============================================
+    */
     .sidebar-header { text-align: center; margin-bottom: 2rem; }
     #app-logo { max-width: 180px; max-height: 80px; cursor: pointer; transition: transform 0.2s ease; }
     #app-logo:hover { transform: scale(1.05); }
@@ -144,8 +163,8 @@
     .collapsible-wrapper { margin-bottom: 1rem; }
     .collapsible { width: 100%; text-align: left; font-weight: 500; border: 1px solid var(--border-color); border-radius: 8px; }
     .content-collapsible { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; }
-    .collapsible-content-padding { padding: 1rem; } /* NUEVO ESTILO */
-    .options-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem; }
+    .collapsible-content-padding { padding: 1rem; }
+    .options-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .option-btn { padding: 0.5rem 1rem; font-weight: 500; background-color: var(--background-color); color: var(--text-color-dark); border: 1px solid var(--border-color); }
     .option-btn.selected { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
     #btnGenerarReporte { background-color: var(--info-color); color: white; }
@@ -374,11 +393,11 @@
                         <label for="ventaCantidad">Cantidad:</label> <input type="number" id="ventaCantidad" min="1" value="1" required />
                         <div class="collapsible-wrapper">
                             <button type="button" class="collapsible">Seleccionar Toppings</button>
-                            <div class="content-collapsible"><div class="options-grid" id="toppings-container"></div></div>
+                            <div class="content-collapsible"><div class="collapsible-content-padding" id="toppings-container"></div></div>
                         </div>
                         <div class="collapsible-wrapper">
                             <button type="button" class="collapsible">Seleccionar Jarabes</button>
-                            <div class="content-collapsible"><div class="options-grid" id="jarabes-container"></div></div>
+                            <div class="content-collapsible"><div class="collapsible-content-padding" id="jarabes-container"></div></div>
                         </div>
                         <label for="ventaNota">Nota para este producto (opcional):</label>
                         <input type="text" id="ventaNota" placeholder="Ej: Sin nuez, extra chocolate, etc." />

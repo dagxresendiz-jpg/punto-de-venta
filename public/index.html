@@ -147,8 +147,8 @@
     .collapsible { background-color: var(--collapsible-bg); color: var(--text-color-dark); }
     .collapsible-wrapper { margin-bottom: 1rem; }
     .collapsible { width: 100%; text-align: left; font-weight: 500; border: 1px solid var(--border-color); border-radius: 8px; }
-    .content-collapsible { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; }
-    .options-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem; }
+    .content-collapsible { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; padding: 1rem; }
+    .options-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .option-btn { padding: 0.5rem 1rem; font-weight: 500; background-color: var(--background-color); color: var(--text-color-dark); border: 1px solid var(--border-color); }
     .option-btn.selected { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
     #btnGenerarReporte { background-color: var(--info-color); color: white; }
@@ -161,12 +161,23 @@
     #filtros-historial { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; align-items: flex-end; }
     #filtros-historial label { font-size: 0.9em; margin-bottom: 0.5rem; color: var(--text-color-dark); display: block; }
     #resumen-ventas { white-space: pre-wrap; word-break: break-word; }
-    #botones-finalizar-venta { display: flex; gap: 1rem; }
-    #botones-finalizar-venta button { flex: 1; }
-    #btnRegistrarPagado { background-color: var(--success-color); color: white; }
-    #btnRegistrarPagado:hover { background-color: var(--success-hover); }
-    #btnRegistrarPendiente { background-color: var(--info-color); color: white; }
-    #btnRegistrarPendiente:hover { background-color: var(--info-hover); }
+    
+    .finalizar-venta-info { margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-size: 1.1rem;}
+    .info-row label { font-weight: 600; }
+    .info-row input { width: 120px; text-align: right; padding: 0.5rem; margin-bottom: 0; }
+    .info-row span { font-weight: 700; color: var(--success-color); }
+    #totalAPagar { font-size: 1.3rem; }
+
+    #botones-accion-venta button { width: 100%; margin-bottom: 0.75rem; padding: 0.8rem; font-size: 1rem; }
+    .botones-grupo { display: flex; gap: 1rem; }
+    .btn-enviar-cocina { background-color: var(--warning-color); color: white; }
+    .btn-enviar-cocina:hover { background-color: var(--warning-hover); }
+    .btn-guardar-pendiente { background-color: var(--info-color); color: white; flex: 1; }
+    .btn-guardar-pendiente:hover { background-color: var(--info-hover); }
+    .btn-cobrar { background-color: var(--success-color); color: white; flex: 1; }
+    .btn-cobrar:hover { background-color: var(--success-hover); }
+    
     .status-badge { padding: 0.2em 0.6em; border-radius: 12px; font-size: 0.8em; font-weight: 600; color: white; text-align: center; display: inline-block; }
     .status-pagado { background-color: #16a34a; }
     .status-pendiente { background-color: #f59e0b; }
@@ -362,20 +373,17 @@
                     <div class="card-header"><h2>Registrar Venta</h2></div>
                     <form id="formVenta" onsubmit="return false;">
                         <input type="hidden" id="idVenta">
-                        <label for="ventaCliente">Cliente:</label> <select id="ventaCliente"></select>
+                        <label for="ventaCliente">Cliente (para recoger en tienda):</label> 
+                        <select id="ventaCliente"></select>
                         <label for="ventaProducto">Producto:</label> <select id="ventaProducto" required></select>
                         <label for="ventaCantidad">Cantidad:</label> <input type="number" id="ventaCantidad" min="1" value="1" required />
                         <div class="collapsible-wrapper">
                             <button type="button" class="collapsible">Seleccionar Toppings</button>
-                            <div class="content-collapsible"><div class="options-grid" id="toppings-container"></div></div>
+                            <div class="content-collapsible options-grid" id="toppings-container"></div>
                         </div>
                         <div class="collapsible-wrapper">
                             <button type="button" class="collapsible">Seleccionar Jarabes</button>
-                            <div class="content-collapsible"><div class="options-grid" id="jarabes-container"></div></div>
-                        </div>
-                        <div id="opcion-domicilio">
-                            <div><input type="checkbox" id="checkDomicilio"><label for="checkDomicilio">Servicio a domicilio</label></div>
-                            <input type="number" id="costoDomicilio" step="0.01" placeholder="Costo" style="display: none;">
+                            <div class="content-collapsible options-grid" id="jarabes-container"></div>
                         </div>
                         <label for="ventaNota">Nota para este producto (opcional):</label>
                         <input type="text" id="ventaNota" placeholder="Ej: Sin nuez, extra chocolate, etc." />
@@ -386,12 +394,28 @@
                     <div class="card">
                         <div class="card-header"><h3>Venta Actual</h3></div>
                         <ul id="listaVentaActual"></ul>
-                        <div id="totalVenta" style="font-weight:600; font-size: 1.2rem; margin-top: 1rem; text-align: right;">Total venta actual: $0.00</div>
-                        <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
+                        <div id="totalVenta" style="font-weight:600; font-size: 1.2rem; margin-top: 1rem; text-align: right;"></div>
+                        
+                        <div class="collapsible-wrapper" style="margin-top: 1.5rem;">
+                            <button type="button" class="collapsible" id="collapsible-domicilio-btn">Información de Entrega (Opcional)</button>
+                            <div class="content-collapsible" id="content-domicilio">
+                                <label for="nombreClienteDomicilio">Nombre del Cliente:</label>
+                                <input type="text" id="nombreClienteDomicilio" placeholder="Nombre para la entrega">
+                                
+                                <label for="telClienteDomicilio">Teléfono:</label>
+                                <input type="tel" id="telClienteDomicilio" placeholder="Teléfono de contacto">
+                                
+                                <label for="dirClienteDomicilio">Dirección de Entrega:</label>
+                                <textarea id="dirClienteDomicilio" rows="3" placeholder="Calle, número, colonia, referencias..."></textarea>
+                                
+                                <label for="costoDomicilio">Costo Domicilio:</label>
+                                <input type="number" id="costoDomicilio" step="0.01" placeholder="Costo del envío">
+                            </div>
+                        </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="fechaEntregaVenta">Fecha de Entrega (Opcional):</label>
+                                <label for="fechaEntregaVenta">Fecha de Entrega:</label>
                                 <select id="fechaEntregaVenta"></select>
                             </div>
                             <div class="form-group">
@@ -405,11 +429,26 @@
                         <label for="notaVentaGeneral">Nota para el Pedido (opcional):</label>
                         <input type="text" id="notaVentaGeneral" placeholder="Ej: Es para un regalo, tocar timbre B...">
 
-                        <div id="botones-accion-venta" style="margin-top: 1rem;">
-                            <button id="btnEnviarACocina" style="width: 100%; margin-bottom: 1rem; background-color: var(--warning-color);">Enviar a Cocina</button>
-                            <div id="botones-finalizar-venta" class="botones-grupo" style="display: flex; gap: 1rem;">
-                                <button id="btnRegistrarPendiente" style="flex: 1;">Guardar Pendiente</button>
-                                <button id="btnRegistrarPagado" style="flex: 1;">Cobrar y Finalizar</button>
+                        <div class="finalizar-venta-info">
+                            <div class="info-row">
+                                <label>Total a Pagar:</label>
+                                <span id="totalAPagar">$0.00</span>
+                            </div>
+                             <div class="info-row">
+                                <label for="pagoCon">Paga con:</label>
+                                <input type="number" id="pagoCon" placeholder="0.00">
+                            </div>
+                             <div class="info-row">
+                                <label>Cambio:</label>
+                                <span id="cambioVenta">$0.00</span>
+                            </div>
+                        </div>
+
+                        <div id="botones-accion-venta">
+                            <button id="btnEnviarACocina" class="btn-enviar-cocina">Enviar a Cocina</button>
+                            <div class="botones-grupo">
+                                <button id="btnRegistrarPendiente" class="btn-guardar-pendiente">Guardar Pendiente</button>
+                                <button id="btnRegistrarPagado" class="btn-cobrar">Cobrar y Finalizar</button>
                             </div>
                             <button id="btnActualizarVenta" style="display:none; width: 100%;" class="btn-secondary">Actualizar Venta</button>
                         </div>
@@ -1247,8 +1286,10 @@
           document.getElementById('ventaNota').value = '';
           document.querySelectorAll('.option-btn.selected').forEach(btn => btn.classList.remove('selected'));
           document.querySelectorAll(".collapsible.active").forEach(c => {
-              c.classList.remove('active');
-              c.nextElementSibling.style.maxHeight = '0px';
+             if(c.id !== 'collapsible-domicilio-btn') {
+                c.classList.remove('active');
+                c.nextElementSibling.style.maxHeight = '0px';
+             }
           });
       }
 
@@ -1302,7 +1343,7 @@
                 return;
             }
             const clienteSelect = document.getElementById('ventaCliente');
-            const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
+            const costoDomicilio = parseFloat(document.getElementById('costoDomicilio').value || 0);
             const subtotal = Object.values(ventaActual).reduce((a, i) => a + (i.precioUnitario * i.cantidad), 0);
             
             const idVentaEditada = document.getElementById('idVenta').value;
@@ -1341,20 +1382,36 @@
             alert('Agrega al menos un producto para enviar a cocina.');
             return;
         }
-        const clienteSelect = document.getElementById('ventaCliente');
-        const clienteId = clienteSelect.value;
-        let clienteData = { nombre: 'Público General', telefono: '', direccion: 'Recoger en tienda' };
-        if (clienteId) {
-            const cliente = clientesCacheados.find(c => c.id === clienteId);
-            if (cliente) {
-                clienteData.nombre = cliente.nombre;
-                clienteData.telefono = cliente.telefono || '';
-                clienteData.direccion = cliente.direccion || 'Recoger en tienda';
-            } else {
-                clienteData.nombre = clienteSelect.options[clienteSelect.selectedIndex].text;
+        
+        const isDomicilio = document.getElementById('collapsible-domicilio-btn').classList.contains('active');
+        let clienteData;
+        
+        if (isDomicilio) {
+            clienteData = {
+                nombre: document.getElementById('nombreClienteDomicilio').value.trim(),
+                telefono: document.getElementById('telClienteDomicilio').value.trim(),
+                direccion: document.getElementById('dirClienteDomicilio').value.trim()
+            };
+            if (!clienteData.nombre || !clienteData.direccion) {
+                alert('Para un pedido a domicilio, el nombre y la dirección son obligatorios.');
+                return;
             }
+        } else {
+             const clienteSelect = document.getElementById('ventaCliente');
+             const clienteId = clienteSelect.value;
+             if (clienteId) {
+                const cliente = clientesCacheados.find(c => c.id === clienteId);
+                clienteData = {
+                    nombre: cliente.nombre,
+                    telefono: cliente.telefono || '',
+                    direccion: cliente.direccion || 'Recoger en tienda'
+                };
+             } else {
+                clienteData = { nombre: 'Público General', telefono: '', direccion: 'Recoger en tienda' };
+             }
         }
-        const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
+        
+        const costoDomicilio = parseFloat(document.getElementById('costoDomicilio').value || 0);
         const total = Object.values(ventaActual).reduce((acc, item) => acc + (item.precioUnitario * item.cantidad), 0) + costoDomicilio;
         const fechaEntregaId = document.getElementById('fechaEntregaVenta').value;
         
@@ -1454,12 +1511,21 @@
               });
           });
       }
+      
+      function calcularCambio() {
+        const total = parseFloat(document.getElementById('totalAPagar').textContent.replace('$', '')) || 0;
+        const pago = parseFloat(document.getElementById('pagoCon').value) || 0;
+        const cambio = pago > total ? pago - total : 0;
+        document.getElementById('cambioVenta').textContent = `$${cambio.toFixed(2)}`;
+      }
 
       function actualizarTotalVenta() {
         const subtotalVenta = Object.values(ventaActual).reduce((acc, item) => acc + (item.precioUnitario * item.cantidad), 0);
-        const costoDomicilio = document.getElementById('checkDomicilio').checked ? parseFloat(document.getElementById('costoDomicilio').value || 0) : 0;
+        const costoDomicilio = parseFloat(document.getElementById('costoDomicilio').value || 0);
         const totalFinal = subtotalVenta + costoDomicilio;
-        document.getElementById('totalVenta').textContent = `Total Venta: $${totalFinal.toFixed(2)}`;
+        document.getElementById('totalVenta').textContent = `Total venta actual: $${totalFinal.toFixed(2)}`;
+        document.getElementById('totalAPagar').textContent = `$${totalFinal.toFixed(2)}`;
+        calcularCambio();
       }
 
       function resetearFormularioCompleto() {
@@ -1467,12 +1533,25 @@
         document.getElementById('formVenta').reset();
         document.getElementById('ventaCliente').disabled = false;
         document.getElementById('idVenta').value = '';
-        document.getElementById('checkDomicilio').checked = false;
-        document.getElementById('costoDomicilio').style.display = 'none';
+
+        // Resetear campos de domicilio
+        document.getElementById('nombreClienteDomicilio').value = '';
+        document.getElementById('telClienteDomicilio').value = '';
+        document.getElementById('dirClienteDomicilio').value = '';
+        document.getElementById('costoDomicilio').value = '';
+        const domicilioCollapsible = document.getElementById('collapsible-domicilio-btn');
+        if (domicilioCollapsible.classList.contains('active')) {
+            domicilioCollapsible.click();
+        }
+        
+        document.getElementById('pagoCon').value = '';
+
         document.querySelectorAll('.option-btn.selected').forEach(btn => btn.classList.remove('selected'));
         document.querySelectorAll(".collapsible.active").forEach(c => {
-            c.classList.remove('active');
-            c.nextElementSibling.style.maxHeight = '0px';
+            if(c.id !== 'collapsible-domicilio-btn') {
+                c.classList.remove('active');
+                c.nextElementSibling.style.maxHeight = '0px';
+            }
         });
         document.getElementById('metodoPago').value = "Efectivo";
         document.getElementById('fechaEntregaVenta').value = "";
@@ -2237,7 +2316,7 @@
 
         document.getElementById('btn-filtro-semana').addEventListener('click', () => {
             const hoy = new Date();
-            const diaDeSemana = hoy.getDay(); // Domingo = 0, Lunes = 1, etc.
+            const diaDeSemana = hoy.getDay();
             const diff = hoy.getDate() - diaDeSemana + (diaDeSemana === 0 ? -6 : 1);
             const primerDiaSemana = new Date(hoy.setDate(diff));
             const ultimoDiaSemana = new Date(primerDiaSemana);
@@ -2283,14 +2362,8 @@
         });
         document.getElementById('btnLimpiarFormUsuario').addEventListener('click', limpiarFormularioUsuario);
         document.getElementById('btnAgregarVenta').addEventListener('click', agregarAVenta);
-        document.getElementById('checkDomicilio').addEventListener('change', (e) => {
-          const costoInput = document.getElementById('costoDomicilio');
-          costoInput.style.display = e.target.checked ? 'inline-block' : 'none';
-          if (e.target.checked) { costoInput.value = COSTO_DOMICILIO_PREDET.toFixed(2); }
-          else { costoInput.value = ''; }
-          actualizarTotalVenta();
-        });
         document.getElementById('costoDomicilio').addEventListener('input', actualizarTotalVenta);
+        document.getElementById('pagoCon').addEventListener('input', calcularCambio);
         
         document.getElementById('filtroEstatus').addEventListener('change', cargarVentasHistorial);
         document.getElementById('filtroCliente').addEventListener('change', cargarVentasHistorial);

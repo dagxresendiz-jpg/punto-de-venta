@@ -564,7 +564,7 @@
                           <th>Total</th>
                           <th>Método de Pago</th>
                           <th>Estatus</th>
-                          <th>Fecha</th>
+                          <th>Fecha (UTC)</th>
                           <th>Acciones</th>
                         </tr></thead>
                         <tbody id="tablaVentasBody"></tbody>
@@ -1692,7 +1692,14 @@
                 accionesHTML = `<button class="btn-marcar-pagado" data-id="${venta.id}">Marcar como Pagado</button>` + accionesHTML;
             }
 
-            tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td><td><span class="status-badge ${estatusClass}">${estatusActual}</span><button class="btn-cambiar-estatus" data-id="${venta.id}" data-estatus="${estatusActual}" title="Cambiar Estatus"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button></td><td>${new Date(venta.fecha).toLocaleString()}</td><td>${accionesHTML}</td>`;
+            // ============================================
+            // INICIO DE LA SECCIÓN CORREGIDA
+            // ============================================
+            tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td><td><span class="status-badge ${estatusClass}">${estatusActual}</span><button class="btn-cambiar-estatus" data-id="${venta.id}" data-estatus="${estatusActual}" title="Cambiar Estatus"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button></td><td>${new Date(venta.fecha).toLocaleString('es-MX', { timeZone: 'UTC' })}</td><td>${accionesHTML}</td>`;
+            // ============================================
+            // FIN DE LA SECCIÓN CORREGIDA
+            // ============================================
+            
             tbody.appendChild(tr);
           });
           
@@ -1811,11 +1818,7 @@
         }
       }
 
-      // ============================================
-      // INICIO DE LA SECCIÓN CORREGIDA
-      // ============================================
       function prepararDatosParaGraficas(ventas) {
-        // CORRECCIÓN: Se añade 'timeZone: UTC' para evitar el desfase de días al mostrar los datos.
         const formatoFecha = { weekday: 'short', day: 'numeric', timeZone: 'UTC' };
         
         let ventasPorDia = {};
@@ -1834,9 +1837,6 @@
         });
         actualizarGraficaCircular(Object.keys(productosVendidos), Object.values(productosVendidos));
       }
-      // ============================================
-      // FIN DE LA SECCIÓN CORREGIDA
-      // ============================================
 
       function actualizarGraficaBarras(labels, data) {
         if (miGraficaDeVentas) { miGraficaDeVentas.destroy(); }

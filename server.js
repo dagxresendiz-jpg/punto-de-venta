@@ -1,4 +1,4 @@
-// server.js - v9.8 (Backend con Cálculo de Cambio)
+// server.js - v9.8 (Backend con Cálculo de Cambio para Pedidos)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -70,9 +70,6 @@ const Usuario = mongoose.model('Usuario', createSchema({
     ...commonFields 
 }));
 
-// ============================================
-// INICIO DE SECCIÓN MODIFICADA
-// ============================================
 const Venta = mongoose.model('Venta', createSchema({
     fecha: Date, clienteId: String, clienteNombre: String, items: Array,
     subtotal: Number, costoDomicilio: Number, total: Number, metodoPago: String,
@@ -80,13 +77,10 @@ const Venta = mongoose.model('Venta', createSchema({
     repartidorId: { type: String, default: null },
     repartidorUsername: { type: String, default: null },
     estatus: String, 
-    pagoCon: { type: Number, default: 0 }, // NUEVO CAMPO
-    cambio: { type: Number, default: 0 },   // NUEVO CAMPO
+    pagoCon: { type: Number, default: 0 },
+    cambio: { type: Number, default: 0 },
     ...commonFields
 }));
-// ============================================
-// FIN DE SECCIÓN MODIFICADA
-// ============================================
 
 const AppConfig = mongoose.model('AppConfig', createSchema({
     logo_base64: { type: String },
@@ -100,6 +94,9 @@ const FechaEntrega = mongoose.model('FechaEntrega', createSchema({
     activa: { type: Boolean, default: true }
 }));
 
+// ============================================
+// INICIO DE SECCIÓN MODIFICADA
+// ============================================
 const Pedido = mongoose.model('Pedido', createSchema({
     nombreCliente: { type: String, required: true },
     telefonoCliente: { type: String, required: true },
@@ -107,6 +104,8 @@ const Pedido = mongoose.model('Pedido', createSchema({
     nota: { type: String, default: '' },
     items: Array,
     total: Number,
+    pagoCon: { type: Number, default: 0 }, // NUEVO CAMPO
+    cambio: { type: Number, default: 0 },   // NUEVO CAMPO
     estatus: { 
         type: String, 
         default: 'recibido', 
@@ -116,6 +115,9 @@ const Pedido = mongoose.model('Pedido', createSchema({
     repartidorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null },
     fechaEntregaId: { type: mongoose.Schema.Types.ObjectId, ref: 'FechaEntrega' }
 }));
+// ============================================
+// FIN DE SECCIÓN MODIFICADA
+// ============================================
 
 
 // --- MIDDLEWARES DE SEGURIDAD ---
@@ -258,12 +260,9 @@ repartidorRouter.get('/mis-pedidos/contador', async (req, res) => {
     }
 });
 
-// ============================================
-// INICIO DE SECCIÓN MODIFICADA
-// ============================================
 repartidorRouter.post('/finalizar-entrega/:id', async (req, res) => {
     try {
-        const { metodoPago, estatus, pagoCon } = req.body; // Se añade pagoCon
+        const { metodoPago, estatus, pagoCon } = req.body;
         const pedido = await Pedido.findOneAndUpdate(
             { _id: req.params.id, repartidorId: req.user.id },
             { estatus: 'entregado' },
@@ -274,8 +273,7 @@ repartidorRouter.post('/finalizar-entrega/:id', async (req, res) => {
             return res.status(404).json({ error: 'Pedido no encontrado o no asignado a ti.' });
         }
         
-        // Se calcula el cambio
-        const pagoConNum = parseFloat(pagoCon) || 0;
+        const pagoConNum = parseFloat(pagoCon) || pedido.pagoCon || 0;
         const cambio = pagoConNum > pedido.total ? pagoConNum - pedido.total : 0;
 
         await Venta.create({
@@ -300,9 +298,6 @@ repartidorRouter.post('/finalizar-entrega/:id', async (req, res) => {
         res.status(500).json({ error: 'Error al finalizar la entrega.' });
     }
 });
-// ============================================
-// FIN DE SECCIÓN MODIFICADA
-// ============================================
 app.use('/api/repartidor', repartidorRouter);
 
 
@@ -415,9 +410,12 @@ ventasRouter.post('/', tienePermiso('pedidos'), (req, res, next) => {
     Venta.create(nuevaVentaData).then(venta => res.status(201).json(venta)).catch(next);
 });
 
+// ============================================
+// INICIO DE SECCIÓN MODIFICADA
+// ============================================
 ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => {
     try {
-        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota } = req.body;
+        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota, pagoCon, cambio } = req.body; // Se añaden pagoCon y cambio
         if (!nombreCliente || !items || !items.length) {
             return res.status(400).json({ error: 'Faltan datos para crear el pedido.' });
         }
@@ -429,6 +427,8 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
             items,
             total,
             nota: nota || '',
+            pagoCon: pagoCon || 0,
+            cambio: cambio || 0,
             visto: false
         });
         res.status(201).json({ message: 'Pedido enviado a cocina con éxito', pedido: nuevoPedido });
@@ -437,6 +437,9 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
+// ============================================
+// FIN DE SECCIÓN MODIFICADA
+// ============================================
 
 ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
     try {

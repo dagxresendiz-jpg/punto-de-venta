@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Mis Entregas - Dulces Amigas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -93,6 +93,22 @@
             padding: 0.5rem;
         }
         .total-section { text-align: right; font-size: 1.2rem; font-weight: 600; margin-top: 1rem; }
+        /* ESTILOS NUEVOS PARA EL CAMBIO */
+        .cambio-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border-color);
+            text-align: right;
+            font-size: 1.1rem;
+        }
+        .cambio-section div { margin-bottom: 0.5rem; }
+        .cambio-section span { font-weight: 600; }
+        .cambio-section .cambio-amount {
+            color: var(--success-color);
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        /* FIN DE ESTILOS NUEVOS */
         .pedido-card-footer { padding: 1rem; }
         .slider-container {
             position: relative;
@@ -192,6 +208,8 @@
         .modal-actions button { flex: 1; }
         #confirm-payment-btn { background-color: var(--success-color); color: white; }
         #cancel-payment-btn { background-color: var(--border-color); color: var(--text-color-dark); }
+        /* NUEVO CAMPO PARA EL PAGO EN MODAL */
+        .pago-con-input { margin-bottom: 1rem; }
     </style>
     <script>
       (function() {
@@ -252,6 +270,12 @@
                 <button class="payment-btn" data-method="Transferencia" data-status="Pagado">Transferencia</button>
                 <button class="payment-btn" data-method="N/A" data-status="Pendiente de Pago" style="border-color: var(--warning-color);">Dejar Pendiente</button>
             </div>
+            <!-- INICIO DE SECCIÓN MODIFICADA -->
+            <div class="pago-con-input">
+                <label for="pagoConRepartidor">Paga con (si es efectivo):</label>
+                <input type="number" id="pagoConRepartidor" placeholder="0.00" style="width: 100%; padding: 0.5rem; text-align: center; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--background-color); color: var(--text-color-dark);">
+            </div>
+            <!-- FIN DE SECCIÓN MODIFICADA -->
             <div class="modal-actions">
                 <button id="cancel-payment-btn">Cancelar</button>
                 <button id="confirm-payment-btn" disabled>Confirmar</button>
@@ -271,10 +295,11 @@
             const paymentOptions = document.querySelectorAll('.payment-btn');
             const confirmPaymentBtn = document.getElementById('confirm-payment-btn');
             const cancelPaymentBtn = document.getElementById('cancel-payment-btn');
+            const pagoConInput = document.getElementById('pagoConRepartidor');
             
             let pedidosActuales = 0;
             let pollingIntervalId = null;
-            let selectedPayment = { method: null, status: null, pedidoId: null };
+            let selectedPayment = { method: null, status: null, pedidoId: null, pagoCon: null };
 
             const token = localStorage.getItem('token');
             try {
@@ -380,6 +405,22 @@
                             ? `<div class="nota-general"><strong>Nota General:</strong> ${p.nota}</div>`
                             : '';
 
+                        // ============================================
+                        // INICIO DE SECCIÓN MODIFICADA
+                        // ============================================
+                        let cambioHtml = '';
+                        if (p.cambio && p.cambio > 0) {
+                            cambioHtml = `
+                                <div class="cambio-section">
+                                    <div>Paga con: <span>$${p.pagoCon.toFixed(2)}</span></div>
+                                    <div>Cambio a Entregar: <span class="cambio-amount">$${p.cambio.toFixed(2)}</span></div>
+                                </div>
+                            `;
+                        }
+                        // ============================================
+                        // FIN DE SECCIÓN MODIFICADA
+                        // ============================================
+
                         const mensajeWhatsapp = `¡Hola ${p.nombreCliente}! Tu pedido de Dulces Amigas ya va en camino.`;
                         const urlWhatsapp = `https://wa.me/${p.telefonoCliente.replace(/\D/g, '')}?text=${encodeURIComponent(mensajeWhatsapp)}`;
 
@@ -408,9 +449,10 @@
                                 <ul class="items-list">${itemsHtml}</ul>
                                 ${notaGeneralHtml}
                                 <div class="total-section">Total a Cobrar: $${p.total.toFixed(2)}</div>
+                                ${cambioHtml}
                             </div>
                             <div class="pedido-card-footer">
-                                <div class="slider-container" data-id="${p.id}">
+                                <div class="slider-container" data-id="${p.id}" data-pagocon="${p.pagoCon || ''}">
                                     <div class="slider-knob"><span class="slider-knob-icon">»</span></div>
                                     <div class="slider-text">Deslizar para Finalizar</div>
                                 </div>
@@ -462,7 +504,7 @@
                         document.removeEventListener('touchmove', onDrag);
                         document.removeEventListener('touchend', endDrag);
 
-                        abrirModalDePago(slider.dataset.id);
+                        abrirModalDePago(slider.dataset.id, slider.dataset.pagocon);
 
                     } else {
                         knob.style.transform = `translateX(0px)`;
@@ -485,8 +527,10 @@
                 knob.addEventListener('touchstart', startDrag, { passive: false });
             }
 
-            function abrirModalDePago(pedidoId) {
+            function abrirModalDePago(pedidoId, pagoCon) {
                 selectedPayment.pedidoId = pedidoId;
+                selectedPayment.pagoCon = pagoCon;
+                pagoConInput.value = pagoCon || '';
                 paymentModal.style.display = 'flex';
             }
 
@@ -494,8 +538,8 @@
                 paymentModal.style.display = 'none';
                 paymentOptions.forEach(btn => btn.classList.remove('selected'));
                 confirmPaymentBtn.disabled = true;
-                selectedPayment = { method: null, status: null, pedidoId: null };
-                cargarMisPedidos(); // Recargar por si el usuario cancela
+                selectedPayment = { method: null, status: null, pedidoId: null, pagoCon: null };
+                cargarMisPedidos();
             }
             
             paymentOptions.forEach(button => {
@@ -516,7 +560,11 @@
                 try {
                     await fetchAPI(`/api/repartidor/finalizar-entrega/${selectedPayment.pedidoId}`, {
                         method: 'POST',
-                        body: JSON.stringify({ metodoPago: selectedPayment.method, estatus: selectedPayment.status })
+                        body: JSON.stringify({ 
+                            metodoPago: selectedPayment.method, 
+                            estatus: selectedPayment.status,
+                            pagoCon: pagoConInput.value || selectedPayment.pagoCon || 0
+                        })
                     });
                     alert('¡Entrega registrada con éxito!');
                     cerrarModalDePago();
@@ -555,7 +603,7 @@
                 
                 fetchAPI('/api/repartidor/mis-pedidos/contador').then(data => {
                     pedidosActuales = data ? data.count : 0;
-                });
+                }).catch(() => { pedidosActuales = 0; });
 
                 pollingIntervalId = setInterval(verificarNuevosPedidosAsignados, 15000);
             }

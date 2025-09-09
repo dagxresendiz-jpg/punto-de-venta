@@ -1442,6 +1442,8 @@
         }));
         
         const notaGeneral = document.getElementById('notaVentaGeneral').value.trim();
+        const pagoCon = parseFloat(document.getElementById('pagoCon').value) || 0;
+        const cambio = pagoCon > total ? pagoCon - total : 0;
         
         const pedidoData = {
             nombreCliente: clienteData.nombre,
@@ -1450,7 +1452,9 @@
             items: itemsParaPedido,
             total: total,
             fechaEntregaId: fechaEntregaId || null,
-            nota: notaGeneral
+            nota: notaGeneral,
+            pagoCon: pagoCon,
+            cambio: cambio
         };
         try {
             await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });

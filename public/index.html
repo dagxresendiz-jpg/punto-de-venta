@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dulces Amigas - Punto de Venta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -1535,7 +1535,7 @@
         }
 
         const metodo = id ? 'PUT' : 'POST';
-        const url = id ? `/api/usuarios/${id}` : `/api/usuarios`;
+        const url = id ? `/api/usuarios/${id}` : '/api/usuarios';
 
         try {
             await fetchAPI(url, { method: metodo, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
@@ -1647,9 +1647,6 @@
           });
       }
       
-      // ============================================
-      // INICIO DEL CÓDIGO CORREGIDO
-      // ============================================
       async function cargarVentasHistorial() {
         try {
           const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
@@ -1663,7 +1660,6 @@
               const fechaInicio = fechasSeleccionadas[0];
               const fechaFin = fechasSeleccionadas.length > 1 ? fechasSeleccionadas[1] : fechaInicio;
               
-              // CORRECCIÓN: Usar la utilidad de formato de flatpickr para evitar errores de zona horaria.
               const isoInicio = selectorFecha.formatDate(fechaInicio, "Y-m-d");
               const isoFin = selectorFecha.formatDate(fechaFin, "Y-m-d");
 
@@ -1712,9 +1708,6 @@
           generarResumen(ventasFiltradas);
         } catch (e) { console.error("Error al cargar historial:", e); }
       }
-      // ============================================
-      // FIN DEL CÓDIGO CORREGIDO
-      // ============================================
       
       async function cargarUsuariosParaFiltro() {
         try {
@@ -1818,23 +1811,32 @@
         }
       }
 
+      // ============================================
+      // INICIO DE LA SECCIÓN CORREGIDA
+      // ============================================
       function prepararDatosParaGraficas(ventas) {
-        const formatoFecha = { weekday: 'short', day: 'numeric' };
+        // CORRECCIÓN: Se añade 'timeZone: UTC' para evitar el desfase de días al mostrar los datos.
+        const formatoFecha = { weekday: 'short', day: 'numeric', timeZone: 'UTC' };
+        
         let ventasPorDia = {};
         ventas.forEach(venta => {
           const clave = new Date(venta.fecha).toLocaleDateString('es-ES', formatoFecha);
           ventasPorDia[clave] = (ventasPorDia[clave] || 0) + venta.total;
         });
         actualizarGraficaBarras(Object.keys(ventasPorDia).reverse(), Object.values(ventasPorDia).reverse());
+        
         let productosVendidos = {};
         ventas.forEach(venta => {
-            venta.items.forEach(item => {
+            (venta.items || []).forEach(item => {
                 const nombre = item.productoNombre || item.nombre;
                 productosVendidos[nombre] = (productosVendidos[nombre] || 0) + (item.cantidad || 1);
             });
         });
         actualizarGraficaCircular(Object.keys(productosVendidos), Object.values(productosVendidos));
       }
+      // ============================================
+      // FIN DE LA SECCIÓN CORREGIDA
+      // ============================================
 
       function actualizarGraficaBarras(labels, data) {
         if (miGraficaDeVentas) { miGraficaDeVentas.destroy(); }
@@ -1861,16 +1863,16 @@
       function generarResumen(ventas) {
           const resumenProductos = {}, resumenToppings = {}, resumenJarabes = {};
           ventas.forEach(venta => {
-              venta.items.forEach(item => {
+              (venta.items || []).forEach(item => {
                   const nombreProducto = item.productoNombre || item.nombre;
                   resumenProductos[nombreProducto] = (resumenProductos[nombreProducto] || 0) + (item.cantidad || 1);
-                  if (item.toppings) item.toppings.forEach(t => { resumenToppings[t.nombre] = (resumenToppings[t.nombre] || 0) + 1; });
-                  if (item.jarabes) item.jarabes.forEach(j => { resumenJarabes[j.nombre] = (resumenJarabes[j.nombre] || 0) + 1; });
+                  if (item.toppings) item.toppings.forEach(t => { resumenToppings[t.nombre] = (resumenToppings[t.nombre] || 0) + (item.cantidad || 1); });
+                  if (item.jarabes) item.jarabes.forEach(j => { resumenJarabes[j.nombre] = (resumenJarabes[j.nombre] || 0) + (item.cantidad || 1); });
               });
           });
-          let textoResumen = "--- RESUMEN DE PRODUCTOS ---\n" + Object.entries(resumenProductos).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
-          textoResumen += "\n\n--- RESUMEN DE TOPPINGS ---\n" + Object.entries(resumenToppings).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
-          textoResumen += "\n\n--- RESUMEN DE JARABES ---\n" + Object.entries(resumenJarabes).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
+          let textoResumen = "--- RESUMEN DE PRODUCTOS ---\n" + Object.entries(resumenProductos).sort(([,a],[,b]) => b-a).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
+          if (Object.keys(resumenToppings).length) textoResumen += "\n\n--- RESUMEN DE TOPPINGS ---\n" + Object.entries(resumenToppings).sort(([,a],[,b]) => b-a).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
+          if (Object.keys(resumenJarabes).length) textoResumen += "\n\n--- RESUMEN DE JARABES ---\n" + Object.entries(resumenJarabes).sort(([,a],[,b]) => b-a).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
           document.getElementById('resumen-ventas').textContent = textoResumen;
       }
       

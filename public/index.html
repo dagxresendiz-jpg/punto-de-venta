@@ -143,8 +143,9 @@
     .collapsible { background-color: var(--collapsible-bg); color: var(--text-color-dark); }
     .collapsible-wrapper { margin-bottom: 1rem; }
     .collapsible { width: 100%; text-align: left; font-weight: 500; border: 1px solid var(--border-color); border-radius: 8px; }
-    .content-collapsible { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; padding: 1rem; }
-    .options-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .content-collapsible { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; }
+    .collapsible-content-padding { padding: 1rem; } /* NUEVO ESTILO */
+    .options-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem; }
     .option-btn { padding: 0.5rem 1rem; font-weight: 500; background-color: var(--background-color); color: var(--text-color-dark); border: 1px solid var(--border-color); }
     .option-btn.selected { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
     #btnGenerarReporte { background-color: var(--info-color); color: white; }
@@ -373,11 +374,11 @@
                         <label for="ventaCantidad">Cantidad:</label> <input type="number" id="ventaCantidad" min="1" value="1" required />
                         <div class="collapsible-wrapper">
                             <button type="button" class="collapsible">Seleccionar Toppings</button>
-                            <div class="content-collapsible options-grid" id="toppings-container"></div>
+                            <div class="content-collapsible"><div class="options-grid" id="toppings-container"></div></div>
                         </div>
                         <div class="collapsible-wrapper">
                             <button type="button" class="collapsible">Seleccionar Jarabes</button>
-                            <div class="content-collapsible options-grid" id="jarabes-container"></div>
+                            <div class="content-collapsible"><div class="options-grid" id="jarabes-container"></div></div>
                         </div>
                         <label for="ventaNota">Nota para este producto (opcional):</label>
                         <input type="text" id="ventaNota" placeholder="Ej: Sin nuez, extra chocolate, etc." />
@@ -393,17 +394,19 @@
                         
                         <div class="collapsible-wrapper" style="margin-top: 1.5rem;">
                             <button type="button" class="collapsible" id="collapsible-domicilio-btn">Información de Entrega (Opcional)</button>
-                            <div class="content-collapsible" id="content-domicilio">
-                                <input type="text" id="nombreClienteDomicilio" placeholder="Nombre completo del cliente">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <input type="tel" id="telClienteDomicilio" placeholder="Teléfono de contacto">
+                            <div class="content-collapsible">
+                               <div class="collapsible-content-padding">
+                                    <input type="text" id="nombreClienteDomicilio" placeholder="Nombre completo del cliente">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <input type="tel" id="telClienteDomicilio" placeholder="Teléfono de contacto">
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="number" id="costoDomicilio" step="0.01" placeholder="Costo del envío">
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <input type="number" id="costoDomicilio" step="0.01" placeholder="Costo del envío">
-                                    </div>
+                                    <textarea id="dirClienteDomicilio" rows="3" placeholder="Dirección completa (calle, número, colonia, referencias...)"></textarea>
                                 </div>
-                                <textarea id="dirClienteDomicilio" rows="3" placeholder="Dirección completa (calle, número, colonia, referencias...)"></textarea>
                             </div>
                         </div>
                         
@@ -1556,8 +1559,7 @@
         document.getElementById('metodoPago').value = "Efectivo";
         document.getElementById('fechaEntregaVenta').value = "";
         document.getElementById('notaVentaGeneral').value = "";
-        document.getElementById('botones-finalizar-venta').style.display = 'flex';
-        document.getElementById('btnActualizarVenta').style.display = 'none';
+        
         mostrarVentaActual();
       }
 
@@ -1730,7 +1732,9 @@
           mostrarVentaActual();
 
           document.getElementById('ventaCliente').disabled = true;
-          document.getElementById('botones-finalizar-venta').style.display = 'none';
+          document.getElementById('btnRegistrarPagado').style.display = 'none';
+          document.getElementById('btnRegistrarPendiente').style.display = 'none';
+          document.getElementById('btnEnviarACocina').style.display = 'none';
           document.getElementById('btnActualizarVenta').style.display = 'block';
 
           mostrarSeccion('registrar-venta');

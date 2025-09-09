@@ -1,4 +1,4 @@
-// server.js - v9.7 (Backend Definitivo con Filtro de Fecha Corregido)
+// server.js - v9.8 (Backend con Cálculo de Cambio)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -70,6 +70,9 @@ const Usuario = mongoose.model('Usuario', createSchema({
     ...commonFields 
 }));
 
+// ============================================
+// INICIO DE SECCIÓN MODIFICADA
+// ============================================
 const Venta = mongoose.model('Venta', createSchema({
     fecha: Date, clienteId: String, clienteNombre: String, items: Array,
     subtotal: Number, costoDomicilio: Number, total: Number, metodoPago: String,
@@ -77,8 +80,13 @@ const Venta = mongoose.model('Venta', createSchema({
     repartidorId: { type: String, default: null },
     repartidorUsername: { type: String, default: null },
     estatus: String, 
+    pagoCon: { type: Number, default: 0 }, // NUEVO CAMPO
+    cambio: { type: Number, default: 0 },   // NUEVO CAMPO
     ...commonFields
 }));
+// ============================================
+// FIN DE SECCIÓN MODIFICADA
+// ============================================
 
 const AppConfig = mongoose.model('AppConfig', createSchema({
     logo_base64: { type: String },
@@ -250,9 +258,12 @@ repartidorRouter.get('/mis-pedidos/contador', async (req, res) => {
     }
 });
 
+// ============================================
+// INICIO DE SECCIÓN MODIFICADA
+// ============================================
 repartidorRouter.post('/finalizar-entrega/:id', async (req, res) => {
     try {
-        const { metodoPago, estatus } = req.body;
+        const { metodoPago, estatus, pagoCon } = req.body; // Se añade pagoCon
         const pedido = await Pedido.findOneAndUpdate(
             { _id: req.params.id, repartidorId: req.user.id },
             { estatus: 'entregado' },
@@ -263,6 +274,10 @@ repartidorRouter.post('/finalizar-entrega/:id', async (req, res) => {
             return res.status(404).json({ error: 'Pedido no encontrado o no asignado a ti.' });
         }
         
+        // Se calcula el cambio
+        const pagoConNum = parseFloat(pagoCon) || 0;
+        const cambio = pagoConNum > pedido.total ? pagoConNum - pedido.total : 0;
+
         await Venta.create({
             fecha: new Date(),
             clienteNombre: pedido.nombreCliente,
@@ -275,6 +290,8 @@ repartidorRouter.post('/finalizar-entrega/:id', async (req, res) => {
             vendedorUsername: 'Pedido Online',
             repartidorId: pedido.repartidorId ? pedido.repartidorId.id : null,
             repartidorUsername: pedido.repartidorId ? pedido.repartidorId.username : null,
+            pagoCon: pagoConNum,
+            cambio: cambio
         });
 
         res.status(200).json({ message: 'Entrega finalizada y registrada con éxito.' });
@@ -283,6 +300,9 @@ repartidorRouter.post('/finalizar-entrega/:id', async (req, res) => {
         res.status(500).json({ error: 'Error al finalizar la entrega.' });
     }
 });
+// ============================================
+// FIN DE SECCIÓN MODIFICADA
+// ============================================
 app.use('/api/repartidor', repartidorRouter);
 
 
@@ -418,17 +438,12 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
     }
 });
 
-// ============================================
-// INICIO DE LA SECCIÓN CORREGIDA Y MEJORADA
-// ============================================
 ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
     try {
         const { fechaInicio, fechaFin } = req.query;
         let filtro = { ...findActive };
 
         if (fechaInicio && fechaFin) {
-            // El frontend ya envía las fechas en formato ISO (UTC) representando el día completo del usuario.
-            // Simplemente las usamos directamente. No se necesita manipulación de zona horaria aquí.
             filtro.fecha = { $gte: new Date(fechaInicio), $lte: new Date(fechaFin) };
         }
         
@@ -439,10 +454,6 @@ ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
         res.status(500).json({ error: 'Error al obtener historial de ventas.' });
     }
 });
-// ============================================
-// FIN DE LA SECCIÓN CORREGIDA
-// ============================================
-
 ventasRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
 ventasRouter.put('/:id', tienePermiso('historial'), async (req, res) => res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 ventasRouter.delete('/:id', tienePermiso('historial'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });

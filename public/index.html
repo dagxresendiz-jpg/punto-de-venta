@@ -21,17 +21,19 @@
       --danger-color: #ef4444; --danger-hover: #dc2626; --success-color: #22c55e; 
       --success-hover: #16a34a; --info-color: #38bdf8; --info-hover: #0ea5e9;
       --warning-color: #f59e0b; --warning-hover: #d97706;
-      --background-color: #f8fafc; --card-background: #ffffff; --text-color-dark: #1e29b3; 
+      --background-color: #f8fafc; --card-background: #ffffff; --text-color-dark: #1e293b; 
       --text-color-light: #64748b; --border-color: #e2e8f0;
       --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
       --form-control-bg: #ffffff; --collapsible-bg: #f1f5f9; --table-header-bg: #f8fafc;
-      --secondary-button-bg: #f1f5f9; --secondary-button-text: #1e29b3; --secondary-button-hover-bg: #e2e8f0;
+      --secondary-button-bg: #f1f5f9; --secondary-button-text: #1e293b; --secondary-button-hover-bg: #e2e8f0;
+      /* Variable para el color de fondo oscuro personalizable */
+      --dark-background-color: #1e293b;
     }
     body.dark-mode {
-      --background-color: #1e29b3; --card-background: #334155; --text-color-dark: #f1f5f9;
+      --background-color: var(--dark-background-color); --card-background: #334155; --text-color-dark: #f1f5f9;
       --text-color-light: #94a3b8; --border-color: #475569;
       --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
-      --form-control-bg: #475569; --collapsible-bg: #475569; --table-header-bg: #1e29b3;
+      --form-control-bg: #475569; --collapsible-bg: #475569; --table-header-bg: #1e293b;
       --secondary-button-bg: #475569; --secondary-button-text: #f1f5f9; --secondary-button-hover-bg: #525f75;
     }
     .product-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; }
@@ -303,11 +305,17 @@
             <div id="customization-controls" style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
                 <h4 style="margin-bottom: 0.75rem; color: var(--text-color-light); font-weight: 500;">Personalizar Apariencia</h4>
                 <input type="file" id="logo-input" accept="image/*" style="display: none;">
-                <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; align-items: center;">
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; align-items: center; row-gap: 0.75rem;">
                     <label for="primary-color-picker" style="font-size: 0.9em;">Primario:</label>
                     <input type="color" id="primary-color-picker" style="width: 100%; height: 25px; border: none; background: none; cursor: pointer;">
+                    
                     <label for="accent-color-picker" style="font-size: 0.9em;">Acento:</label>
                     <input type="color" id="accent-color-picker" style="width: 100%; height: 25px; border: none; background: none; cursor: pointer;">
+                    
+                    <!-- INICIO DE SECCIÓN MODIFICADA -->
+                    <label for="dark-bg-color-picker" style="font-size: 0.9em;">Fondo Oscuro:</label>
+                    <input type="color" id="dark-bg-color-picker" style="width: 100%; height: 25px; border: none; background: none; cursor: pointer;">
+                    <!-- FIN DE SECCIÓN MODIFICADA -->
                 </div>
             </div>
         </div>
@@ -497,13 +505,11 @@
           <div class="card">
             <div class="card-header"><h2>Historial de Ventas</h2></div>
 
-            <!-- INICIO DE SECCIÓN MODIFICADA -->
             <div id="filtro-rapido-fechas">
               <button id="btn-filtro-hoy" class="btn-secondary">Hoy</button>
               <button id="btn-filtro-semana" class="btn-secondary">Esta Semana</button>
               <button id="btn-filtro-mes" class="btn-secondary">Este Mes</button>
             </div>
-            <!-- FIN DE SECCIÓN MODIFICADA -->
 
             <div id="filtros-historial">
               <div>
@@ -687,6 +693,7 @@
           const appLogo = document.getElementById('app-logo');
           const primaryColorPicker = document.getElementById('primary-color-picker');
           const accentColorPicker = document.getElementById('accent-color-picker');
+          const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
           const root = document.documentElement;
 
           appLogo.addEventListener('click', () => logoInput.click());
@@ -716,6 +723,13 @@
               root.style.setProperty('--accent-color', accent_color);
               guardarConfiguracionServidor({ accent_color });
           });
+
+          // Event Listener para el nuevo selector de color de fondo oscuro
+          darkBgColorPicker.addEventListener('input', (event) => {
+              const dark_background_color = event.target.value;
+              root.style.setProperty('--dark-background-color', dark_background_color);
+              guardarConfiguracionServidor({ dark_background_color });
+          });
       }
 
       async function loadPublicConfig() {
@@ -723,6 +737,7 @@
           const loginLogo = document.getElementById('login-logo');
           const primaryColorPicker = document.getElementById('primary-color-picker');
           const accentColorPicker = document.getElementById('accent-color-picker');
+          const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
           const root = document.documentElement;
           
           try {
@@ -751,6 +766,15 @@
                   root.style.setProperty('--accent-color', config.accent_color);
                   accentColorPicker.value = config.accent_color;
               }
+              
+              // Cargar el color de fondo oscuro personalizado
+              if (config && config.dark_background_color) {
+                  root.style.setProperty('--dark-background-color', config.dark_background_color);
+                  darkBgColorPicker.value = config.dark_background_color;
+              } else {
+                  darkBgColorPicker.value = '#1e293b'; // Valor por defecto
+              }
+
           } catch (error) {
               console.error("No se pudo cargar la configuración de apariencia desde el servidor.", error);
               const errorLogo = 'https://via.placeholder.com/180x60.png?text=Error';
@@ -1019,8 +1043,6 @@
                 inicializarSelectorFecha(); 
                 cargarClientesParaFiltro(); 
                 cargarUsuariosParaFiltro();
-                // CORRECCIÓN: Carga inicial de los datos de hoy.
-                cargarVentasHistorial(); 
             },
             'papelera-reciclaje': () => cargarPapelera(),
           };
@@ -1649,27 +1671,28 @@
       function inicializarSelectorFecha() {
           flatpickr("#filtroFecha", {
               mode: "range",
-              dateFormat: "Y-m-d", // Cambiado a un formato estándar para evitar confusiones
+              dateFormat: "Y-m-d", 
               locale: "es",
               defaultDate: new Date(),
+              onReady: function(selectedDates, dateStr, instance) {
+                // Dispara la carga inicial cuando el calendario está listo.
+                cargarVentasHistorial();
+              },
               onChange: function(selectedDates, dateStr, instance) {
-                  if(selectedDates.length > 0) {
-                    cargarVentasHistorial();
-                  }
+                // Dispara la carga en cada cambio de fecha manual.
+                if(selectedDates.length > 0) {
+                  cargarVentasHistorial();
+                }
               },
           });
       }
       
-      // ============================================
-      // INICIO DE LA SECCIÓN CORREGIDA Y MEJORADA
-      // ============================================
       async function cargarVentasHistorial() {
         try {
           const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
           const fechasSeleccionadas = selectorFecha.selectedDates;
           
           if (!fechasSeleccionadas || fechasSeleccionadas.length === 0) {
-            console.log("No hay fechas seleccionadas, no se cargará el historial.");
             return;
           }
 
@@ -1679,14 +1702,12 @@
           
           let url = '/api/ventas?';
 
-          // Lógica robusta para manejar el rango de fechas en la zona horaria local del usuario.
           const fechaInicio = fechasSeleccionadas[0];
-          fechaInicio.setHours(0, 0, 0, 0); // Asegura que la fecha de inicio es al comienzo del día.
+          fechaInicio.setHours(0, 0, 0, 0);
 
           const fechaFin = new Date(fechasSeleccionadas.length > 1 ? fechasSeleccionadas[1] : fechasSeleccionadas[0]);
-          fechaFin.setHours(23, 59, 59, 999); // Asegura que la fecha de fin abarca todo el día.
+          fechaFin.setHours(23, 59, 59, 999);
 
-          // Convertir a formato ISO (UTC) para enviar al servidor.
           const isoInicio = fechaInicio.toISOString();
           const isoFin = fechaFin.toISOString();
 
@@ -1899,7 +1920,7 @@
       function generarReportePDF() {
           const textoResumen = document.getElementById('resumen-ventas').textContent;
           const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
-          const filtros = `Período: ${document.getElementById('filtroFecha').value}, Cliente: ${document.getElementById('filtroCliente').options[document.getElementById('filtroCliente').selectedIndex].text}, Vendedor: ${document.getElementById('filtroUsuario').options[document.getElementById('filtroUsuario').selectedIndex].text}`;
+          const filtros = `Período: ${document.getElementById('filtroFecha')._flatpickr.input.value}, Cliente: ${document.getElementById('filtroCliente').options[document.getElementById('filtroCliente').selectedIndex].text}, Vendedor: ${document.getElementById('filtroUsuario').options[document.getElementById('filtroUsuario').selectedIndex].text}`;
           const { jsPDF } = window.jspdf;
           const pdf = new jsPDF();
           pdf.setFontSize(18);
@@ -2214,12 +2235,9 @@
           }
       }
       
-      // ============================================
-      // INICIO DE LA SECCIÓN CORREGIDA Y MEJORADA
-      // ============================================
       function setFechaYRecargar(start, end) {
         const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
-        selectorFecha.setDate([start, end], true); // El 'true' dispara el evento onChange.
+        selectorFecha.setDate([start, end], true);
       }
 
       function setupEventListeners() {
@@ -2230,6 +2248,7 @@
 
         document.getElementById('btn-filtro-semana').addEventListener('click', () => {
           const hoy = new Date();
+          // El domingo es 0, lunes es 1, etc.
           const primerDiaSemana = new Date(hoy.setDate(hoy.getDate() - hoy.getDay()));
           const ultimoDiaSemana = new Date(primerDiaSemana);
           ultimoDiaSemana.setDate(ultimoDiaSemana.getDate() + 6);
@@ -2242,9 +2261,6 @@
           const ultimoDiaMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
           setFechaYRecargar(primerDiaMes, ultimoDiaMes);
         });
-      // ============================================
-      // FIN DE LA SECCIÓN CORREGIDA Y MEJORADA
-      // ============================================
       
         document.getElementById('btnRegistrarPagado').addEventListener('click', () => registrarVenta('Pagado'));
         document.getElementById('btnRegistrarPendiente').addEventListener('click', () => registrarVenta('Pendiente de Pago'));

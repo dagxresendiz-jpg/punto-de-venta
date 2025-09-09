@@ -136,10 +136,6 @@
     .quantity-selector-venta { display: flex; align-items: center; gap: 0.5rem; }
     .quantity-btn-venta { background: none; border: 1px solid var(--border-color); color: var(--text-color-dark); cursor: pointer; font-size: 0.8rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; }
     .remove-btn-venta { background-color: var(--danger-color); color: white; border: none; font-size: 0.8rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; }
-    #opcion-domicilio { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; }
-    #opcion-domicilio > div { display: flex; align-items: center; gap: 0.5rem; }
-    #opcion-domicilio input[type="checkbox"] { width: auto; margin: 0; }
-    #opcion-domicilio input[type="number"] { width: 100px; margin: 0; padding: 0.5rem; }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
     th { background-color: var(--table-header-bg); font-weight: 600; color: var(--text-color-light); }
@@ -161,14 +157,13 @@
     #filtros-historial { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; align-items: flex-end; }
     #filtros-historial label { font-size: 0.9em; margin-bottom: 0.5rem; color: var(--text-color-dark); display: block; }
     #resumen-ventas { white-space: pre-wrap; word-break: break-word; }
-    
     .finalizar-venta-info { margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
     .info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-size: 1.1rem;}
-    .info-row label { font-weight: 600; }
+    .info-row label { font-weight: 600; margin-bottom: 0; }
     .info-row input { width: 120px; text-align: right; padding: 0.5rem; margin-bottom: 0; }
-    .info-row span { font-weight: 700; color: var(--success-color); }
-    #totalAPagar { font-size: 1.3rem; }
-
+    .info-row span { font-weight: 700; }
+    #totalAPagar { font-size: 1.3rem; color: var(--text-color-dark); }
+    #cambioVenta { color: var(--success-color); }
     #botones-accion-venta button { width: 100%; margin-bottom: 0.75rem; padding: 0.8rem; font-size: 1rem; }
     .botones-grupo { display: flex; gap: 1rem; }
     .btn-enviar-cocina { background-color: var(--warning-color); color: white; }
@@ -177,7 +172,6 @@
     .btn-guardar-pendiente:hover { background-color: var(--info-hover); }
     .btn-cobrar { background-color: var(--success-color); color: white; flex: 1; }
     .btn-cobrar:hover { background-color: var(--success-hover); }
-    
     .status-badge { padding: 0.2em 0.6em; border-radius: 12px; font-size: 0.8em; font-weight: 600; color: white; text-align: center; display: inline-block; }
     .status-pagado { background-color: #16a34a; }
     .status-pendiente { background-color: #f59e0b; }
@@ -394,22 +388,22 @@
                     <div class="card">
                         <div class="card-header"><h3>Venta Actual</h3></div>
                         <ul id="listaVentaActual"></ul>
+                        <hr id="lista-venta-divider" style="display: none; margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
                         <div id="totalVenta" style="font-weight:600; font-size: 1.2rem; margin-top: 1rem; text-align: right;"></div>
                         
                         <div class="collapsible-wrapper" style="margin-top: 1.5rem;">
                             <button type="button" class="collapsible" id="collapsible-domicilio-btn">Información de Entrega (Opcional)</button>
                             <div class="content-collapsible" id="content-domicilio">
-                                <label for="nombreClienteDomicilio">Nombre del Cliente:</label>
-                                <input type="text" id="nombreClienteDomicilio" placeholder="Nombre para la entrega">
-                                
-                                <label for="telClienteDomicilio">Teléfono:</label>
-                                <input type="tel" id="telClienteDomicilio" placeholder="Teléfono de contacto">
-                                
-                                <label for="dirClienteDomicilio">Dirección de Entrega:</label>
-                                <textarea id="dirClienteDomicilio" rows="3" placeholder="Calle, número, colonia, referencias..."></textarea>
-                                
-                                <label for="costoDomicilio">Costo Domicilio:</label>
-                                <input type="number" id="costoDomicilio" step="0.01" placeholder="Costo del envío">
+                                <input type="text" id="nombreClienteDomicilio" placeholder="Nombre completo del cliente">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <input type="tel" id="telClienteDomicilio" placeholder="Teléfono de contacto">
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" id="costoDomicilio" step="0.01" placeholder="Costo del envío">
+                                    </div>
+                                </div>
+                                <textarea id="dirClienteDomicilio" rows="3" placeholder="Dirección completa (calle, número, colonia, referencias...)"></textarea>
                             </div>
                         </div>
                         
@@ -1368,7 +1362,7 @@
             alert(`Venta ${idVentaEditada ? 'actualizada' : 'guardada como ' + estatus} con éxito`);
             document.getElementById('ticket').textContent = generarTextoTicket(ventaGuardada);
             resetearFormularioCompleto();
-            await cargarVentasHistorial();
+            
         } catch (e) {
             alert(`Error: ${e.message}`);
         } finally {
@@ -1447,8 +1441,15 @@
 
       function mostrarVentaActual() {
         const lista = document.getElementById('listaVentaActual');
+        const divider = document.getElementById('lista-venta-divider');
         lista.innerHTML = '';
         
+        if (Object.keys(ventaActual).length === 0) {
+            divider.style.display = 'none';
+        } else {
+            divider.style.display = 'block';
+        }
+
         for (const idUnico in ventaActual) {
             const item = ventaActual[idUnico];
             const li = document.createElement('li');
@@ -1534,7 +1535,6 @@
         document.getElementById('ventaCliente').disabled = false;
         document.getElementById('idVenta').value = '';
 
-        // Resetear campos de domicilio
         document.getElementById('nombreClienteDomicilio').value = '';
         document.getElementById('telClienteDomicilio').value = '';
         document.getElementById('dirClienteDomicilio').value = '';

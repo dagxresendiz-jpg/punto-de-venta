@@ -6,7 +6,7 @@
   <title>Dulces Amigas - Punto de Venta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family/Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
@@ -26,7 +26,6 @@
       --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
       --form-control-bg: #ffffff; --collapsible-bg: #f1f5f9; --table-header-bg: #f8fafc;
       --secondary-button-bg: #f1f5f9; --secondary-button-text: #1e293b; --secondary-button-hover-bg: #e2e8f0;
-      /* Variable para el color de fondo oscuro personalizable */
       --dark-background-color: #1e293b;
     }
     body.dark-mode {
@@ -196,7 +195,6 @@
     .fecha-item.inactiva { background-color: #f1f5f9; color: var(--text-color-light); text-decoration: line-through; }
     .form-row { display: flex; gap: 1rem; align-items: flex-start; } 
     .form-group { flex: 1; }
-    /* Estilos para los nuevos botones de filtro rápido */
     #filtro-rapido-fechas { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
     #filtro-rapido-fechas button { padding: 0.5rem 1rem; font-size: 0.9em; }
 
@@ -308,14 +306,10 @@
                 <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; align-items: center; row-gap: 0.75rem;">
                     <label for="primary-color-picker" style="font-size: 0.9em;">Primario:</label>
                     <input type="color" id="primary-color-picker" style="width: 100%; height: 25px; border: none; background: none; cursor: pointer;">
-                    
                     <label for="accent-color-picker" style="font-size: 0.9em;">Acento:</label>
                     <input type="color" id="accent-color-picker" style="width: 100%; height: 25px; border: none; background: none; cursor: pointer;">
-                    
-                    <!-- INICIO DE SECCIÓN MODIFICADA -->
                     <label for="dark-bg-color-picker" style="font-size: 0.9em;">Fondo Oscuro:</label>
                     <input type="color" id="dark-bg-color-picker" style="width: 100%; height: 25px; border: none; background: none; cursor: pointer;">
-                    <!-- FIN DE SECCIÓN MODIFICADA -->
                 </div>
             </div>
         </div>
@@ -723,8 +717,7 @@
               root.style.setProperty('--accent-color', accent_color);
               guardarConfiguracionServidor({ accent_color });
           });
-
-          // Event Listener para el nuevo selector de color de fondo oscuro
+          
           darkBgColorPicker.addEventListener('input', (event) => {
               const dark_background_color = event.target.value;
               root.style.setProperty('--dark-background-color', dark_background_color);
@@ -767,12 +760,11 @@
                   accentColorPicker.value = config.accent_color;
               }
               
-              // Cargar el color de fondo oscuro personalizado
               if (config && config.dark_background_color) {
                   root.style.setProperty('--dark-background-color', config.dark_background_color);
                   darkBgColorPicker.value = config.dark_background_color;
               } else {
-                  darkBgColorPicker.value = '#1e293b'; // Valor por defecto
+                  darkBgColorPicker.value = '#1e293b';
               }
 
           } catch (error) {
@@ -1602,7 +1594,7 @@
                           })
                       });
                       alert("¡Venta actualizada a 'Pagado'!");
-                      cargarVentasHistorial();
+                      await cargarVentasHistorial();
                   } catch (error) {
                       alert(`Error al actualizar la venta: ${error.message}`);
                   }
@@ -1623,7 +1615,7 @@
                 body: JSON.stringify({ estatus: nuevoEstatus })
             });
             alert("¡Estatus de la venta actualizado!");
-            cargarVentasHistorial();
+            await cargarVentasHistorial();
           } catch (error) {
             alert(`Error al actualizar el estatus: ${error.message}`);
           }
@@ -1668,6 +1660,9 @@
         }
       }
 
+      // ============================================
+      // INICIO DE SECCIÓN CORREGIDA Y MEJORADA
+      // ============================================
       function inicializarSelectorFecha() {
           flatpickr("#filtroFecha", {
               mode: "range",
@@ -1690,19 +1685,18 @@
       async function cargarVentasHistorial() {
         try {
           const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
-          const fechasSeleccionadas = selectorFecha.selectedDates;
-          
-          if (!fechasSeleccionadas || fechasSeleccionadas.length === 0) {
-            return;
+          if (!selectorFecha || !selectorFecha.selectedDates || selectorFecha.selectedDates.length === 0) {
+            return; // No hacer nada si el calendario no está listo o no hay fecha
           }
 
+          const fechasSeleccionadas = selectorFecha.selectedDates;
           const clienteId = document.getElementById('filtroCliente').value;
           const usuarioId = document.getElementById('filtroUsuario').value;
           const estatus = document.getElementById('filtroEstatus').value;
           
           let url = '/api/ventas?';
 
-          const fechaInicio = fechasSeleccionadas[0];
+          const fechaInicio = new Date(fechasSeleccionadas[0]);
           fechaInicio.setHours(0, 0, 0, 0);
 
           const fechaFin = new Date(fechasSeleccionadas.length > 1 ? fechasSeleccionadas[1] : fechasSeleccionadas[0]);
@@ -1756,6 +1750,9 @@
           generarResumen(ventasFiltradas);
         } catch (e) { console.error("Error al cargar historial:", e); }
       }
+      // ============================================
+      // FIN DE LA SECCIÓN CORREGIDA
+      // ============================================
       
       async function cargarUsuariosParaFiltro() {
         try {
@@ -2247,12 +2244,13 @@
         });
 
         document.getElementById('btn-filtro-semana').addEventListener('click', () => {
-          const hoy = new Date();
-          // El domingo es 0, lunes es 1, etc.
-          const primerDiaSemana = new Date(hoy.setDate(hoy.getDate() - hoy.getDay()));
-          const ultimoDiaSemana = new Date(primerDiaSemana);
-          ultimoDiaSemana.setDate(ultimoDiaSemana.getDate() + 6);
-          setFechaYRecargar(primerDiaSemana, ultimoDiaSemana);
+            const hoy = new Date();
+            const diaDeSemana = hoy.getDay(); // Domingo = 0, Lunes = 1, etc.
+            const diff = hoy.getDate() - diaDeSemana + (diaDeSemana === 0 ? -6 : 1); // Ajuste para que Lunes sea el primer día
+            const primerDiaSemana = new Date(hoy.setDate(diff));
+            const ultimoDiaSemana = new Date(primerDiaSemana);
+            ultimoDiaSemana.setDate(ultimoDiaSemana.getDate() + 6);
+            setFechaYRecargar(primerDiaSemana, ultimoDiaSemana);
         });
 
         document.getElementById('btn-filtro-mes').addEventListener('click', () => {

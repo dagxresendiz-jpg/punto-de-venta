@@ -192,8 +192,9 @@
     input:checked + .slider:before { transform: translateX(24px); }
     .fecha-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.5rem; }
     .fecha-item.inactiva { background-color: #f1f5f9; color: var(--text-color-light); text-decoration: line-through; }
-    .form-row { display: flex; gap: 1rem; align-items: center; } /* Para alinear Fecha y Método de Pago */
-    .form-group { flex: 1; } /* Para que cada grupo ocupe espacio equitativo */
+    
+    .form-row { display: flex; gap: 1rem; align-items: flex-start; } 
+    .form-group { flex: 1; }
 
     @media (max-width: 992px) {
       .menu-toggle { display: block; }
@@ -1637,9 +1638,9 @@
               mode: "range",
               dateFormat: "d/m/Y",
               locale: "es",
-              defaultDate: "today",
+              defaultDate: "today", 
               onChange: function(selectedDates, dateStr, instance) {
-                  if(selectedDates.length > 0) { // Solo cargar si hay una fecha seleccionada
+                  if(selectedDates.length > 0) {
                     cargarVentasHistorial();
                   }
               },

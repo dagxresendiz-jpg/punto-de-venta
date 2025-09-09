@@ -1,4 +1,4 @@
-// server.js - v9.6 (Backend con Notificaciones para Repartidor)
+// server.js - v9.7 (Backend Definitivo con Filtro de Fecha Corregido)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -83,7 +83,8 @@ const Venta = mongoose.model('Venta', createSchema({
 const AppConfig = mongoose.model('AppConfig', createSchema({
     logo_base64: { type: String },
     primary_color: { type: String, default: '#4f46e5' },
-    accent_color: { type: String, default: '#FF85A2' }
+    accent_color: { type: String, default: '#FF85A2' },
+    dark_background_color: { type: String, default: '#1e293b' }
 }));
 
 const FechaEntrega = mongoose.model('FechaEntrega', createSchema({
@@ -239,7 +240,6 @@ repartidorRouter.get('/mis-pedidos', async (req, res) => {
     }
 });
 
-// ===== NUEVA RUTA PARA NOTIFICACIONES DE REPARTIDOR =====
 repartidorRouter.get('/mis-pedidos/contador', async (req, res) => {
     try {
         const count = await Pedido.countDocuments({ repartidorId: req.user.id, estatus: 'en_reparto' });
@@ -417,19 +417,19 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
+
+// ============================================
+// INICIO DE LA SECCIÓN CORREGIDA Y MEJORADA
+// ============================================
 ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
     try {
         const { fechaInicio, fechaFin } = req.query;
         let filtro = { ...findActive };
 
         if (fechaInicio && fechaFin) {
-            const inicio = new Date(fechaInicio);
-            inicio.setUTCHours(0, 0, 0, 0);
-
-            const fin = new Date(fechaFin);
-            fin.setUTCHours(23, 59, 59, 999);
-            
-            filtro.fecha = { $gte: inicio, $lte: fin };
+            // El frontend ya envía las fechas en formato ISO (UTC) representando el día completo del usuario.
+            // Simplemente las usamos directamente. No se necesita manipulación de zona horaria aquí.
+            filtro.fecha = { $gte: new Date(fechaInicio), $lte: new Date(fechaFin) };
         }
         
         const ventas = await Venta.find(filtro).sort({ fecha: -1 });
@@ -439,6 +439,10 @@ ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
         res.status(500).json({ error: 'Error al obtener historial de ventas.' });
     }
 });
+// ============================================
+// FIN DE LA SECCIÓN CORREGIDA
+// ============================================
+
 ventasRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
 ventasRouter.put('/:id', tienePermiso('historial'), async (req, res) => res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 ventasRouter.delete('/:id', tienePermiso('historial'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });

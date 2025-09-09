@@ -6,7 +6,7 @@
   <title>Dulces Amigas - Punto de Venta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family/Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
@@ -1660,9 +1660,6 @@
         }
       }
 
-      // ============================================
-      // INICIO DE SECCIÓN CORREGIDA Y MEJORADA
-      // ============================================
       function inicializarSelectorFecha() {
           flatpickr("#filtroFecha", {
               mode: "range",
@@ -1670,11 +1667,9 @@
               locale: "es",
               defaultDate: new Date(),
               onReady: function(selectedDates, dateStr, instance) {
-                // Dispara la carga inicial cuando el calendario está listo.
                 cargarVentasHistorial();
               },
               onChange: function(selectedDates, dateStr, instance) {
-                // Dispara la carga en cada cambio de fecha manual.
                 if(selectedDates.length > 0) {
                   cargarVentasHistorial();
                 }
@@ -1686,7 +1681,7 @@
         try {
           const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
           if (!selectorFecha || !selectorFecha.selectedDates || selectorFecha.selectedDates.length === 0) {
-            return; // No hacer nada si el calendario no está listo o no hay fecha
+            return;
           }
 
           const fechasSeleccionadas = selectorFecha.selectedDates;
@@ -1750,9 +1745,6 @@
           generarResumen(ventasFiltradas);
         } catch (e) { console.error("Error al cargar historial:", e); }
       }
-      // ============================================
-      // FIN DE LA SECCIÓN CORREGIDA
-      // ============================================
       
       async function cargarUsuariosParaFiltro() {
         try {
@@ -2246,7 +2238,7 @@
         document.getElementById('btn-filtro-semana').addEventListener('click', () => {
             const hoy = new Date();
             const diaDeSemana = hoy.getDay(); // Domingo = 0, Lunes = 1, etc.
-            const diff = hoy.getDate() - diaDeSemana + (diaDeSemana === 0 ? -6 : 1); // Ajuste para que Lunes sea el primer día
+            const diff = hoy.getDate() - diaDeSemana + (diaDeSemana === 0 ? -6 : 1);
             const primerDiaSemana = new Date(hoy.setDate(diff));
             const ultimoDiaSemana = new Date(primerDiaSemana);
             ultimoDiaSemana.setDate(ultimoDiaSemana.getDate() + 6);

@@ -93,7 +93,6 @@
             padding: 0.5rem;
         }
         .total-section { text-align: right; font-size: 1.2rem; font-weight: 600; margin-top: 1rem; }
-        /* ESTILOS NUEVOS PARA EL CAMBIO */
         .cambio-section {
             margin-top: 1rem;
             padding-top: 1rem;
@@ -108,7 +107,6 @@
             font-size: 1.3rem;
             font-weight: 700;
         }
-        /* FIN DE ESTILOS NUEVOS */
         .pedido-card-footer { padding: 1rem; }
         .slider-container {
             position: relative;
@@ -208,7 +206,6 @@
         .modal-actions button { flex: 1; }
         #confirm-payment-btn { background-color: var(--success-color); color: white; }
         #cancel-payment-btn { background-color: var(--border-color); color: var(--text-color-dark); }
-        /* NUEVO CAMPO PARA EL PAGO EN MODAL */
         .pago-con-input { margin-bottom: 1rem; }
     </style>
     <script>
@@ -270,12 +267,10 @@
                 <button class="payment-btn" data-method="Transferencia" data-status="Pagado">Transferencia</button>
                 <button class="payment-btn" data-method="N/A" data-status="Pendiente de Pago" style="border-color: var(--warning-color);">Dejar Pendiente</button>
             </div>
-            <!-- INICIO DE SECCIÓN MODIFICADA -->
             <div class="pago-con-input">
                 <label for="pagoConRepartidor">Paga con (si es efectivo):</label>
                 <input type="number" id="pagoConRepartidor" placeholder="0.00" style="width: 100%; padding: 0.5rem; text-align: center; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--background-color); color: var(--text-color-dark);">
             </div>
-            <!-- FIN DE SECCIÓN MODIFICADA -->
             <div class="modal-actions">
                 <button id="cancel-payment-btn">Cancelar</button>
                 <button id="confirm-payment-btn" disabled>Confirmar</button>
@@ -404,10 +399,7 @@
                         const notaGeneralHtml = p.nota && p.nota.trim() !== ''
                             ? `<div class="nota-general"><strong>Nota General:</strong> ${p.nota}</div>`
                             : '';
-
-                        // ============================================
-                        // INICIO DE SECCIÓN MODIFICADA
-                        // ============================================
+                        
                         let cambioHtml = '';
                         if (p.cambio && p.cambio > 0) {
                             cambioHtml = `
@@ -417,9 +409,6 @@
                                 </div>
                             `;
                         }
-                        // ============================================
-                        // FIN DE SECCIÓN MODIFICADA
-                        // ============================================
 
                         const mensajeWhatsapp = `¡Hola ${p.nombreCliente}! Tu pedido de Dulces Amigas ya va en camino.`;
                         const urlWhatsapp = `https://wa.me/${p.telefonoCliente.replace(/\D/g, '')}?text=${encodeURIComponent(mensajeWhatsapp)}`;

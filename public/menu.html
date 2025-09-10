@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú - Dulces Amigas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -141,6 +141,12 @@
         .phone-input-group { display: flex; align-items: center; gap: 0.5rem; }
         .phone-input-group select { flex: 0 0 120px; }
         .phone-input-group input { flex: 1 1 auto; }
+        
+        /* ESTILOS NUEVOS PARA EL CAMBIO */
+        .info-row-pago { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .info-row-pago label { margin-bottom: 0; flex-basis: 50%; }
+        .info-row-pago input { margin-bottom: 0; flex-basis: 50%; }
+        #cambio-display { font-weight: 600; color: var(--success-color); }
     </style>
 </head>
 <body>
@@ -205,6 +211,18 @@
 
                 <label for="notaGeneral">Nota para tu pedido (opcional):</label>
                 <textarea id="notaGeneral" rows="3" placeholder="Ej. Sin cebolla, tocar timbre B, etc."></textarea>
+                
+                <!-- INICIO DE SECCIÓN MODIFICADA -->
+                <h3 style="margin-top: 2rem;">Información de Pago</h3>
+                <div class="info-row-pago">
+                    <label for="pagoCon">¿Pagas con? (opcional):</label>
+                    <input type="number" id="pagoCon" placeholder="Ej: 500">
+                </div>
+                <div class="info-row-pago" id="cambio-container" style="display: none;">
+                    <label>Tu cambio será de:</label>
+                    <span id="cambio-display">$0.00</span>
+                </div>
+                <!-- FIN DE SECCIÓN MODIFICADA -->
 
                 <button type="submit" id="submit-order-btn">Realizar Pedido</button>
             </form>
@@ -231,8 +249,17 @@
             const phonePrefixSelect = document.getElementById('phonePrefix');
             const telefonoClienteInput = document.getElementById('telefonoCliente');
             const fechaEntregaSelect = document.getElementById('fechaEntrega');
+            
+            // ============================================
+            // INICIO DE SECCIÓN MODIFICADA
+            // ============================================
+            const pagoConInput = document.getElementById('pagoCon');
+            const cambioDisplay = document.getElementById('cambio-display');
+            const cambioContainer = document.getElementById('cambio-container');
+            // ============================================
+            // FIN DE SECCIÓN MODIFICADA
+            // ============================================
 
-            // ===== PROTECCIÓN DEL LOGO =====
             const headerContainer = document.getElementById('header-container');
             const observer = new MutationObserver((mutationsList) => {
                 for(const mutation of mutationsList) {
@@ -250,7 +277,6 @@
                 }
             });
             observer.observe(headerContainer, { childList: true });
-            // ===== FIN DE LA PROTECCIÓN =====
 
             function applyTheme(theme) {
                 if (theme === 'dark') {
@@ -421,6 +447,7 @@
                 if (Object.keys(carrito).length === 0) {
                     cartItemsEl.innerHTML = '<p style="color: var(--text-color-light);">Aún no has agregado productos a tu pedido.</p>';
                     cartTotalEl.textContent = 'Total del Pedido: $0.00';
+                    actualizarCalculoCambio();
                     return;
                 }
 
@@ -465,6 +492,7 @@
                 
                 cartTotalEl.textContent = `Total del Pedido: $${granTotal.toFixed(2)}`;
                 addCartEventListeners();
+                actualizarCalculoCambio();
             }
 
             function addCartEventListeners() {
@@ -516,6 +544,27 @@
                     telefonoClienteInput.value = telefonoClienteInput.value.replace(/[^\d]/g, '');
                 });
             }
+
+            // ============================================
+            // INICIO DE SECCIÓN MODIFICADA
+            // ============================================
+            function actualizarCalculoCambio() {
+                const total = parseFloat(cartTotalEl.textContent.replace('Total del Pedido: $', '')) || 0;
+                const pago = parseFloat(pagoConInput.value) || 0;
+
+                if (pago > 0 && pago >= total) {
+                    const cambio = pago - total;
+                    cambioDisplay.textContent = `$${cambio.toFixed(2)}`;
+                    cambioContainer.style.display = 'flex';
+                } else {
+                    cambioContainer.style.display = 'none';
+                }
+            }
+
+            pagoConInput.addEventListener('input', actualizarCalculoCambio);
+            // ============================================
+            // FIN DE SECCIÓN MODIFICADA
+            // ============================================
             
             orderForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -550,6 +599,9 @@
                     };
                 });
 
+                const pagoCon = parseFloat(pagoConInput.value) || 0;
+                const cambio = pagoCon > totalCalculado ? pagoCon - totalCalculado : 0;
+
                 const orderData = {
                     nombreCliente: document.getElementById('nombreCliente').value,
                     telefonoCliente: phonePrefixSelect.value + telefonoClienteInput.value,
@@ -557,7 +609,9 @@
                     fechaEntregaId: document.getElementById('fechaEntrega').value,
                     nota: document.getElementById('notaGeneral').value,
                     items: itemsParaEnviar,
-                    total: totalCalculado
+                    total: totalCalculado,
+                    pagoCon: pagoCon,
+                    cambio: cambio
                 };
 
                 try {

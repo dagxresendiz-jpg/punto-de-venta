@@ -1,4 +1,4 @@
-// server.js - v9.9 (Backend Definitivo con Cambio en Pedidos de Menú)
+// server.js - v10.0 (Backend con Papelera de Pedidos y Vaciado Individual)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -108,6 +108,7 @@ const Pedido = mongoose.model('Pedido', createSchema({
         default: 'recibido', 
         enum: ['recibido', 'en_preparacion', 'listo', 'en_reparto', 'entregado', 'cancelado']
     },
+    status: { type: String, default: 'activo' }, // Para la papelera
     visto: { type: Boolean, default: false },
     repartidorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null },
     fechaEntregaId: { type: mongoose.Schema.Types.ObjectId, ref: 'FechaEntrega' }
@@ -183,10 +184,6 @@ publicApiRouter.get('/configuracion', async (req, res) => {
 publicApiRouter.get('/productos', async (req, res) => res.json(await Producto.find(findActive)));
 publicApiRouter.get('/toppings', async (req, res) => res.json(await Topping.find(findActive)));
 publicApiRouter.get('/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
-
-// ============================================
-// INICIO DE SECCIÓN MODIFICADA
-// ============================================
 publicApiRouter.post('/pedidos', async (req, res) => {
     try {
         const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota, pagoCon, cambio } = req.body;
@@ -229,10 +226,6 @@ publicApiRouter.post('/pedidos', async (req, res) => {
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
-// ============================================
-// FIN DE SECCIÓN MODIFICADA
-// ============================================
-
 publicApiRouter.get('/fechas-entrega', async (req, res) => {
     try {
         const hoy = new Date();
@@ -316,13 +309,36 @@ apiRouter.post('/configuracion', esAdmin, async (req, res) => {
     res.json({ message: 'Configuración actualizada', config: updatedConfig });
 });
 
+// ============================================
+// INICIO DE SECCIÓN MODIFICADA: RUTAS DE PEDIDOS
+// ============================================
 const pedidosRouter = express.Router();
 pedidosRouter.get('/', tienePermiso('pedidos'), async (req, res) => {
-    const pedidos = await Pedido.find().populate('repartidorId', 'username').populate('fechaEntregaId').sort({ createdAt: -1 });
+    const pedidos = await Pedido.find(findActive).populate('repartidorId', 'username').populate('fechaEntregaId').sort({ createdAt: -1 });
     res.json(pedidos);
 });
 pedidosRouter.put('/:id', tienePermiso('pedidos'), async (req, res) => res.json(await Pedido.findByIdAndUpdate(req.params.id, { estatus: req.body.estatus }, { new: true })));
-pedidosRouter.delete('/:id', tienePermiso('pedidos'), async (req, res) => { await Pedido.findByIdAndDelete(req.params.id); res.status(204).send(); });
+
+// CAMBIADO: ya no elimina, mueve a la papelera (cancela)
+pedidosRouter.delete('/:id', tienePermiso('pedidos'), async (req, res) => { 
+    await Pedido.findByIdAndUpdate(req.params.id, { status: 'eliminado', estatus: 'cancelado' }); 
+    res.status(204).send(); 
+});
+// NUEVO: Para la papelera
+pedidosRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Pedido.find({ status: 'eliminado' })));
+pedidosRouter.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => {
+    await Pedido.findByIdAndUpdate(req.params.id, { status: 'activo', estatus: 'recibido' });
+    res.json({ message: 'Pedido restaurado' });
+});
+pedidosRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => {
+    await Pedido.findByIdAndDelete(req.params.id);
+    res.status(204).send();
+});
+pedidosRouter.delete('/papelera/vaciar', esAdmin, async (req, res) => {
+    await Pedido.deleteMany({ status: 'eliminado' });
+    res.status(204).send();
+});
+
 pedidosRouter.post('/:id/asignar', tienePermiso('pedidos'), async (req, res) => {
     try {
         const { repartidorId } = req.body;
@@ -377,6 +393,9 @@ pedidosRouter.post('/marcar-vistos', tienePermiso('pedidos'), async (req, res) =
     } catch (error) { res.status(500).json({ error: 'Error al marcar pedidos como vistos.' }); }
 });
 apiRouter.use('/pedidos', pedidosRouter);
+// ============================================
+// FIN DE SECCIÓN MODIFICADA
+// ============================================
 
 const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
@@ -387,6 +406,12 @@ const crearRutasCrud = (modelo, nombre, permiso) => {
     router.delete('/:id', tienePermiso(permiso), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
     router.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
     router.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
+
+    // NUEVO: Ruta para vaciar la papelera de cada sección
+    router.delete('/papelera/vaciar', esAdmin, async (req, res) => {
+        await modelo.deleteMany({ status: 'eliminado' });
+        res.status(204).send();
+    });
 
     if (['Producto', 'Topping', 'Jarabe'].includes(nombre)) {
         router.put('/:id/toggle-agotado', tienePermiso('gestion'), async (req, res) => {
@@ -463,6 +488,10 @@ ventasRouter.put('/:id', tienePermiso('historial'), async (req, res) => res.json
 ventasRouter.delete('/:id', tienePermiso('historial'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
 ventasRouter.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: 'Venta restaurada' }); });
 ventasRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await Venta.findByIdAndDelete(req.params.id); res.status(204).send(); });
+ventasRouter.delete('/papelera/vaciar', esAdmin, async (req, res) => {
+    await Venta.deleteMany({ status: 'eliminado' });
+    res.status(204).send();
+});
 apiRouter.use('/ventas', ventasRouter);
 
 const usuariosRouter = express.Router();
@@ -503,6 +532,11 @@ usuariosRouter.delete('/:id', tienePermiso('usuarios'), async (req, res) => {
     res.status(204).send();
 });
 usuariosRouter.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await Usuario.findByIdAndDelete(req.params.id); res.status(204).send(); });
+usuariosRouter.delete('/papelera/vaciar', esAdmin, async (req, res) => {
+    const primerAdmin = await Usuario.findOne({}).sort({ createdAt: 1 });
+    await Usuario.deleteMany({ status: 'eliminado', _id: { $ne: primerAdmin._id } });
+    res.status(204).send();
+});
 apiRouter.use('/usuarios', esAdmin, usuariosRouter);
 
 const fechasRouter = express.Router();

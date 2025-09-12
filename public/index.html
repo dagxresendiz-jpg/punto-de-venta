@@ -212,15 +212,41 @@
     .form-group { flex: 1; }
     #filtro-rapido-fechas { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
     #filtro-rapido-fechas button { padding: 0.5rem 1rem; font-size: 0.9em; }
+    
+    /* VISTA DE DETALLES DE VENTA EN MÓVIL */
+    .detalle-ventas-mobile { display: none; }
+    .venta-card-mobile {
+        background: var(--card-background);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--primary-color);
+    }
+    .venta-card-mobile-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .venta-card-mobile-row:last-child { border-bottom: none; }
+    .venta-card-mobile-label { font-weight: 600; color: var(--text-color-light); }
+    .venta-card-mobile-value { text-align: right; }
+    .venta-card-mobile-actions { margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem; }
+    
+    .papelera-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;}
 
-    @media (max-width: 992px) {
+    @media (max-width: 768px) {
       .menu-toggle { display: block; }
       .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transform: translateX(-100%); }
       .sidebar.nav-open { transform: translateX(0); }
       .app-wrapper { display: block; }
       main { padding: 1rem; }
       .card { padding: 1rem; }
-      #opcion-domicilio { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      
+      /* Ocultar tabla y mostrar tarjetas en móvil */
+      #tablaVentasDesktop { display: none; }
+      .detalle-ventas-mobile { display: block; }
     }
   </style>
   
@@ -611,7 +637,7 @@
                         </button>
                     </div>
                 </div>
-                <div style="overflow-x:auto;">
+                <div id="tablaVentasDesktop" style="overflow-x:auto;">
                     <table>
                         <thead><tr>
                           <th>ID Venta</th>
@@ -626,6 +652,7 @@
                         <tbody id="tablaVentasBody"></tbody>
                     </table>
                 </div>
+                <div id="detalleVentasMobile" class="detalle-ventas-mobile"></div>
             </div>
           </div>
         </section>
@@ -635,13 +662,46 @@
                 <p>Aquí se muestran los elementos eliminados. Puedes restaurarlos o eliminarlos permanentemente.</p>
             </div>
             <div class="grid-container">
-                <div class="card"><h3>Productos Eliminados</h3><ul id="papelera-productos"></ul></div>
-                <div class="card"><h3>Toppings Eliminados</h3><ul id="papelera-toppings"></ul></div>
-                <div class="card"><h3>Jarabes Eliminados</h3><ul id="papelera-jarabes"></ul></div>
-                <div class="card"><h3>Clientes Eliminados</h3><ul id="papelera-clientes"></ul></div>
-                <div class="card"><h3>Usuarios Eliminados</h3><ul id="papelera-usuarios"></ul></div>
+                <div class="card">
+                    <div class="papelera-header">
+                        <h3>Productos Eliminados</h3>
+                        <button class="btn-eliminar-perm" data-tipo="productos">Vaciar Papelera</button>
+                    </div>
+                    <ul id="papelera-productos"></ul>
+                </div>
+                <div class="card">
+                     <div class="papelera-header">
+                        <h3>Toppings Eliminados</h3>
+                        <button class="btn-eliminar-perm" data-tipo="toppings">Vaciar Papelera</button>
+                    </div>
+                    <ul id="papelera-toppings"></ul>
+                </div>
+                <div class="card">
+                    <div class="papelera-header">
+                        <h3>Jarabes Eliminados</h3>
+                        <button class="btn-eliminar-perm" data-tipo="jarabes">Vaciar Papelera</button>
+                    </div>
+                    <ul id="papelera-jarabes"></ul>
+                </div>
+                <div class="card">
+                    <div class="papelera-header">
+                        <h3>Clientes Eliminados</h3>
+                        <button class="btn-eliminar-perm" data-tipo="clientes">Vaciar Papelera</button>
+                    </div>
+                    <ul id="papelera-clientes"></ul>
+                </div>
+                <div class="card">
+                    <div class="papelera-header">
+                        <h3>Usuarios Eliminados</h3>
+                        <button class="btn-eliminar-perm" data-tipo="usuarios">Vaciar Papelera</button>
+                    </div>
+                    <ul id="papelera-usuarios"></ul>
+                </div>
                 <div class="card full-width-card">
-                    <h3>Ventas Eliminadas</h3>
+                    <div class="papelera-header">
+                        <h3>Ventas Eliminadas</h3>
+                        <button class="btn-eliminar-perm" data-tipo="ventas">Vaciar Papelera</button>
+                    </div>
                     <div style="overflow-x:auto;">
                         <table id="papelera-ventas-tabla">
                             <thead>
@@ -655,6 +715,13 @@
                             <tbody id="papelera-ventas"></tbody>
                         </table>
                     </div>
+                </div>
+                 <div class="card full-width-card">
+                    <div class="papelera-header">
+                        <h3>Pedidos Cancelados</h3>
+                        <button class="btn-eliminar-perm" data-tipo="pedidos">Vaciar Papelera</button>
+                    </div>
+                    <div id="papelera-pedidos"></div>
                 </div>
             </div>
         </section>
@@ -1823,9 +1890,11 @@
           ventasFiltradasGlobal = ventasFiltradas;
           
           const tbody = document.getElementById('tablaVentasBody');
+          const mobileContainer = document.getElementById('detalleVentasMobile');
           tbody.innerHTML = '';
+          mobileContainer.innerHTML = '';
+
           ventasFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
-            const tr = document.createElement('tr');
             const estatusActual = venta.estatus || 'N/A';
             let estatusClass = 'status-na';
             if(estatusActual === 'Pagado') estatusClass = 'status-pagado';
@@ -1838,10 +1907,24 @@
             if (estatusActual === 'Pendiente de Pago') {
                 accionesHTML = `<button class="btn-marcar-pagado" data-id="${venta.id}">Marcar como Pagado</button>` + accionesHTML;
             }
-            
+
+            // Para la tabla de escritorio
+            const tr = document.createElement('tr');
             tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td><td><span class="status-badge ${estatusClass}">${estatusActual}</span><button class="btn-cambiar-estatus" data-id="${venta.id}" data-estatus="${estatusActual}" title="Cambiar Estatus"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button></td><td>${new Date(venta.fecha).toLocaleString('es-MX')}</td><td>${accionesHTML}</td>`;
-            
             tbody.appendChild(tr);
+
+            // Para la vista móvil
+            const cardMobile = document.createElement('div');
+            cardMobile.className = 'venta-card-mobile';
+            cardMobile.innerHTML = `
+                <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">ID Venta:</span> <span class="venta-card-mobile-value">${venta.id.slice(-6)}</span></div>
+                <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Cliente:</span> <span class="venta-card-mobile-value">${venta.clienteNombre}</span></div>
+                <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Total:</span> <span class="venta-card-mobile-value" style="font-weight:700; color: var(--primary-color);">$${venta.total.toFixed(2)}</span></div>
+                <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Estatus:</span> <span class="venta-card-mobile-value"><span class="status-badge ${estatusClass}">${estatusActual}</span></span></div>
+                <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Fecha:</span> <span class="venta-card-mobile-value">${new Date(venta.fecha).toLocaleString('es-MX')}</span></div>
+                <div class="venta-card-mobile-actions">${accionesHTML}</div>
+            `;
+            mobileContainer.appendChild(cardMobile);
           });
           
           document.querySelectorAll('.btn-eliminar-venta').forEach(btn => btn.addEventListener('click', () => eliminarItem(btn.dataset.id, 'Venta')));
@@ -1877,24 +1960,26 @@
       
       async function cargarPapelera() {
         try {
-            const [productos, toppings, jarabes, clientes, usuarios, ventas] = await Promise.all([
+            const [productos, toppings, jarabes, clientes, usuarios, ventas, pedidos] = await Promise.all([
                 fetchAPI('/api/productos/papelera'), fetchAPI('/api/toppings/papelera'),
                 fetchAPI('/api/jarabes/papelera'), fetchAPI('/api/clientes/papelera'),
                 fetchAPI('/api/usuarios/papelera'), fetchAPI('/api/ventas/papelera'),
+                fetchAPI('/api/pedidos/papelera')
             ]);
-            renderizarPapelera(productos, 'Producto');
-            renderizarPapelera(toppings, 'Topping');
-            renderizarPapelera(jarabes, 'Jarabe');
-            renderizarPapelera(clientes, 'Cliente');
-            renderizarPapelera(usuarios, 'Usuario');
+            renderizarPapelera(productos, 'Producto', 'productos');
+            renderizarPapelera(toppings, 'Topping', 'toppings');
+            renderizarPapelera(jarabes, 'Jarabe', 'jarabes');
+            renderizarPapelera(clientes, 'Cliente', 'clientes');
+            renderizarPapelera(usuarios, 'Usuario', 'usuarios');
             renderizarPapeleraVentas(ventas);
+            renderizarPapeleraPedidos(pedidos);
         } catch (error) {
             alert("Error al cargar la papelera: " + error.message);
         }
       }
 
-      function renderizarPapelera(items, tipo) {
-        const lista = document.getElementById(`papelera-${tipo.toLowerCase()}s`);
+      function renderizarPapelera(items, tipo, endpoint) {
+        const lista = document.getElementById(`papelera-${endpoint}`);
         if(!lista) return;
         lista.innerHTML = '';
         items.forEach(item => {
@@ -1906,12 +1991,12 @@
           const btnRestaurar = document.createElement('button');
           btnRestaurar.textContent = 'Restaurar';
           btnRestaurar.className = 'btn-restaurar';
-          btnRestaurar.onclick = () => restaurarItem(item.id, tipo);
+          btnRestaurar.onclick = () => restaurarItem(item.id, endpoint);
 
           const btnEliminarPerm = document.createElement('button');
           btnEliminarPerm.textContent = 'Eliminar Permanente';
           btnEliminarPerm.className = 'btn-eliminar-perm';
-          btnEliminarPerm.onclick = () => eliminarPermanentemente(item.id, tipo);
+          btnEliminarPerm.onclick = () => eliminarPermanentemente(item.id, endpoint);
 
           divBotones.appendChild(btnRestaurar);
           divBotones.appendChild(btnEliminarPerm);
@@ -1931,31 +2016,63 @@
                   <td>${new Date(item.fecha).toLocaleString()}</td>
                   <td>$${item.total.toFixed(2)}</td>
                   <td>
-                      <button class="btn-restaurar" data-id="${item.id}" data-tipo="Venta">Restaurar</button>
-                      <button class="btn-eliminar-perm" data-id="${item.id}" data-tipo="Venta">Eliminar Permanente</button>
+                      <button class="btn-restaurar" onclick="restaurarItem('${item.id}', 'ventas')">Restaurar</button>
+                      <button class="btn-eliminar-perm" onclick="eliminarPermanentemente('${item.id}', 'ventas')">Eliminar Permanente</button>
                   </td>
               `;
               tbody.appendChild(tr);
           });
-          tbody.querySelectorAll('.btn-restaurar').forEach(btn => btn.addEventListener('click', (e) => restaurarItem(e.target.dataset.id, e.target.dataset.tipo)));
-          tbody.querySelectorAll('.btn-eliminar-perm').forEach(btn => btn.addEventListener('click', (e) => eliminarPermanentemente(e.target.dataset.id, e.target.dataset.tipo)));
+      }
+      
+      function renderizarPapeleraPedidos(items) {
+          const container = document.getElementById('papelera-pedidos');
+          container.innerHTML = '';
+          items.forEach(item => {
+              const card = document.createElement('div');
+              card.className = 'pedido-card';
+              card.innerHTML = `
+                <div class="pedido-card-header">
+                    <h4>${item.nombreCliente}</h4>
+                    <span>Cancelado: ${new Date(item.updatedAt).toLocaleDateString()}</span>
+                </div>
+                <div class="pedido-card-footer">
+                    <span class="total">Total: $${item.total.toFixed(2)}</span>
+                    <div>
+                        <button class="btn-restaurar" onclick="restaurarItem('${item.id}', 'pedidos')">Restaurar</button>
+                        <button class="btn-eliminar-perm" onclick="eliminarPermanentemente('${item.id}', 'pedidos')">Eliminar Permanente</button>
+                    </div>
+                </div>
+              `;
+              container.appendChild(card);
+          });
       }
 
-      async function restaurarItem(id, tipo) {
-        if (confirm(`¿Restaurar este ${tipo.toLowerCase()}? Volverá a la lista principal.`)) {
+      async function restaurarItem(id, tipoEndpoint) {
+        if (confirm(`¿Restaurar este elemento? Volverá a su lista principal.`)) {
           try {
-            await fetchAPI(`/api/${tipo.toLowerCase()}s/${id}/restaurar`, { method: 'PUT' });
+            await fetchAPI(`/api/${tipoEndpoint}/${id}/restaurar`, { method: 'PUT' });
             cargarPapelera();
           } catch (err) { alert(`Error: ${err.message}`); }
         }
       }
 
-      async function eliminarPermanentemente(id, tipo) {
-        if (confirm(`¡ADVERTENCIA! Esta acción es irreversible. ¿Eliminar permanentemente este ${tipo.toLowerCase()}?`)) {
+      async function eliminarPermanentemente(id, tipoEndpoint) {
+        if (confirm(`¡ADVERTENCIA! Esta acción es irreversible. ¿Eliminar permanentemente este elemento?`)) {
           try {
-            await fetchAPI(`/api/${tipo.toLowerCase()}s/${id}/permanente`, { method: 'DELETE' });
+            await fetchAPI(`/api/${tipoEndpoint}/${id}/permanente`, { method: 'DELETE' });
             cargarPapelera();
           } catch (err) { alert(`Error: ${err.message}`); }
+        }
+      }
+      
+      async function vaciarPapelera(tipoEndpoint) {
+        if (confirm(`¡ADVERTENCIA! Se eliminarán permanentemente TODOS los elementos de esta sección. ¿Deseas continuar?`)) {
+            try {
+                await fetchAPI(`/api/${tipoEndpoint}/papelera/vaciar`, { method: 'DELETE' });
+                cargarPapelera();
+            } catch(err) {
+                alert(`Error al vaciar la papelera: ${err.message}`);
+            }
         }
       }
 
@@ -2018,26 +2135,50 @@
       }
       
       function generarReportePDF() {
-          const textoResumen = document.getElementById('resumen-ventas').textContent;
-          const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
-          const filtros = `Período: ${document.getElementById('filtroFecha')._flatpickr.input.value}, Cliente: ${document.getElementById('filtroCliente').options[document.getElementById('filtroCliente').selectedIndex].text}, Vendedor: ${document.getElementById('filtroUsuario').options[document.getElementById('filtroUsuario').selectedIndex].text}`;
-          const { jsPDF } = window.jspdf;
-          const pdf = new jsPDF();
-          pdf.setFontSize(18);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text("Reporte de Ventas - Dulces Amigas", 105, 20, { align: 'center' });
-          pdf.setFontSize(10);
-          pdf.setFont('helvetica', 'normal');
-          pdf.text(`Filtros Aplicados: ${filtros}`, 10, 35);
-          pdf.text(`Fecha del Reporte: ${new Date().toLocaleString()}`, 10, 40);
-          pdf.setFont('courier', 'normal');
-          pdf.setFontSize(11);
-          pdf.text(textoResumen, 10, 55);
-          pdf.setFont('helvetica', 'bold');
-          pdf.setFontSize(14);
-          pdf.text(totalTexto, 105, 280, { align: 'center' });
-          pdf.save("reporte-ventas-completo.pdf");
-      }
+        if (ventasFiltradasGlobal.length === 0) {
+            alert("No hay ventas en el período seleccionado para generar un reporte.");
+            return;
+        }
+        const textoResumen = document.getElementById('resumen-ventas').textContent;
+        const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
+        const filtros = `Período: ${document.getElementById('filtroFecha')._flatpickr.input.value}, Cliente: ${document.getElementById('filtroCliente').options[document.getElementById('filtroCliente').selectedIndex].text}, Vendedor: ${document.getElementById('filtroUsuario').options[document.getElementById('filtroUsuario').selectedIndex].text}`;
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        pdf.setFontSize(18);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text("Reporte de Ventas - Dulces Amigas", 105, 20, { align: 'center' });
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Filtros Aplicados: ${filtros}`, 10, 35);
+        pdf.text(`Fecha del Reporte: ${new Date().toLocaleString()}`, 10, 40);
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(totalTexto, 10, 50);
+        pdf.setFont('courier', 'normal');
+        pdf.setFontSize(11);
+        pdf.text(textoResumen, 10, 65);
+
+        const finalYResumen = pdf.splitTextToSize(textoResumen, 180).length * 5 + 75;
+
+        const head = [['ID', 'Cliente', 'Total', 'Pago', 'Estatus', 'Fecha']];
+        const body = ventasFiltradasGlobal.map(v => [
+            v.id.slice(-6),
+            v.clienteNombre,
+            `$${v.total.toFixed(2)}`,
+            v.metodoPago || 'N/A',
+            v.estatus || 'N/A',
+            new Date(v.fecha).toLocaleDateString()
+        ]);
+
+        pdf.autoTable({
+            head: head,
+            body: body,
+            startY: finalYResumen,
+            theme: 'grid'
+        });
+
+        pdf.save("reporte-ventas-completo.pdf");
+    }
       
       function enviarResumenWhatsapp() {
           const textoResumen = document.getElementById('resumen-ventas').textContent;
@@ -2243,7 +2384,7 @@
       }
 
       async function cancelarPedido(id, nombre) {
-        if(confirm(`¿Estás seguro de que quieres cancelar el pedido de ${nombre}? Esta acción es irreversible.`)) {
+        if(confirm(`¿Estás seguro de que quieres cancelar el pedido de ${nombre}? El pedido se moverá a la papelera.`)) {
             await fetchAPI(`/api/pedidos/${id}`, { method: 'DELETE' });
             cargarPedidos();
         }
@@ -2435,6 +2576,10 @@
         document.getElementById('btnResumenPDF').addEventListener('click', generarResumenPDFSimple);
         document.getElementById('btnDetalleWhatsapp').addEventListener('click', enviarDetalleWhatsapp);
         document.getElementById('btnDetallePDF').addEventListener('click', generarDetallePDF);
+        
+        document.querySelectorAll('.papelera-header button').forEach(btn => {
+            btn.addEventListener('click', () => vaciarPapelera(btn.dataset.tipo));
+        });
 
         document.body.addEventListener('click', unlockAudio, { once: true });
         document.body.addEventListener('touchstart', unlockAudio, { once: true });

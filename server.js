@@ -1,4 +1,4 @@
-// server.js - v9.8 (Backend con Cálculo de Cambio para Pedidos)
+// server.js - v9.9 (Backend Definitivo con Cambio en Pedidos de Menú)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -94,9 +94,6 @@ const FechaEntrega = mongoose.model('FechaEntrega', createSchema({
     activa: { type: Boolean, default: true }
 }));
 
-// ============================================
-// INICIO DE SECCIÓN MODIFICADA
-// ============================================
 const Pedido = mongoose.model('Pedido', createSchema({
     nombreCliente: { type: String, required: true },
     telefonoCliente: { type: String, required: true },
@@ -104,8 +101,8 @@ const Pedido = mongoose.model('Pedido', createSchema({
     nota: { type: String, default: '' },
     items: Array,
     total: Number,
-    pagoCon: { type: Number, default: 0 }, // NUEVO CAMPO
-    cambio: { type: Number, default: 0 },   // NUEVO CAMPO
+    pagoCon: { type: Number, default: 0 },
+    cambio: { type: Number, default: 0 },
     estatus: { 
         type: String, 
         default: 'recibido', 
@@ -115,9 +112,6 @@ const Pedido = mongoose.model('Pedido', createSchema({
     repartidorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null },
     fechaEntregaId: { type: mongoose.Schema.Types.ObjectId, ref: 'FechaEntrega' }
 }));
-// ============================================
-// FIN DE SECCIÓN MODIFICADA
-// ============================================
 
 
 // --- MIDDLEWARES DE SEGURIDAD ---
@@ -189,9 +183,13 @@ publicApiRouter.get('/configuracion', async (req, res) => {
 publicApiRouter.get('/productos', async (req, res) => res.json(await Producto.find(findActive)));
 publicApiRouter.get('/toppings', async (req, res) => res.json(await Topping.find(findActive)));
 publicApiRouter.get('/jarabes', async (req, res) => res.json(await Jarabe.find(findActive)));
+
+// ============================================
+// INICIO DE SECCIÓN MODIFICADA
+// ============================================
 publicApiRouter.post('/pedidos', async (req, res) => {
     try {
-        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota } = req.body;
+        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota, pagoCon, cambio } = req.body;
         if (!nombreCliente || !telefonoCliente || !items || !items.length || !fechaEntregaId) {
             return res.status(400).json({ error: 'Faltan datos en el pedido.' });
         }
@@ -219,13 +217,22 @@ publicApiRouter.post('/pedidos', async (req, res) => {
             }
         }
 
-        const nuevoPedido = await Pedido.create({ nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota, visto: false });
+        const nuevoPedido = await Pedido.create({ 
+            nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota, 
+            pagoCon: pagoCon || 0, 
+            cambio: cambio || 0,
+            visto: false 
+        });
         res.status(201).json({ message: 'Pedido recibido con éxito', pedidoId: nuevoPedido.id });
     } catch (error) {
         console.error("Error al crear pedido desde el menú:", error);
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
+// ============================================
+// FIN DE SECCIÓN MODIFICADA
+// ============================================
+
 publicApiRouter.get('/fechas-entrega', async (req, res) => {
     try {
         const hoy = new Date();
@@ -410,12 +417,9 @@ ventasRouter.post('/', tienePermiso('pedidos'), (req, res, next) => {
     Venta.create(nuevaVentaData).then(venta => res.status(201).json(venta)).catch(next);
 });
 
-// ============================================
-// INICIO DE SECCIÓN MODIFICADA
-// ============================================
 ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => {
     try {
-        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota, pagoCon, cambio } = req.body; // Se añaden pagoCon y cambio
+        const { nombreCliente, telefonoCliente, direccionEntrega, fechaEntregaId, items, total, nota, pagoCon, cambio } = req.body;
         if (!nombreCliente || !items || !items.length) {
             return res.status(400).json({ error: 'Faltan datos para crear el pedido.' });
         }
@@ -437,9 +441,6 @@ ventasRouter.post('/crear-pedido', tienePermiso('pedidos'), async (req, res) => 
         res.status(500).json({ error: 'Error al procesar el pedido.' });
     }
 });
-// ============================================
-// FIN DE SECCIÓN MODIFICADA
-// ============================================
 
 ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
     try {

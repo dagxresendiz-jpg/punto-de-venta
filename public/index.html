@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dulces Amigas - Punto de Venta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -1143,10 +1143,14 @@
             'gestion-fechas': () => cargarFechasDeEntrega(),
             'gestion-clientes': () => cargarClientes(),
             'gestion-usuarios': () => cargarUsuarios(),
-            'historial-ventas': () => { 
-                inicializarSelectorFecha(); 
-                cargarClientesParaFiltro(); 
+            'historial-ventas': () => {
+                // Primero asegura que el selector de fecha esté listo
+                inicializarSelectorFecha();
+                cargarClientesParaFiltro();
                 cargarUsuariosParaFiltro();
+                // Dispara el evento click en el botón "Hoy" para cargar automáticamente
+                // los datos del día actual cada vez que se entra a la sección.
+                document.getElementById('btn-filtro-hoy').click();
             },
             'papelera-reciclaje': () => cargarPapelera(),
           };
@@ -1845,7 +1849,8 @@
               locale: "es",
               defaultDate: new Date(),
               onReady: function(selectedDates, dateStr, instance) {
-                cargarVentasHistorial();
+                // Se elimina la carga automática desde aquí para evitar doble carga.
+                // La carga se hará ahora desde la función mostrarSeccion.
               },
               onChange: function(selectedDates, dateStr, instance) {
                 if(selectedDates.length > 0) {

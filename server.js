@@ -1,4 +1,4 @@
-// server.js - v10.0 (Backend con Papelera de Pedidos y Vaciado Individual)
+// server.js - v10.1 (Backend con Papelera, Vaciado Individual y Cambio de Fecha de Venta)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -318,13 +318,10 @@ pedidosRouter.get('/', tienePermiso('pedidos'), async (req, res) => {
     res.json(pedidos);
 });
 pedidosRouter.put('/:id', tienePermiso('pedidos'), async (req, res) => res.json(await Pedido.findByIdAndUpdate(req.params.id, { estatus: req.body.estatus }, { new: true })));
-
-// CAMBIADO: ya no elimina, mueve a la papelera (cancela)
 pedidosRouter.delete('/:id', tienePermiso('pedidos'), async (req, res) => { 
     await Pedido.findByIdAndUpdate(req.params.id, { status: 'eliminado', estatus: 'cancelado' }); 
     res.status(204).send(); 
 });
-// NUEVO: Para la papelera
 pedidosRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Pedido.find({ status: 'eliminado' })));
 pedidosRouter.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => {
     await Pedido.findByIdAndUpdate(req.params.id, { status: 'activo', estatus: 'recibido' });
@@ -393,9 +390,6 @@ pedidosRouter.post('/marcar-vistos', tienePermiso('pedidos'), async (req, res) =
     } catch (error) { res.status(500).json({ error: 'Error al marcar pedidos como vistos.' }); }
 });
 apiRouter.use('/pedidos', pedidosRouter);
-// ============================================
-// FIN DE SECCIÓN MODIFICADA
-// ============================================
 
 const crearRutasCrud = (modelo, nombre, permiso) => {
     const router = express.Router();
@@ -406,8 +400,6 @@ const crearRutasCrud = (modelo, nombre, permiso) => {
     router.delete('/:id', tienePermiso(permiso), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });
     router.put('/:id/restaurar', tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndUpdate(req.params.id, { status: 'activo' }); res.json({ message: `${nombre} restaurado` }); });
     router.delete('/:id/permanente', tienePermiso('papelera'), async (req, res) => { await modelo.findByIdAndDelete(req.params.id); res.status(204).send(); });
-
-    // NUEVO: Ruta para vaciar la papelera de cada sección
     router.delete('/papelera/vaciar', esAdmin, async (req, res) => {
         await modelo.deleteMany({ status: 'eliminado' });
         res.status(204).send();
@@ -483,6 +475,33 @@ ventasRouter.get('/', tienePermiso('historial'), async (req, res) => {
         res.status(500).json({ error: 'Error al obtener historial de ventas.' });
     }
 });
+
+// **NUEVA RUTA AÑADIDA AQUÍ**
+ventasRouter.put('/:id/fecha', esAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { nuevaFecha } = req.body;
+
+  if (!nuevaFecha || isNaN(new Date(nuevaFecha))) {
+    return res.status(400).json({ error: 'Se requiere una fecha válida.' });
+  }
+
+  try {
+    const ventaActualizada = await Venta.findByIdAndUpdate(
+      id, 
+      { fecha: new Date(nuevaFecha) }, 
+      { new: true }
+    );
+    if (!ventaActualizada) {
+      return res.status(404).json({ error: 'Venta no encontrada.' });
+    }
+    res.json({ message: 'Fecha de la venta actualizada correctamente.' });
+  } catch (error) {
+    console.error('Error al actualizar la fecha de la venta:', error);
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+});
+
+
 ventasRouter.get('/papelera', tienePermiso('papelera'), async (req, res) => res.json(await Venta.find({ status: 'eliminado' })));
 ventasRouter.put('/:id', tienePermiso('historial'), async (req, res) => res.json(await Venta.findByIdAndUpdate(req.params.id, req.body, { new: true })));
 ventasRouter.delete('/:id', tienePermiso('historial'), async (req, res) => { await Venta.findByIdAndUpdate(req.params.id, { status: 'eliminado' }); res.status(204).send(); });

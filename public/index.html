@@ -244,7 +244,6 @@
       main { padding: 1rem; }
       .card { padding: 1rem; }
       
-      /* Ocultar tabla y mostrar tarjetas en móvil */
       #tablaVentasDesktop { display: none; }
       .detalle-ventas-mobile { display: block; }
     }
@@ -742,7 +741,7 @@
       const notificationSound = document.getElementById('notification-sound');
       const originalTitle = document.title;
       let clientesCacheados = [];
-      let currentUserRole = null; // Variable global para el rol del usuario
+      let currentUserRole = null;
       
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
@@ -760,9 +759,7 @@
       const passwordInput = document.getElementById('password');
       const eyeOpen = document.getElementById('eye-open');
       const eyeClosed = document.getElementById('eye-closed');
-
-      // **CORRECCIÓN 2:** Mover el event listener del ojo de la contraseña aquí
-      // para que se active tan pronto como la página cargue, antes de cualquier login.
+      
       togglePassword.addEventListener('click', () => {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordInput.setAttribute('type', type);
@@ -965,7 +962,7 @@
                 return;
             }
 
-            currentUserRole = payload.role; // **MODIFICACIÓN:** Guardar el rol en la variable global
+            currentUserRole = payload.role;
             welcomeUserSpan.textContent = `Bienvenido, ${payload.username} (${payload.role})`;
             
             const esAdmin = payload.role === 'admin';
@@ -1049,7 +1046,7 @@
       function showLogin() {
         localStorage.removeItem('token');
         sessionStorage.removeItem('lastActiveSection');
-        currentUserRole = null; // Limpiar el rol al cerrar sesión
+        currentUserRole = null;
         if (pollingIntervalId) clearInterval(pollingIntervalId);
         const style = document.head.querySelector('style[data-flicker-guard]');
         if (style) {
@@ -1811,12 +1808,11 @@
         }
       }
       
-      // **NUEVA FUNCIÓN 1:** Lógica para cambiar la fecha de una venta
-      async function cambiarFechaVenta(ventaId) {
+      async function cambiarFechaVenta(ventaId, element) {
           const venta = ventasEnMemoria.find(v => v.id === ventaId);
           if (!venta) return;
 
-          flatpickr("body", {
+          flatpickr(element, {
               defaultDate: venta.fecha,
               enableTime: true,
               dateFormat: "Y-m-d H:i",
@@ -1935,47 +1931,84 @@
           mobileContainer.innerHTML = '';
 
           ventasFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
-            const estatusActual = venta.estatus || 'N/A';
-            let estatusClass = 'status-na';
-            if(estatusActual === 'Pagado') estatusClass = 'status-pagado';
-            if(estatusActual === 'Pendiente de Pago') estatusClass = 'status-pendiente';
-            
-            let accionesHTML = `
-              <button class="btn-editar-venta" onclick="window.app.editarVenta('${venta.id}')" title="Editar Venta"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>
-              <button class="btn-reimprimir" onclick="window.app.reimprimirTicket('${venta.id}')" title="Reimprimir Ticket"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg></button>
-              <button class="btn-eliminar-venta" onclick="eliminarItem('${venta.id}', 'Venta')">X</button>`;
-            
-            if (currentUserRole === 'admin') {
-                const btnCambiarFecha = `<button class="btn-cambiar-fecha" onclick="window.app.cambiarFechaVenta('${venta.id}')" title="Cambiar Fecha de Venta"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 12.75h.008v.008H12v-.008z" /></svg></button>`;
-                accionesHTML = btnCambiarFecha + accionesHTML;
-            }
+              const tr = document.createElement('tr');
+              const cardMobile = document.createElement('div');
+              cardMobile.className = 'venta-card-mobile';
 
-            if (estatusActual === 'Pendiente de Pago') {
-                accionesHTML = `<button class="btn-marcar-pagado" onclick="window.app.marcarComoPagado('${venta.id}')">Marcar como Pagado</button>` + accionesHTML;
-            }
-            
-            const btnCambiarEstatus = `<button class="btn-cambiar-estatus" onclick="window.app.cambiarEstatus('${venta.id}', '${estatusActual}')" title="Cambiar Estatus"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>`;
-            
-            // Para la tabla de escritorio
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td><td><span class="status-badge ${estatusClass}">${estatusActual}</span>${btnCambiarEstatus}</td><td>${new Date(venta.fecha).toLocaleString('es-MX')}</td><td>${accionesHTML}</td>`;
-            tbody.appendChild(tr);
+              const estatusActual = venta.estatus || 'N/A';
+              let estatusClass = 'status-na';
+              if (estatusActual === 'Pagado') estatusClass = 'status-pagado';
+              if (estatusActual === 'Pendiente de Pago') estatusClass = 'status-pendiente';
 
-            // Para la vista móvil
-            const cardMobile = document.createElement('div');
-            cardMobile.className = 'venta-card-mobile';
-            cardMobile.innerHTML = `
-                <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">ID Venta:</span> <span class="venta-card-mobile-value">${venta.id.slice(-6)}</span></div>
-                <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Cliente:</span> <span class="venta-card-mobile-value">${venta.clienteNombre}</span></div>
-                <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Total:</span> <span class="venta-card-mobile-value" style="font-weight:700; color: var(--primary-color);">$${venta.total.toFixed(2)}</span></div>
-                <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Estatus:</span> <span class="venta-card-mobile-value"><span class="status-badge ${estatusClass}">${estatusActual}</span></span></div>
-                <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Fecha:</span> <span class="venta-card-mobile-value">${new Date(venta.fecha).toLocaleString('es-MX')}</span></div>
-                <div class="venta-card-mobile-actions">${accionesHTML}</div>
-            `;
-            mobileContainer.appendChild(cardMobile);
+              const actionsContainer = document.createElement('div');
+              actionsContainer.className = 'venta-card-mobile-actions';
+
+              if (estatusActual === 'Pendiente de Pago') {
+                  const btnPagado = document.createElement('button');
+                  btnPagado.className = 'btn-marcar-pagado';
+                  btnPagado.textContent = 'Marcar como Pagado';
+                  btnPagado.addEventListener('click', () => marcarComoPagado(venta.id));
+                  actionsContainer.appendChild(btnPagado);
+              }
+
+              if (currentUserRole === 'admin') {
+                  const btnFecha = document.createElement('button');
+                  btnFecha.className = 'btn-cambiar-fecha';
+                  btnFecha.title = 'Cambiar Fecha de Venta';
+                  btnFecha.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 12.75h.008v.008H12v-.008z" /></svg>`;
+                  btnFecha.addEventListener('click', (e) => cambiarFechaVenta(venta.id, e.currentTarget));
+                  actionsContainer.appendChild(btnFecha);
+              }
+              
+              const btnEditar = document.createElement('button');
+              btnEditar.className = 'btn-editar-venta';
+              btnEditar.title = 'Editar Venta';
+              btnEditar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>`;
+              btnEditar.addEventListener('click', () => editarVenta(venta.id));
+              actionsContainer.appendChild(btnEditar);
+              
+              const btnReimprimir = document.createElement('button');
+              btnReimprimir.className = 'btn-reimprimir';
+              btnReimprimir.title = 'Reimprimir Ticket';
+              btnReimprimir.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg>`;
+              btnReimprimir.addEventListener('click', () => reimprimirTicket(venta.id));
+              actionsContainer.appendChild(btnReimprimir);
+              
+              const btnEliminar = document.createElement('button');
+              btnEliminar.className = 'btn-eliminar-venta';
+              btnEliminar.textContent = 'X';
+              btnEliminar.addEventListener('click', () => eliminarItem(venta.id, 'Venta'));
+              actionsContainer.appendChild(btnEliminar);
+
+              const estatusHTML = `<span class="status-badge ${estatusClass}">${estatusActual}</span>`;
+              const btnCambiarEstatus = document.createElement('button');
+              btnCambiarEstatus.className = 'btn-cambiar-estatus';
+              btnCambiarEstatus.title = 'Cambiar Estatus';
+              btnCambiarEstatus.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>`;
+              btnCambiarEstatus.addEventListener('click', () => cambiarEstatus(venta.id, estatusActual));
+
+              tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td>`;
+              const estatusCell = document.createElement('td');
+              estatusCell.innerHTML = estatusHTML;
+              estatusCell.appendChild(btnCambiarEstatus);
+              tr.appendChild(estatusCell);
+              tr.innerHTML += `<td>${new Date(venta.fecha).toLocaleString('es-MX')}</td>`;
+              const actionsCell = document.createElement('td');
+              actionsCell.appendChild(actionsContainer.cloneNode(true));
+              tr.appendChild(actionsCell);
+              tbody.appendChild(tr);
+
+              cardMobile.innerHTML = `
+                  <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">ID Venta:</span> <span class="venta-card-mobile-value">${venta.id.slice(-6)}</span></div>
+                  <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Cliente:</span> <span class="venta-card-mobile-value">${venta.clienteNombre}</span></div>
+                  <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Total:</span> <span class="venta-card-mobile-value" style="font-weight:700; color: var(--primary-color);">$${venta.total.toFixed(2)}</span></div>
+                  <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Estatus:</span> <span class="venta-card-mobile-value"><span class="status-badge ${estatusClass}">${estatusActual}</span></span></div>
+                  <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Fecha:</span> <span class="venta-card-mobile-value">${new Date(venta.fecha).toLocaleString('es-MX')}</span></div>`;
+              cardMobile.appendChild(actionsContainer);
+              mobileContainer.appendChild(cardMobile);
           });
           
-          const totalPeriodo = ventasFiltradas.reduce((acc, venta) => acc + venta.total, 0);
+          const totalPeriodo = ventasFiltradas.reduce((acc, v) => acc + v.total, 0);
           document.getElementById('totalPeriodoHistorial').textContent = `Total del Período Filtrado: $${totalPeriodo.toFixed(2)}`;
           prepararDatosParaGraficas(ventasFiltradas);
           generarResumen(ventasFiltradas);
@@ -2637,13 +2670,7 @@
           convertirPedidoAVenta, 
           asignarRepartidor,
           toggleFecha, 
-          eliminarFecha,
-          // **NUEVA FUNCIÓN 2:** Exponer las funciones al objeto global `app`
-          marcarComoPagado,
-          cambiarEstatus,
-          reimprimirTicket,
-          editarVenta,
-          cambiarFechaVenta
+          eliminarFecha
       };
 
       await loadPublicConfig();

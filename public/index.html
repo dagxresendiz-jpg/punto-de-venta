@@ -188,8 +188,8 @@
     .status-na { background-color: var(--text-color-light); }
     .btn-marcar-pagado { background-color: var(--success-color); color: white; padding: 0.4rem 0.8rem; font-size: 0.8em; margin-right: 0.5rem; }
     .btn-marcar-pagado:hover { background-color: var(--success-hover); }
-    .btn-reimprimir, .btn-editar-venta { background-color: var(--primary-color); color: white; padding: 0.4rem; font-size: 0.8em; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin-right: 0.5rem; }
-    .btn-reimprimir svg, .btn-editar-venta svg { width: 16px; height: 16px; }
+    .btn-reimprimir, .btn-editar-venta, .btn-cambiar-fecha { background-color: var(--primary-color); color: white; padding: 0.4rem; font-size: 0.8em; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin-right: 0.5rem; }
+    .btn-reimprimir svg, .btn-editar-venta svg, .btn-cambiar-fecha svg { width: 16px; height: 16px; }
     .btn-cambiar-estatus { background: none; border: none; padding: 0; margin-left: 0.5rem; cursor: pointer; color: var(--text-color-light); }
     .btn-cambiar-estatus:hover { color: var(--primary-color); }
     .btn-cambiar-estatus svg { width: 16px; height: 16px; }
@@ -742,6 +742,7 @@
       const notificationSound = document.getElementById('notification-sound');
       const originalTitle = document.title;
       let clientesCacheados = [];
+      let currentUserRole = null; // Variable global para el rol del usuario
       
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
@@ -759,6 +760,15 @@
       const passwordInput = document.getElementById('password');
       const eyeOpen = document.getElementById('eye-open');
       const eyeClosed = document.getElementById('eye-closed');
+
+      // **CORRECCIÓN 2:** Mover el event listener del ojo de la contraseña aquí
+      // para que se active tan pronto como la página cargue, antes de cualquier login.
+      togglePassword.addEventListener('click', () => {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        eyeOpen.style.display = type === 'password' ? 'block' : 'none';
+        eyeClosed.style.display = type === 'text' ? 'block' : 'none';
+      });
 
       function applyTheme(theme) {
           if (theme === 'dark') {
@@ -812,7 +822,7 @@
                       const logo_base64 = e.target.result;
                       document.getElementById('app-logo').src = logo_base64;
                       document.getElementById('login-logo').src = logo_base64;
-                      guardarConfiguracionServidor({ logo_base64 });
+                      guardarConfiguracionServidor({ logo_base_64 });
                   };
                   reader.readAsDataURL(file);
               }
@@ -955,6 +965,7 @@
                 return;
             }
 
+            currentUserRole = payload.role; // **MODIFICACIÓN:** Guardar el rol en la variable global
             welcomeUserSpan.textContent = `Bienvenido, ${payload.username} (${payload.role})`;
             
             const esAdmin = payload.role === 'admin';
@@ -1038,6 +1049,7 @@
       function showLogin() {
         localStorage.removeItem('token');
         sessionStorage.removeItem('lastActiveSection');
+        currentUserRole = null; // Limpiar el rol al cerrar sesión
         if (pollingIntervalId) clearInterval(pollingIntervalId);
         const style = document.head.querySelector('style[data-flicker-guard]');
         if (style) {
@@ -1144,12 +1156,9 @@
             'gestion-clientes': () => cargarClientes(),
             'gestion-usuarios': () => cargarUsuarios(),
             'historial-ventas': () => {
-                // Primero asegura que el selector de fecha esté listo
                 inicializarSelectorFecha();
                 cargarClientesParaFiltro();
                 cargarUsuariosParaFiltro();
-                // Dispara el evento click en el botón "Hoy" para cargar automáticamente
-                // los datos del día actual cada vez que se entra a la sección.
                 document.getElementById('btn-filtro-hoy').click();
             },
             'papelera-reciclaje': () => cargarPapelera(),
@@ -1801,6 +1810,36 @@
           }
         }
       }
+      
+      // **NUEVA FUNCIÓN 1:** Lógica para cambiar la fecha de una venta
+      async function cambiarFechaVenta(ventaId) {
+          const venta = ventasEnMemoria.find(v => v.id === ventaId);
+          if (!venta) return;
+
+          flatpickr("body", {
+              defaultDate: venta.fecha,
+              enableTime: true,
+              dateFormat: "Y-m-d H:i",
+              locale: "es",
+              onClose: async (selectedDates) => {
+                  if (selectedDates.length > 0) {
+                      const nuevaFecha = selectedDates[0];
+                      if (confirm(`¿Confirmas cambiar la fecha de esta venta a ${nuevaFecha.toLocaleString('es-MX')}?`)) {
+                          try {
+                              await fetchAPI(`/api/ventas/${ventaId}/fecha`, {
+                                  method: 'PUT',
+                                  body: JSON.stringify({ nuevaFecha: nuevaFecha.toISOString() })
+                              });
+                              alert('¡Fecha de la venta actualizada correctamente!');
+                              await cargarVentasHistorial();
+                          } catch (error) {
+                              alert(`Error al cambiar la fecha: ${error.message}`);
+                          }
+                      }
+                  }
+              }
+          }).open();
+      }
 
       function reimprimirTicket(ventaId) {
           const venta = ventasEnMemoria.find(v => v.id === ventaId);
@@ -1848,10 +1887,6 @@
               dateFormat: "Y-m-d", 
               locale: "es",
               defaultDate: new Date(),
-              onReady: function(selectedDates, dateStr, instance) {
-                // Se elimina la carga automática desde aquí para evitar doble carga.
-                // La carga se hará ahora desde la función mostrarSeccion.
-              },
               onChange: function(selectedDates, dateStr, instance) {
                 if(selectedDates.length > 0) {
                   cargarVentasHistorial();
@@ -1906,16 +1941,24 @@
             if(estatusActual === 'Pendiente de Pago') estatusClass = 'status-pendiente';
             
             let accionesHTML = `
-              <button class="btn-editar-venta" data-id="${venta.id}" title="Editar Venta"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>
-              <button class="btn-reimprimir" data-id="${venta.id}" title="Reimprimir Ticket"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg></button>
-              <button class="btn-eliminar-venta" data-id="${venta.id}">X</button>`;
-            if (estatusActual === 'Pendiente de Pago') {
-                accionesHTML = `<button class="btn-marcar-pagado" data-id="${venta.id}">Marcar como Pagado</button>` + accionesHTML;
+              <button class="btn-editar-venta" onclick="window.app.editarVenta('${venta.id}')" title="Editar Venta"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>
+              <button class="btn-reimprimir" onclick="window.app.reimprimirTicket('${venta.id}')" title="Reimprimir Ticket"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg></button>
+              <button class="btn-eliminar-venta" onclick="eliminarItem('${venta.id}', 'Venta')">X</button>`;
+            
+            if (currentUserRole === 'admin') {
+                const btnCambiarFecha = `<button class="btn-cambiar-fecha" onclick="window.app.cambiarFechaVenta('${venta.id}')" title="Cambiar Fecha de Venta"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 12.75h.008v.008H12v-.008z" /></svg></button>`;
+                accionesHTML = btnCambiarFecha + accionesHTML;
             }
 
+            if (estatusActual === 'Pendiente de Pago') {
+                accionesHTML = `<button class="btn-marcar-pagado" onclick="window.app.marcarComoPagado('${venta.id}')">Marcar como Pagado</button>` + accionesHTML;
+            }
+            
+            const btnCambiarEstatus = `<button class="btn-cambiar-estatus" onclick="window.app.cambiarEstatus('${venta.id}', '${estatusActual}')" title="Cambiar Estatus"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>`;
+            
             // Para la tabla de escritorio
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td><td><span class="status-badge ${estatusClass}">${estatusActual}</span><button class="btn-cambiar-estatus" data-id="${venta.id}" data-estatus="${estatusActual}" title="Cambiar Estatus"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button></td><td>${new Date(venta.fecha).toLocaleString('es-MX')}</td><td>${accionesHTML}</td>`;
+            tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td><td><span class="status-badge ${estatusClass}">${estatusActual}</span>${btnCambiarEstatus}</td><td>${new Date(venta.fecha).toLocaleString('es-MX')}</td><td>${accionesHTML}</td>`;
             tbody.appendChild(tr);
 
             // Para la vista móvil
@@ -1932,12 +1975,6 @@
             mobileContainer.appendChild(cardMobile);
           });
           
-          document.querySelectorAll('.btn-eliminar-venta').forEach(btn => btn.addEventListener('click', () => eliminarItem(btn.dataset.id, 'Venta')));
-          document.querySelectorAll('.btn-marcar-pagado').forEach(btn => btn.addEventListener('click', () => marcarComoPagado(btn.dataset.id)));
-          document.querySelectorAll('.btn-reimprimir').forEach(btn => btn.addEventListener('click', () => reimprimirTicket(btn.dataset.id)));
-          document.querySelectorAll('.btn-editar-venta').forEach(btn => btn.addEventListener('click', () => editarVenta(btn.dataset.id)));
-          document.querySelectorAll('.btn-cambiar-estatus').forEach(btn => btn.addEventListener('click', () => cambiarEstatus(btn.dataset.id, btn.dataset.estatus)));
-
           const totalPeriodo = ventasFiltradas.reduce((acc, venta) => acc + venta.total, 0);
           document.getElementById('totalPeriodoHistorial').textContent = `Total del Período Filtrado: $${totalPeriodo.toFixed(2)}`;
           prepararDatosParaGraficas(ventasFiltradas);
@@ -2524,12 +2561,7 @@
             }
           }
         });
-        togglePassword.addEventListener('click', () => {
-          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-          passwordInput.setAttribute('type', type);
-          eyeOpen.style.display = type === 'password' ? 'block' : 'none';
-          eyeClosed.style.display = type === 'text' ? 'block' : 'none';
-        });
+        
         document.getElementById('formProducto').addEventListener('submit', (e) => guardarItem(e, 'Producto'));
         document.getElementById('formTopping').addEventListener('submit', (e) => guardarItem(e, 'Topping'));
         document.getElementById('formJarabe').addEventListener('submit', (e) => guardarItem(e, 'Jarabe'));
@@ -2605,7 +2637,13 @@
           convertirPedidoAVenta, 
           asignarRepartidor,
           toggleFecha, 
-          eliminarFecha
+          eliminarFecha,
+          // **NUEVA FUNCIÓN 2:** Exponer las funciones al objeto global `app`
+          marcarComoPagado,
+          cambiarEstatus,
+          reimprimirTicket,
+          editarVenta,
+          cambiarFechaVenta
       };
 
       await loadPublicConfig();

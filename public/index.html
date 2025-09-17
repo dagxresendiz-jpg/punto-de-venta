@@ -1891,30 +1891,68 @@
           });
       }
       
+      // **NUEVA FUNCIÓN HELPER PARA CREAR BOTONES**
+      function createActionButtons(venta) {
+          const container = document.createElement('div');
+          container.className = 'venta-card-mobile-actions'; // Reutilizamos la clase para el flexbox
+
+          if (venta.estatus === 'Pendiente de Pago') {
+              const btnPagado = document.createElement('button');
+              btnPagado.className = 'btn-marcar-pagado';
+              btnPagado.textContent = 'Marcar como Pagado';
+              btnPagado.addEventListener('click', () => marcarComoPagado(venta.id));
+              container.appendChild(btnPagado);
+          }
+
+          if (currentUserRole === 'admin') {
+              const btnFecha = document.createElement('button');
+              btnFecha.className = 'btn-cambiar-fecha';
+              btnFecha.title = 'Cambiar Fecha de Venta';
+              btnFecha.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 12.75h.008v.008H12v-.008z" /></svg>`;
+              btnFecha.addEventListener('click', (e) => cambiarFechaVenta(venta.id, e.currentTarget));
+              container.appendChild(btnFecha);
+          }
+          
+          const btnEditar = document.createElement('button');
+          btnEditar.className = 'btn-editar-venta';
+          btnEditar.title = 'Editar Venta';
+          btnEditar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>`;
+          btnEditar.addEventListener('click', () => editarVenta(venta.id));
+          container.appendChild(btnEditar);
+          
+          const btnReimprimir = document.createElement('button');
+          btnReimprimir.className = 'btn-reimprimir';
+          btnReimprimir.title = 'Reimprimir Ticket';
+          btnReimprimir.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg>`;
+          btnReimprimir.addEventListener('click', () => reimprimirTicket(venta.id));
+          container.appendChild(btnReimprimir);
+          
+          const btnEliminar = document.createElement('button');
+          btnEliminar.className = 'btn-eliminar-venta';
+          btnEliminar.textContent = 'X';
+          btnEliminar.addEventListener('click', () => eliminarItem(venta.id, 'Venta'));
+          container.appendChild(btnEliminar);
+
+          return container;
+      }
+
       async function cargarVentasHistorial() {
         try {
           const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
           if (!selectorFecha || !selectorFecha.selectedDates || selectorFecha.selectedDates.length === 0) {
             return;
           }
-
           const fechasSeleccionadas = selectorFecha.selectedDates;
           const clienteId = document.getElementById('filtroCliente').value;
           const usuarioId = document.getElementById('filtroUsuario').value;
           const estatus = document.getElementById('filtroEstatus').value;
           
           let url = '/api/ventas?';
-
           const fechaInicio = new Date(fechasSeleccionadas[0]);
           fechaInicio.setHours(0, 0, 0, 0);
-
           const fechaFin = new Date(fechasSeleccionadas.length > 1 ? fechasSeleccionadas[1] : fechasSeleccionadas[0]);
           fechaFin.setHours(23, 59, 59, 999);
-
-          const isoInicio = fechaInicio.toISOString();
-          const isoFin = fechaFin.toISOString();
-
-          url += `fechaInicio=${isoInicio}&fechaFin=${isoFin}`;
+          url += `fechaInicio=${fechaInicio.toISOString()}&fechaFin=${fechaFin.toISOString()}`;
 
           ventasEnMemoria = await fetchAPI(url);
           let ventasFiltradas = ventasEnMemoria;
@@ -1931,80 +1969,39 @@
           mobileContainer.innerHTML = '';
 
           ventasFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
-              const tr = document.createElement('tr');
-              const cardMobile = document.createElement('div');
-              cardMobile.className = 'venta-card-mobile';
-
               const estatusActual = venta.estatus || 'N/A';
               let estatusClass = 'status-na';
               if (estatusActual === 'Pagado') estatusClass = 'status-pagado';
               if (estatusActual === 'Pendiente de Pago') estatusClass = 'status-pendiente';
 
-              const actionsContainer = document.createElement('div');
-              actionsContainer.className = 'venta-card-mobile-actions';
-
-              if (estatusActual === 'Pendiente de Pago') {
-                  const btnPagado = document.createElement('button');
-                  btnPagado.className = 'btn-marcar-pagado';
-                  btnPagado.textContent = 'Marcar como Pagado';
-                  btnPagado.addEventListener('click', () => marcarComoPagado(venta.id));
-                  actionsContainer.appendChild(btnPagado);
-              }
-
-              if (currentUserRole === 'admin') {
-                  const btnFecha = document.createElement('button');
-                  btnFecha.className = 'btn-cambiar-fecha';
-                  btnFecha.title = 'Cambiar Fecha de Venta';
-                  btnFecha.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 12.75h.008v.008H12v-.008z" /></svg>`;
-                  btnFecha.addEventListener('click', (e) => cambiarFechaVenta(venta.id, e.currentTarget));
-                  actionsContainer.appendChild(btnFecha);
-              }
-              
-              const btnEditar = document.createElement('button');
-              btnEditar.className = 'btn-editar-venta';
-              btnEditar.title = 'Editar Venta';
-              btnEditar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>`;
-              btnEditar.addEventListener('click', () => editarVenta(venta.id));
-              actionsContainer.appendChild(btnEditar);
-              
-              const btnReimprimir = document.createElement('button');
-              btnReimprimir.className = 'btn-reimprimir';
-              btnReimprimir.title = 'Reimprimir Ticket';
-              btnReimprimir.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg>`;
-              btnReimprimir.addEventListener('click', () => reimprimirTicket(venta.id));
-              actionsContainer.appendChild(btnReimprimir);
-              
-              const btnEliminar = document.createElement('button');
-              btnEliminar.className = 'btn-eliminar-venta';
-              btnEliminar.textContent = 'X';
-              btnEliminar.addEventListener('click', () => eliminarItem(venta.id, 'Venta'));
-              actionsContainer.appendChild(btnEliminar);
-
-              const estatusHTML = `<span class="status-badge ${estatusClass}">${estatusActual}</span>`;
+              // --- Renderizar para la tabla de escritorio ---
+              const tr = tbody.insertRow();
+              tr.insertCell().textContent = venta.id.slice(-6);
+              tr.insertCell().textContent = venta.vendedorUsername;
+              tr.insertCell().textContent = venta.clienteNombre;
+              tr.insertCell().textContent = `$${venta.total.toFixed(2)}`;
+              tr.insertCell().textContent = venta.metodoPago || 'N/A';
+              const estatusCell = tr.insertCell();
+              estatusCell.innerHTML = `<span class="status-badge ${estatusClass}">${estatusActual}</span>`;
               const btnCambiarEstatus = document.createElement('button');
               btnCambiarEstatus.className = 'btn-cambiar-estatus';
               btnCambiarEstatus.title = 'Cambiar Estatus';
               btnCambiarEstatus.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>`;
               btnCambiarEstatus.addEventListener('click', () => cambiarEstatus(venta.id, estatusActual));
-
-              tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td>`;
-              const estatusCell = document.createElement('td');
-              estatusCell.innerHTML = estatusHTML;
               estatusCell.appendChild(btnCambiarEstatus);
-              tr.appendChild(estatusCell);
-              tr.innerHTML += `<td>${new Date(venta.fecha).toLocaleString('es-MX')}</td>`;
-              const actionsCell = document.createElement('td');
-              actionsCell.appendChild(actionsContainer.cloneNode(true));
-              tr.appendChild(actionsCell);
-              tbody.appendChild(tr);
+              tr.insertCell().textContent = new Date(venta.fecha).toLocaleString('es-MX');
+              tr.insertCell().appendChild(createActionButtons(venta));
 
+              // --- Renderizar para la vista móvil ---
+              const cardMobile = document.createElement('div');
+              cardMobile.className = 'venta-card-mobile';
               cardMobile.innerHTML = `
                   <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">ID Venta:</span> <span class="venta-card-mobile-value">${venta.id.slice(-6)}</span></div>
                   <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Cliente:</span> <span class="venta-card-mobile-value">${venta.clienteNombre}</span></div>
                   <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Total:</span> <span class="venta-card-mobile-value" style="font-weight:700; color: var(--primary-color);">$${venta.total.toFixed(2)}</span></div>
                   <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Estatus:</span> <span class="venta-card-mobile-value"><span class="status-badge ${estatusClass}">${estatusActual}</span></span></div>
                   <div class="venta-card-mobile-row"><span class="venta-card-mobile-label">Fecha:</span> <span class="venta-card-mobile-value">${new Date(venta.fecha).toLocaleString('es-MX')}</span></div>`;
-              cardMobile.appendChild(actionsContainer);
+              cardMobile.appendChild(createActionButtons(venta));
               mobileContainer.appendChild(cardMobile);
           });
           
@@ -2384,7 +2381,7 @@
             const btnCancelar = document.createElement('button');
             btnCancelar.className = 'btn-cancelar';
             btnCancelar.textContent = 'Cancelar';
-            btnCancelar.onclick = () => window.app.cancelarPedido(p.id, p.nombreCliente);
+            btnCancelar.onclick = () => cancelarPedido(p.id, p.nombreCliente);
             
             if (p.estatus === 'recibido') {
                 const btnW = document.createElement('button');
@@ -2396,21 +2393,21 @@
                 const btnP = document.createElement('button');
                 btnP.className = 'btn-preparar';
                 btnP.textContent = 'Preparar';
-                btnP.onclick = () => window.app.cambiarEstatusPedido(p.id, 'en_preparacion');
+                btnP.onclick = () => cambiarEstatusPedido(p.id, 'en_preparacion');
                 actions.appendChild(btnP);
                 cols.recibidos.appendChild(card);
             } else if (p.estatus === 'en_preparacion') {
                 const btnL = document.createElement('button');
                 btnL.className = 'btn-listo';
                 btnL.textContent = 'Listo';
-                btnL.onclick = () => window.app.cambiarEstatusPedido(p.id, 'listo');
+                btnL.onclick = () => cambiarEstatusPedido(p.id, 'listo');
                 actions.appendChild(btnL);
                 cols.preparacion.appendChild(card);
             } else if (p.estatus === 'listo') {
                 const btnA = document.createElement('button');
                 btnA.className = 'btn-asignar';
                 btnA.textContent = 'Asignar Reparto';
-                btnA.onclick = () => window.app.asignarRepartidor(p.id);
+                btnA.onclick = () => asignarRepartidor(p.id);
                 actions.appendChild(btnA);
                 cols.listos.appendChild(card);
             } else if (p.estatus === 'en_reparto') {

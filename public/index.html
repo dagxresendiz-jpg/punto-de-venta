@@ -7,8 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- CSS de Flatpickr y del plugin de confirmación -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css">
+  
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- JS del plugin de confirmación de Flatpickr -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
   <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -213,7 +218,6 @@
     #filtro-rapido-fechas { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
     #filtro-rapido-fechas button { padding: 0.5rem 1rem; font-size: 0.9em; }
     
-    /* VISTA DE DETALLES DE VENTA EN MÓVIL */
     .detalle-ventas-mobile { display: none; }
     .venta-card-mobile {
         background: var(--card-background);
@@ -991,9 +995,14 @@
             
             initApp();
             
+            // **MODIFICACIÓN PARA LA SECCIÓN INICIAL**
             let seccionInicial = sessionStorage.getItem('lastActiveSection');
-            let seccionEsValida = false;
-
+            if (!seccionInicial) {
+                // Si no hay nada guardado (primer login), por defecto es 'registrar-venta'
+                seccionInicial = 'registrar-venta';
+            }
+            
+            // Validar si el usuario tiene permiso para ver la sección guardada
             const mapaSeccionesAPermisos = {
                 'gestion-pedidos': 'pedidos',
                 'gestion-completa': 'gestion',
@@ -1003,33 +1012,18 @@
                 'historial-ventas': 'historial',
                 'papelera-reciclaje': 'papelera'
             };
-
-            if (seccionInicial) {
-                const permisoNecesario = mapaSeccionesAPermisos[seccionInicial];
-                if (seccionInicial === 'registrar-venta' || (permisoNecesario === 'admin' && esAdmin) || (permisos && permisos[permisoNecesario])) {
-                    seccionEsValida = true;
-                }
+            
+            const permisoNecesario = mapaSeccionesAPermisos[seccionInicial];
+            let seccionEsValida = false;
+            if (seccionInicial === 'registrar-venta' || (permisoNecesario === 'admin' && esAdmin) || (permisos && permisos[permisoNecesario])) {
+                seccionEsValida = true;
             }
-
+            
             if (seccionEsValida) {
                 mostrarSeccion(seccionInicial);
             } else {
-                const ordenDeSecciones = ['gestion-pedidos', 'registrar-venta', 'gestion-completa', 'gestion-fechas', 'gestion-clientes', 'historial-ventas', 'gestion-usuarios', 'papelera-reciclaje'];
-                let primeraEncontrada = '';
-                for (const seccion of ordenDeSecciones) {
-                    const permisoNecesario = mapaSeccionesAPermisos[seccion];
-                    if (seccion === 'registrar-venta' || (permisoNecesario === 'admin' && esAdmin) || (permisos && permisos[permisoNecesario])) {
-                        primeraEncontrada = seccion; 
-                        break; 
-                    }
-                }
-                
-                if (primeraEncontrada) {
-                    mostrarSeccion(primeraEncontrada);
-                } else {
-                    alert('No tienes permisos asignados. Contacta a un administrador.');
-                    document.querySelector('main').innerHTML = '<div class="card"><p>No tienes acceso a ninguna sección.</p></div>';
-                }
+                // Si no tiene permiso, lo mandamos a la primera sección que sí tenga
+                mostrarSeccion('registrar-venta'); //Fallback seguro
             }
             
             if (esAdmin || (permisos && permisos.pedidos)) {
@@ -1078,7 +1072,10 @@
                 return;
             }
             
+            // **MODIFICACIÓN PARA LA SECCIÓN INICIAL**
+            // Limpiamos la sección guardada SÓLO al iniciar sesión.
             sessionStorage.removeItem('lastActiveSection');
+            
             const style = document.head.querySelector('style[data-flicker-guard]');
             if (style) {
                 style.textContent = '#login-container { display: none !important; } #app-wrapper { display: flex !important; }';
@@ -1817,8 +1814,13 @@
               enableTime: true,
               dateFormat: "Y-m-d H:i",
               locale: "es",
-              onClose: async (selectedDates) => {
-                  if (selectedDates.length > 0) {
+              plugins: [new confirmDatePlugin({
+                  confirmText: "Aceptar",
+                  showAlways: true,
+                  theme: "light"
+              })],
+              onClose: async (selectedDates, dateStr, instance) => {
+                  if (selectedDates.length > 0 && instance.isConfirmed) {
                       const nuevaFecha = selectedDates[0];
                       if (confirm(`¿Confirmas cambiar la fecha de esta venta a ${nuevaFecha.toLocaleString('es-MX')}?`)) {
                           try {
@@ -1891,10 +1893,9 @@
           });
       }
       
-      // **NUEVA FUNCIÓN HELPER PARA CREAR BOTONES**
       function createActionButtons(venta) {
           const container = document.createElement('div');
-          container.className = 'venta-card-mobile-actions'; // Reutilizamos la clase para el flexbox
+          container.className = 'venta-card-mobile-actions';
 
           if (venta.estatus === 'Pendiente de Pago') {
               const btnPagado = document.createElement('button');
@@ -1974,7 +1975,6 @@
               if (estatusActual === 'Pagado') estatusClass = 'status-pagado';
               if (estatusActual === 'Pendiente de Pago') estatusClass = 'status-pendiente';
 
-              // --- Renderizar para la tabla de escritorio ---
               const tr = tbody.insertRow();
               tr.insertCell().textContent = venta.id.slice(-6);
               tr.insertCell().textContent = venta.vendedorUsername;
@@ -1991,8 +1991,7 @@
               estatusCell.appendChild(btnCambiarEstatus);
               tr.insertCell().textContent = new Date(venta.fecha).toLocaleString('es-MX');
               tr.insertCell().appendChild(createActionButtons(venta));
-
-              // --- Renderizar para la vista móvil ---
+              
               const cardMobile = document.createElement('div');
               cardMobile.className = 'venta-card-mobile';
               cardMobile.innerHTML = `
@@ -2381,33 +2380,33 @@
             const btnCancelar = document.createElement('button');
             btnCancelar.className = 'btn-cancelar';
             btnCancelar.textContent = 'Cancelar';
-            btnCancelar.onclick = () => cancelarPedido(p.id, p.nombreCliente);
+            btnCancelar.addEventListener('click', () => cancelarPedido(p.id, p.nombreCliente));
             
             if (p.estatus === 'recibido') {
                 const btnW = document.createElement('button');
                 btnW.className = 'btn-whatsapp';
                 btnW.textContent = 'Contactar';
-                btnW.onclick = () => window.open(`https://wa.me/${p.telefonoCliente.replace(/\D/g, '')}?text=¡Hola ${p.nombreCliente}! Recibimos tu pedido y estamos por prepararlo.`, '_blank');
+                btnW.addEventListener('click', () => window.open(`https://wa.me/${p.telefonoCliente.replace(/\D/g, '')}?text=¡Hola ${p.nombreCliente}! Recibimos tu pedido y estamos por prepararlo.`, '_blank'));
                 actions.appendChild(btnW);
 
                 const btnP = document.createElement('button');
                 btnP.className = 'btn-preparar';
                 btnP.textContent = 'Preparar';
-                btnP.onclick = () => cambiarEstatusPedido(p.id, 'en_preparacion');
+                btnP.addEventListener('click', () => cambiarEstatusPedido(p.id, 'en_preparacion'));
                 actions.appendChild(btnP);
                 cols.recibidos.appendChild(card);
             } else if (p.estatus === 'en_preparacion') {
                 const btnL = document.createElement('button');
                 btnL.className = 'btn-listo';
                 btnL.textContent = 'Listo';
-                btnL.onclick = () => cambiarEstatusPedido(p.id, 'listo');
+                btnL.addEventListener('click', () => cambiarEstatusPedido(p.id, 'listo'));
                 actions.appendChild(btnL);
                 cols.preparacion.appendChild(card);
             } else if (p.estatus === 'listo') {
                 const btnA = document.createElement('button');
                 btnA.className = 'btn-asignar';
                 btnA.textContent = 'Asignar Reparto';
-                btnA.onclick = () => asignarRepartidor(p.id);
+                btnA.addEventListener('click', () => asignarRepartidor(p.id));
                 actions.appendChild(btnA);
                 cols.listos.appendChild(card);
             } else if (p.estatus === 'en_reparto') {

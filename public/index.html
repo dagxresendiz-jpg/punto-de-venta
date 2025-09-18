@@ -7,10 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS de Flatpickr y del plugin de confirmación -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css">
   
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- JS del plugin de confirmación de Flatpickr -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
   <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -237,6 +240,23 @@
     .venta-card-mobile-actions { margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem; }
     
     .papelera-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;}
+
+    .app-footer {
+        text-align: center;
+        padding: 1.5rem 2rem;
+        font-size: 0.85em;
+        color: var(--text-color-light);
+        border-top: 1px solid var(--border-color);
+        margin-top: auto;
+    }
+    .app-footer a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .app-footer a:hover {
+        text-decoration: underline;
+    }
 
     @media (max-width: 768px) {
       .menu-toggle { display: block; }
@@ -727,6 +747,10 @@
             </div>
         </section>
       </main>
+      <!-- MARCA DE AGUA / FOOTER AÑADIDO -->
+      <footer class="app-footer">
+        <p>&copy; 2025 Developed with ❤️ by <a href="https://www.facebook.com/search/top?q=fia%20records" target="_blank" rel="noopener noreferrer">FiaRecords</a></p>
+      </footer>
     </div>
   </div>
 
@@ -999,20 +1023,13 @@
             }
             
             const mapaSeccionesAPermisos = {
-                'gestion-pedidos': 'pedidos',
-                'gestion-completa': 'gestion',
-                'gestion-fechas': 'admin',
-                'gestion-clientes': 'clientes',
-                'gestion-usuarios': 'usuarios',
-                'historial-ventas': 'historial',
+                'gestion-pedidos': 'pedidos', 'gestion-completa': 'gestion', 'gestion-fechas': 'admin',
+                'gestion-clientes': 'clientes', 'usuarios': 'usuarios', 'historial-ventas': 'historial',
                 'papelera-reciclaje': 'papelera'
             };
             
             const permisoNecesario = mapaSeccionesAPermisos[seccionInicial];
-            let seccionEsValida = false;
-            if (seccionInicial === 'registrar-venta' || (permisoNecesario === 'admin' && esAdmin) || (permisos && permisos[permisoNecesario])) {
-                seccionEsValida = true;
-            }
+            let seccionEsValida = seccionInicial === 'registrar-venta' || (permisoNecesario === 'admin' && esAdmin) || (permisos && permisos[permisoNecesario]);
             
             if (seccionEsValida) {
                 mostrarSeccion(seccionInicial);
@@ -1526,7 +1543,6 @@
             await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
             alert('¡Pedido enviado a cocina con éxito!');
             
-            // Si era una venta editada, eliminarla de la lista de ventas pendientes.
             const idVentaEditada = document.getElementById('idVenta').value;
             if (idVentaEditada) {
                 await eliminarItem(idVentaEditada, 'Venta');
@@ -1657,7 +1673,6 @@
         document.getElementById('fechaEntregaVenta').value = "";
         document.getElementById('notaVentaGeneral').value = "";
         
-        // Restaurar visibilidad de botones
         document.getElementById('btnRegistrarPagado').style.display = 'block';
         document.getElementById('btnRegistrarPendiente').style.display = 'block';
         document.getElementById('btnEnviarACocina').style.display = 'block';
@@ -1822,7 +1837,7 @@
               plugins: [new confirmDatePlugin({
                   confirmText: "Aceptar",
                   showAlways: true,
-                  theme: "light"
+                  theme: "light" 
               })],
               onClose: async (selectedDates, dateStr, instance) => {
                   if (selectedDates.length > 0 && instance.isConfirmed) {
@@ -1873,7 +1888,6 @@
           document.getElementById('ventaCliente').disabled = true;
           document.getElementById('btnRegistrarPagado').style.display = 'none';
           document.getElementById('btnRegistrarPendiente').style.display = 'none';
-          // **CORRECCIÓN 2: Asegurarse de que "Enviar a Cocina" esté visible al editar**
           document.getElementById('btnEnviarACocina').style.display = 'block';
           document.getElementById('btnActualizarVenta').style.display = 'block';
 

@@ -7,12 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- CSS de Flatpickr y del plugin de confirmación -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css">
   
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <!-- JS del plugin de confirmación de Flatpickr -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
   <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -995,14 +993,11 @@
             
             initApp();
             
-            // **MODIFICACIÓN PARA LA SECCIÓN INICIAL**
             let seccionInicial = sessionStorage.getItem('lastActiveSection');
             if (!seccionInicial) {
-                // Si no hay nada guardado (primer login), por defecto es 'registrar-venta'
                 seccionInicial = 'registrar-venta';
             }
             
-            // Validar si el usuario tiene permiso para ver la sección guardada
             const mapaSeccionesAPermisos = {
                 'gestion-pedidos': 'pedidos',
                 'gestion-completa': 'gestion',
@@ -1022,8 +1017,7 @@
             if (seccionEsValida) {
                 mostrarSeccion(seccionInicial);
             } else {
-                // Si no tiene permiso, lo mandamos a la primera sección que sí tenga
-                mostrarSeccion('registrar-venta'); //Fallback seguro
+                mostrarSeccion('registrar-venta');
             }
             
             if (esAdmin || (permisos && permisos.pedidos)) {
@@ -1072,8 +1066,6 @@
                 return;
             }
             
-            // **MODIFICACIÓN PARA LA SECCIÓN INICIAL**
-            // Limpiamos la sección guardada SÓLO al iniciar sesión.
             sessionStorage.removeItem('lastActiveSection');
             
             const style = document.head.querySelector('style[data-flicker-guard]');
@@ -1533,6 +1525,13 @@
         try {
             await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
             alert('¡Pedido enviado a cocina con éxito!');
+            
+            // Si era una venta editada, eliminarla de la lista de ventas pendientes.
+            const idVentaEditada = document.getElementById('idVenta').value;
+            if (idVentaEditada) {
+                await eliminarItem(idVentaEditada, 'Venta');
+            }
+
             resetearFormularioCompleto();
             mostrarSeccion('gestion-pedidos');
         } catch (error) {
@@ -1658,6 +1657,12 @@
         document.getElementById('fechaEntregaVenta').value = "";
         document.getElementById('notaVentaGeneral').value = "";
         
+        // Restaurar visibilidad de botones
+        document.getElementById('btnRegistrarPagado').style.display = 'block';
+        document.getElementById('btnRegistrarPendiente').style.display = 'block';
+        document.getElementById('btnEnviarACocina').style.display = 'block';
+        document.getElementById('btnActualizarVenta').style.display = 'none';
+
         mostrarVentaActual();
       }
 
@@ -1822,17 +1827,15 @@
               onClose: async (selectedDates, dateStr, instance) => {
                   if (selectedDates.length > 0 && instance.isConfirmed) {
                       const nuevaFecha = selectedDates[0];
-                      if (confirm(`¿Confirmas cambiar la fecha de esta venta a ${nuevaFecha.toLocaleString('es-MX')}?`)) {
-                          try {
-                              await fetchAPI(`/api/ventas/${ventaId}/fecha`, {
-                                  method: 'PUT',
-                                  body: JSON.stringify({ nuevaFecha: nuevaFecha.toISOString() })
-                              });
-                              alert('¡Fecha de la venta actualizada correctamente!');
-                              await cargarVentasHistorial();
-                          } catch (error) {
-                              alert(`Error al cambiar la fecha: ${error.message}`);
-                          }
+                      try {
+                          await fetchAPI(`/api/ventas/${ventaId}/fecha`, {
+                              method: 'PUT',
+                              body: JSON.stringify({ nuevaFecha: nuevaFecha.toISOString() })
+                          });
+                          alert('¡Fecha de la venta actualizada correctamente!');
+                          await cargarVentasHistorial();
+                      } catch (error) {
+                          alert(`Error al cambiar la fecha: ${error.message}`);
                       }
                   }
               }
@@ -1870,7 +1873,8 @@
           document.getElementById('ventaCliente').disabled = true;
           document.getElementById('btnRegistrarPagado').style.display = 'none';
           document.getElementById('btnRegistrarPendiente').style.display = 'none';
-          document.getElementById('btnEnviarACocina').style.display = 'none';
+          // **CORRECCIÓN 2: Asegurarse de que "Enviar a Cocina" esté visible al editar**
+          document.getElementById('btnEnviarACocina').style.display = 'block';
           document.getElementById('btnActualizarVenta').style.display = 'block';
 
           mostrarSeccion('registrar-venta');

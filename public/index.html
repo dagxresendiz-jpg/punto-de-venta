@@ -8,12 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- CSS de Flatpickr y del plugin de confirmación -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css">
   
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <!-- JS del plugin de confirmación de Flatpickr -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
   <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -747,7 +745,6 @@
             </div>
         </section>
       </main>
-      <!-- MARCA DE AGUA / FOOTER AÑADIDO -->
       <footer class="app-footer">
         <p>&copy; 2025 Developed with ❤️ by <a href="https://www.facebook.com/search/top?q=fia%20records" target="_blank" rel="noopener noreferrer">FiaRecords</a></p>
       </footer>
@@ -1029,7 +1026,15 @@
             };
             
             const permisoNecesario = mapaSeccionesAPermisos[seccionInicial];
-            let seccionEsValida = seccionInicial === 'registrar-venta' || (permisoNecesario === 'admin' && esAdmin) || (permisos && permisos[permisoNecesario]);
+            let seccionEsValida = false;
+
+            if (esAdmin) {
+                seccionEsValida = true;
+            } else if (seccionInicial === 'registrar-venta') {
+                seccionEsValida = true;
+            } else if (permisos && permisoNecesario && permisos[permisoNecesario]) {
+                seccionEsValida = true;
+            }
             
             if (seccionEsValida) {
                 mostrarSeccion(seccionInicial);
@@ -1837,7 +1842,7 @@
               plugins: [new confirmDatePlugin({
                   confirmText: "Aceptar",
                   showAlways: true,
-                  theme: "light" 
+                  theme: "light"
               })],
               onClose: async (selectedDates, dateStr, instance) => {
                   if (selectedDates.length > 0 && instance.isConfirmed) {

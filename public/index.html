@@ -746,7 +746,7 @@
         </section>
       </main>
       <footer class="app-footer">
-        <p>&copy; 2025 Developed with ❤️ by <a href="https://www.facebook.com/search/top?q=fia%20records" target="_blank" rel="noopener noreferrer">FiaRecords</a></p>
+        <p>&copy; 2025 Developed with ❤️ by <a href="#" id="fiarecords-link">FiaRecords</a></p>
       </footer>
     </div>
   </div>
@@ -1842,9 +1842,10 @@
               plugins: [new confirmDatePlugin({
                   confirmText: "Aceptar",
                   showAlways: true,
-                  theme: "light"
+                  theme: "light" 
               })],
               onClose: async (selectedDates, dateStr, instance) => {
+                  // Solo actuar si se confirmó
                   if (selectedDates.length > 0 && instance.isConfirmed) {
                       const nuevaFecha = selectedDates[0];
                       try {
@@ -2218,8 +2219,14 @@
               (venta.items || []).forEach(item => {
                   const nombreProducto = item.productoNombre || item.nombre;
                   resumenProductos[nombreProducto] = (resumenProductos[nombreProducto] || 0) + (item.cantidad || 1);
-                  if (item.toppings) item.toppings.forEach(t => { resumenToppings[t.nombre] = (resumenToppings[t.nombre] || 0) + (item.cantidad || 1); });
-                  if (item.jarabes) item.jarabes.forEach(j => { resumenJarabes[j.nombre] = (resumenJarabes[j.nombre] || 0) + (item.cantidad || 1); });
+                  (item.toppings || []).forEach(t => { 
+                      const nombreTopping = typeof t === 'object' ? t.nombre : t;
+                      if(nombreTopping) resumenToppings[nombreTopping] = (resumenToppings[nombreTopping] || 0) + (item.cantidad || 1); 
+                  });
+                  (item.jarabes || []).forEach(j => { 
+                      const nombreJarabe = typeof j === 'object' ? j.nombre : j;
+                      if(nombreJarabe) resumenJarabes[nombreJarabe] = (resumenJarabes[nombreJarabe] || 0) + (item.cantidad || 1); 
+                  });
               });
           });
           let textoResumen = "--- RESUMEN DE PRODUCTOS ---\n" + Object.entries(resumenProductos).sort(([,a],[,b]) => b-a).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
@@ -2680,6 +2687,22 @@
           sound.play();
           banner.style.display = 'none';
         });
+
+        // **CORRECCIÓN 3: Evento para el enlace de FiaRecords**
+        document.getElementById('fiarecords-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            const appUrl = 'fb://page/100063717596372'; // ID aproximado, mejor si tienes el numérico
+            const webUrl = 'https://www.facebook.com/FiaRecords';
+
+            // Intenta abrir la app
+            window.location.href = appUrl;
+
+            // Si después de un momento no se ha cambiado de app, abre la web
+            setTimeout(() => {
+                window.open(webUrl, '_blank');
+            }, 500);
+        });
+
       }
       
       window.app = { 

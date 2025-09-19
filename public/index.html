@@ -746,7 +746,7 @@
         </section>
       </main>
       <footer class="app-footer">
-        <p>&copy; 2025 Developed with ❤️ by <a href="#" id="fiarecords-link">FiaRecords</a></p>
+        <p>&copy; 2025 Developed with ❤️ by <a href="https://www.facebook.com/597113570372047" target="_blank" rel="noopener noreferrer">FiaRecords</a></p>
       </footer>
     </div>
   </div>
@@ -1845,7 +1845,6 @@
                   theme: "light" 
               })],
               onClose: async (selectedDates, dateStr, instance) => {
-                  // Solo actuar si se confirmó
                   if (selectedDates.length > 0 && instance.isConfirmed) {
                       const nuevaFecha = selectedDates[0];
                       try {
@@ -2687,22 +2686,6 @@
           sound.play();
           banner.style.display = 'none';
         });
-
-        // **CORRECCIÓN 3: Evento para el enlace de FiaRecords**
-        document.getElementById('fiarecords-link').addEventListener('click', (e) => {
-            e.preventDefault();
-            const appUrl = 'fb://page/100063717596372'; // ID aproximado, mejor si tienes el numérico
-            const webUrl = 'https://www.facebook.com/FiaRecords';
-
-            // Intenta abrir la app
-            window.location.href = appUrl;
-
-            // Si después de un momento no se ha cambiado de app, abre la web
-            setTimeout(() => {
-                window.open(webUrl, '_blank');
-            }, 500);
-        });
-
       }
       
       window.app = { 

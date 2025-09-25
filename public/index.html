@@ -239,20 +239,22 @@
     
     .papelera-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;}
 
-    .app-footer {
+    .app-footer, .login-footer {
         text-align: center;
         padding: 1.5rem 2rem;
         font-size: 0.85em;
         color: var(--text-color-light);
+    }
+    .app-footer {
         border-top: 1px solid var(--border-color);
         margin-top: auto;
     }
-    .app-footer a {
+    .app-footer a, .login-footer a {
         color: var(--primary-color);
         text-decoration: none;
         font-weight: 500;
     }
-    .app-footer a:hover {
+    .app-footer a:hover, .login-footer a:hover {
         text-decoration: underline;
     }
 
@@ -334,6 +336,10 @@
       <button type="submit" style="width:100%;">Entrar</button>
       <p id="login-error"></p>
     </form>
+    <!-- MARCA DE AGUA PARA EL LOGIN -->
+    <div class="login-footer">
+        <p>&copy; 2025 Developed with ❤️ by <a href="https://www.facebook.com/597113570372047" target="_blank" rel="noopener noreferrer">FiaRecords</a></p>
+    </div>
   </div>
 
   <div id="app-wrapper" style="display:none;">

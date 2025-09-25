@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Mis Entregas - Dulces Amigas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -36,8 +36,11 @@
             color: var(--text-color-dark);
             transition: background-color 0.3s, color 0.3s;
             visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        .app-container { max-width: 600px; margin: 0 auto; padding: 1rem; }
+        .app-container { max-width: 600px; margin: 0 auto; padding: 1rem; width: 100%; flex-grow: 1; }
         .header { 
             display: flex; 
             flex-direction: column; 
@@ -207,6 +210,24 @@
         #confirm-payment-btn { background-color: var(--success-color); color: white; }
         #cancel-payment-btn { background-color: var(--border-color); color: var(--text-color-dark); }
         .pago-con-input { margin-bottom: 1rem; }
+
+        /* Estilos para el Footer (Marca de agua) */
+        .app-footer {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            font-size: 0.85em;
+            color: var(--text-color-light);
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+        .app-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .app-footer a:hover {
+            text-decoration: underline;
+        }
     </style>
     <script>
       (function() {
@@ -277,6 +298,11 @@
             </div>
         </div>
     </div>
+
+    <!-- MARCA DE AGUA AÑADIDA -->
+    <footer class="app-footer">
+        <p>&copy; 2025 Developed with ❤️ by <a href="https://www.facebook.com/597113570372047" target="_blank" rel="noopener noreferrer">FiaRecords</a></p>
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {

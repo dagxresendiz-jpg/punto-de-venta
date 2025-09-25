@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú - Dulces Amigas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -33,8 +33,11 @@
             color: var(--text-color-dark); 
             padding: 1rem;
             transition: background-color 0.3s, color 0.3s;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 800px; margin: 0 auto; width: 100%; flex-grow: 1; }
         .header { text-align: center; margin-bottom: 2rem; position: relative; }
         #menu-logo {
             max-width: 200px;
@@ -142,11 +145,25 @@
         .phone-input-group select { flex: 0 0 120px; }
         .phone-input-group input { flex: 1 1 auto; }
         
-        /* ESTILOS NUEVOS PARA EL CAMBIO */
         .info-row-pago { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
         .info-row-pago label { margin-bottom: 0; flex-basis: 50%; }
         .info-row-pago input { margin-bottom: 0; flex-basis: 50%; }
         #cambio-display { font-weight: 600; color: var(--success-color); }
+
+        .menu-footer {
+            text-align: center;
+            padding: 2rem 1rem 1rem;
+            font-size: 0.85em;
+            color: var(--text-color-light);
+        }
+        .menu-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .menu-footer a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -212,7 +229,6 @@
                 <label for="notaGeneral">Nota para tu pedido (opcional):</label>
                 <textarea id="notaGeneral" rows="3" placeholder="Ej. Sin cebolla, tocar timbre B, etc."></textarea>
                 
-                <!-- INICIO DE SECCIÓN MODIFICADA -->
                 <h3 style="margin-top: 2rem;">Información de Pago</h3>
                 <div class="info-row-pago">
                     <label for="pagoCon">¿Pagas con? (opcional):</label>
@@ -222,12 +238,15 @@
                     <label>Tu cambio será de:</label>
                     <span id="cambio-display">$0.00</span>
                 </div>
-                <!-- FIN DE SECCIÓN MODIFICADA -->
 
                 <button type="submit" id="submit-order-btn">Realizar Pedido</button>
             </form>
         </div>
     </div>
+
+    <footer class="menu-footer">
+        <p>&copy; 2025 Developed with ❤️ by <a href="https://www.facebook.com/597113570372047" target="_blank" rel="noopener noreferrer">FiaRecords</a></p>
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -250,16 +269,10 @@
             const telefonoClienteInput = document.getElementById('telefonoCliente');
             const fechaEntregaSelect = document.getElementById('fechaEntrega');
             
-            // ============================================
-            // INICIO DE SECCIÓN MODIFICADA
-            // ============================================
             const pagoConInput = document.getElementById('pagoCon');
             const cambioDisplay = document.getElementById('cambio-display');
             const cambioContainer = document.getElementById('cambio-container');
-            // ============================================
-            // FIN DE SECCIÓN MODIFICADA
-            // ============================================
-
+            
             const headerContainer = document.getElementById('header-container');
             const observer = new MutationObserver((mutationsList) => {
                 for(const mutation of mutationsList) {
@@ -545,9 +558,6 @@
                 });
             }
 
-            // ============================================
-            // INICIO DE SECCIÓN MODIFICADA
-            // ============================================
             function actualizarCalculoCambio() {
                 const total = parseFloat(cartTotalEl.textContent.replace('Total del Pedido: $', '')) || 0;
                 const pago = parseFloat(pagoConInput.value) || 0;
@@ -562,9 +572,6 @@
             }
 
             pagoConInput.addEventListener('input', actualizarCalculoCambio);
-            // ============================================
-            // FIN DE SECCIÓN MODIFICADA
-            // ============================================
             
             orderForm.addEventListener('submit', async (e) => {
                 e.preventDefault();

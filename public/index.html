@@ -106,7 +106,7 @@
     .nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px; text-decoration: none; color: var(--text-color-light); font-weight: 500; transition: all 0.2s ease; cursor: pointer; user-select: none; }
     .nav-link:hover { background-color: var(--background-color); color: var(--primary-color); }
     .nav-link.active-link { background-color: var(--primary-color); color: white; }
-    .nav-link svg { width: 20px; height: 20px; stroke-width: 2; }
+    .nav-link svg { width: 20px; height: 20px; stroke-width: 2; flex-shrink: 0; }
     .drag-handle { cursor: grab; margin-right: 8px; color: var(--text-color-light); }
     .nav-link.dragging { opacity: 0.5; background: var(--primary-color); }
     .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); }
@@ -965,7 +965,7 @@
               if (file) {
                   const reader = new FileReader();
                   reader.onload = (e) => {
-                      const logo_base64 = e.target.result;
+                      const logo_base_64 = e.target.result;
                       document.getElementById('app-logo').src = logo_base_64;
                       document.getElementById('login-logo').src = logo_base_64;
                       guardarConfiguracionServidor({ logo_base_64 });
@@ -994,54 +994,50 @@
       }
 
       async function loadPublicConfig() {
-          const appLogo = document.getElementById('app-logo');
-          const loginLogo = document.getElementById('login-logo');
-          const primaryColorPicker = document.getElementById('primary-color-picker');
-          const accentColorPicker = document.getElementById('accent-color-picker');
-          const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
-          const root = document.documentElement;
-          
-          try {
-              const response = await fetch('/api/configuracion');
-              if (!response.ok) {
-                  throw new Error(`Error de red: ${response.statusText}`);
-              }
-              const config = await response.json();
-              
-              const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
-              
-              if (config && config.logo_base64) {
-                  appLogo.src = config.logo_base_64;
-                  loginLogo.src = config.logo_base_64;
-              } else {
-                   appLogo.src = defaultLogo;
-                   loginLogo.src = defaultLogo;
-              }
+        const appLogo = document.getElementById('app-logo');
+        const loginLogo = document.getElementById('login-logo');
+        const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
 
-              if (config && config.primary_color) {
-                  root.style.setProperty('--primary-color', config.primary_color);
-                  primaryColorPicker.value = config.primary_color;
-              }
+        // Set default immediately to avoid broken image icon
+        appLogo.src = defaultLogo;
+        loginLogo.src = defaultLogo;
 
-              if (config && config.accent_color) {
-                  root.style.setProperty('--accent-color', config.accent_color);
-                  accentColorPicker.value = config.accent_color;
-              }
-              
-              if (config && config.dark_background_color) {
-                  root.style.setProperty('--dark-background-color', config.dark_background_color);
-                  darkBgColorPicker.value = config.dark_background_color;
-              } else {
-                  darkBgColorPicker.value = '#1e293b';
-              }
+        try {
+            const response = await fetch('/api/configuracion');
+            if (response.ok) {
+                const config = await response.json();
+                
+                if (config && config.logo_base_64) {
+                    appLogo.src = config.logo_base_64;
+                    loginLogo.src = config.logo_base_64;
+                }
 
-          } catch (error) {
-              console.error("No se pudo cargar la configuración de apariencia desde el servidor.", error);
-              const errorLogo = 'https://via.placeholder.com/180x60.png?text=Error';
-              appLogo.src = errorLogo;
-              loginLogo.src = errorLogo;
-          }
-      }
+                const root = document.documentElement;
+                const primaryColorPicker = document.getElementById('primary-color-picker');
+                const accentColorPicker = document.getElementById('accent-color-picker');
+                const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
+
+                if (config && config.primary_color) {
+                    root.style.setProperty('--primary-color', config.primary_color);
+                    primaryColorPicker.value = config.primary_color;
+                }
+                if (config && config.accent_color) {
+                    root.style.setProperty('--accent-color', config.accent_color);
+                    accentColorPicker.value = config.accent_color;
+                }
+                if (config && config.dark_background_color) {
+                    root.style.setProperty('--dark-background-color', config.dark_background_color);
+                    darkBgColorPicker.value = config.dark_background_color;
+                } else {
+                    darkBgColorPicker.value = '#1e293b';
+                }
+            } else {
+                console.error("Respuesta de red no fue ok al cargar configuración.");
+            }
+        } catch (error) {
+            console.error("No se pudo cargar la configuración de apariencia desde el servidor. Usando valores por defecto.", error);
+        }
+    }
       
       function actualizarTituloConNotificacion(count) {
         if (count > 0) {
@@ -1130,13 +1126,12 @@
             for (const permiso in mapaPermisos) {
                 const tieneAcceso = esAdmin || (permisos && permisos[permiso]);
                 if (mapaPermisos[permiso]) {
-                    mapaPermisos[permiso].style.display = tieneAcceso ? 'flex' : 'none';
+                    mapaPermisos[permiso].parentElement.style.display = tieneAcceso ? 'flex' : 'none';
                 }
             }
-            if (esAdmin) {
-                mapaPermisos['fechas'].style.display = 'flex';
+             if (esAdmin) {
+                mapaPermisos['fechas'].parentElement.style.display = 'flex';
             } else {
-                // Non-admins can't see the 'fechas' link
                 const btnFechas = document.querySelector('[data-seccion="gestion-fechas"]');
                 if (btnFechas) btnFechas.style.display = 'none';
             }
@@ -1327,15 +1322,18 @@
 
       function setupCollapsibles() {
         document.querySelectorAll(".collapsible").forEach(c => {
-          c.addEventListener("click", function() {
-            this.classList.toggle("active");
-            const content = this.nextElementSibling;
-            if (content.style.maxHeight && content.style.maxHeight !== '0px') {
-              content.style.maxHeight = '0px';
-            } else {
-              content.style.maxHeight = content.scrollHeight + "px";
-            }
-          });
+            const newC = c.cloneNode(true);
+            c.parentNode.replaceChild(newC, c);
+            
+            newC.addEventListener("click", function() {
+                this.classList.toggle("active");
+                const content = this.nextElementSibling;
+                if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+                content.style.maxHeight = '0px';
+                } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                }
+            });
         });
       }
       
@@ -2840,17 +2838,18 @@
         let draggedItem = null;
 
         container.addEventListener('dragstart', e => {
-            if (e.target.classList.contains('nav-link')) {
-                draggedItem = e.target;
+            const target = e.target.closest('.nav-link');
+            if (target) {
+                draggedItem = target;
                 setTimeout(() => {
-                    e.target.classList.add('dragging');
+                    target.classList.add('dragging');
                 }, 0);
             }
         });
 
         container.addEventListener('dragend', e => {
-             if (draggedItem && e.target.classList.contains('nav-link')) {
-                e.target.classList.remove('dragging');
+             if (draggedItem) {
+                draggedItem.classList.remove('dragging');
                 draggedItem = null;
 
                 const newOrder = [...container.querySelectorAll('.nav-link')].map(link => link.dataset.seccion);
@@ -2860,6 +2859,8 @@
 
         container.addEventListener('dragover', e => {
             e.preventDefault();
+            if(!draggedItem) return;
+
             const afterElement = getDragAfterElement(container, e.clientY);
             if (afterElement == null) {
                 container.appendChild(draggedItem);
@@ -2909,13 +2910,13 @@
         document.getElementById('btnRegistrarPendiente').addEventListener('click', () => registrarVenta('Pendiente de Pago'));
         document.getElementById('btnActualizarVenta').addEventListener('click', () => registrarVenta(null));
         document.getElementById('btnEnviarACocina').addEventListener('click', enviarACocina);
-        document.querySelectorAll('nav a').forEach(b => b.addEventListener('click', (e) => {
-            e.preventDefault();
+        document.getElementById('sidebar-nav-container').addEventListener('click', (e) => {
             const link = e.target.closest('.nav-link');
-            if(link) {
+            if (link) {
+                e.preventDefault();
                 mostrarSeccion(link.dataset.seccion);
             }
-        }));
+        });
         mainContent.addEventListener('click', (e) => {
           if (nav.classList.contains('nav-open') && window.innerWidth < 992) {
             if (!e.target.closest('.sidebar') && !e.target.closest('#menu-toggle')) {

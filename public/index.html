@@ -949,8 +949,6 @@
       function setupCustomizationEventListeners() {
           const logoInput = document.getElementById('logo-input');
           const appLogo = document.getElementById('app-logo');
-          const primaryColorPicker = document.getElementById('primary-color-picker');
-          // ... (rest of the color pickers)
           appLogo.addEventListener('click', () => logoInput.click());
           logoInput.addEventListener('change', (event) => {
               const file = event.target.files[0];
@@ -965,16 +963,14 @@
                   reader.readAsDataURL(file);
               }
           });
-          // ... (event listeners for color pickers)
+          // Simplified - other color picker listeners would go here
       }
 
       async function loadPublicConfig() {
           const appLogo = document.getElementById('app-logo');
           const loginLogo = document.getElementById('login-logo');
           const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
-          appLogo.src = defaultLogo;
-          loginLogo.src = defaultLogo;
-
+          
           try {
               const response = await fetch('/api/configuracion');
               if (!response.ok) {
@@ -982,34 +978,25 @@
               }
               const config = await response.json();
 
-              if (config && config.logo_base_64 && typeof config.logo_base_64 === 'string' && config.logo_base_64.length > 50) {
+              // CORRECCIÓN FINAL: Lógica de carga de logo simplificada y robusta.
+              if (config && config.logo_base_64) {
                   appLogo.src = config.logo_base_64;
                   loginLogo.src = config.logo_base_64;
               } else {
-                  console.warn("Logo data not found or invalid. Using default.");
+                  appLogo.src = defaultLogo;
+                  loginLogo.src = defaultLogo;
               }
 
+              // Apply theme colors
               const root = document.documentElement;
-              const primaryColorPicker = document.getElementById('primary-color-picker');
-              const accentColorPicker = document.getElementById('accent-color-picker');
-              const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
+              if (config && config.primary_color) root.style.setProperty('--primary-color', config.primary_color);
+              if (config && config.accent_color) root.style.setProperty('--accent-color', config.accent_color);
+              if (config && config.dark_background_color) root.style.setProperty('--dark-background-color', config.dark_background_color);
 
-              if (config && config.primary_color) {
-                  root.style.setProperty('--primary-color', config.primary_color);
-                  primaryColorPicker.value = config.primary_color;
-              }
-              if (config && config.accent_color) {
-                  root.style.setProperty('--accent-color', config.accent_color);
-                  accentColorPicker.value = config.accent_color;
-              }
-              if (config && config.dark_background_color) {
-                  root.style.setProperty('--dark-background-color', config.dark_background_color);
-                  darkBgColorPicker.value = config.dark_background_color;
-              } else {
-                  darkBgColorPicker.value = '#1e293b';
-              }
           } catch (error) {
               console.error("Failed to load public configuration. Using defaults.", error);
+              appLogo.src = defaultLogo;
+              loginLogo.src = defaultLogo;
           }
       }
       
@@ -1558,6 +1545,8 @@
         try {
             if (Object.keys(ventaActual).length === 0) {
                 showToast('Agrega al menos un producto a la venta', 'error');
+                procesandoVenta = false;
+                botones.forEach((btn, index) => setButtonLoading(btn, false, originalTexts[index]));
                 return;
             }
             const clienteSelect = document.getElementById('ventaCliente');

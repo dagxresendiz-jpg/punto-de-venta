@@ -572,12 +572,10 @@
       let inventarioCache = { productos: [], toppings: [], jarabes: [] };
       let currentUserRole = null;
       
-      // Inyectar el HTML de la aplicación
       document.getElementById('app-wrapper').innerHTML = document.getElementById('app-content-template').innerHTML;
       document.querySelector('main').innerHTML = document.getElementById('sections-template').innerHTML;
       document.getElementById('sidebar-nav-container').innerHTML = document.getElementById('nav-links-template').innerHTML;
 
-      // Ahora que el DOM está completo, asigna las constantes
       const loginContainer = document.getElementById('login-container');
       const appWrapper = document.getElementById('app-wrapper');
       const loginForm = document.getElementById('login-form');
@@ -587,6 +585,7 @@
       const menuToggle = document.getElementById('menu-toggle');
       const mainContent = document.querySelector('.main-content');
       const { jsPDF } = window.jspdf;
+      
       const themeSwitch = document.getElementById('theme-switch');
       const togglePassword = document.getElementById('toggle-password');
       const passwordInput = document.getElementById('password');
@@ -705,53 +704,53 @@
       }
 
       async function loadPublicConfig() {
-          const appLogo = document.getElementById('app-logo');
-          const loginLogo = document.getElementById('login-logo');
-          const primaryColorPicker = document.getElementById('primary-color-picker');
-          const accentColorPicker = document.getElementById('accent-color-picker');
-          const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
-          const logoPreview = document.getElementById('logo-preview');
-          const root = document.documentElement;
-          
-          try {
-              const response = await fetch('/api/configuracion');
-              if (!response.ok) {
-                  throw new Error(`Error de red: ${response.statusText}`);
-              }
-              const config = await response.json();
-              
-              const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
-              
-              if (config && config.logo_base_64) {
-                  appLogo.src = config.logo_base_64;
-                  loginLogo.src = config.logo_base_64;
-                  if(logoPreview) logoPreview.src = config.logo_base_64;
-              } else {
-                   appLogo.src = defaultLogo;
-                   loginLogo.src = defaultLogo;
-                   if(logoPreview) logoPreview.src = defaultLogo;
-              }
+        const appLogo = document.getElementById('app-logo');
+        const loginLogo = document.getElementById('login-logo');
+        const primaryColorPicker = document.getElementById('primary-color-picker');
+        const accentColorPicker = document.getElementById('accent-color-picker');
+        const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
+        const logoPreview = document.getElementById('logo-preview');
+        const root = document.documentElement;
+        
+        try {
+            const response = await fetch('/api/configuracion');
+            if (!response.ok) {
+                throw new Error(`Error de red: ${response.statusText}`);
+            }
+            const config = await response.json();
+            
+            const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
+            
+            if (config && config.logo_base_64) {
+                appLogo.src = config.logo_base_64;
+                loginLogo.src = config.logo_base_64;
+                if(logoPreview) logoPreview.src = config.logo_base_64;
+            } else {
+                 appLogo.src = defaultLogo;
+                 loginLogo.src = defaultLogo;
+                 if(logoPreview) logoPreview.src = defaultLogo;
+            }
 
-              if (config && config.primary_color) {
-                  root.style.setProperty('--primary-color', config.primary_color);
-                  if(primaryColorPicker) primaryColorPicker.value = config.primary_color;
-              }
+            if (config && config.primary_color) {
+                root.style.setProperty('--primary-color', config.primary_color);
+                if(primaryColorPicker) primaryColorPicker.value = config.primary_color;
+            }
 
-              if (config && config.accent_color) {
-                  root.style.setProperty('--accent-color', config.accent_color);
-                  if(accentColorPicker) accentColorPicker.value = config.accent_color;
-              }
-              
-              if (config && config.dark_background_color) {
-                  root.style.setProperty('--dark-background-color', config.dark_background_color);
-                  if(darkBgColorPicker) darkBgColorPicker.value = config.dark_background_color;
-              } else {
-                  if(darkBgColorPicker) darkBgColorPicker.value = '#1e293b';
-              }
+            if (config && config.accent_color) {
+                root.style.setProperty('--accent-color', config.accent_color);
+                if(accentColorPicker) accentColorPicker.value = config.accent_color;
+            }
+            
+            if (config && config.dark_background_color) {
+                root.style.setProperty('--dark-background-color', config.dark_background_color);
+                if(darkBgColorPicker) darkBgColorPicker.value = config.dark_background_color;
+            } else {
+                if(darkBgColorPicker) darkBgColorPicker.value = '#1e293b';
+            }
 
-          } catch (error) {
-              console.error("No se pudo cargar la configuración de apariencia desde el servidor.", error);
-          }
+        } catch (error) {
+            console.error("No se pudo cargar la configuración de apariencia desde el servidor.", error);
+        }
       }
       
       function actualizarTituloConNotificacion(count) {

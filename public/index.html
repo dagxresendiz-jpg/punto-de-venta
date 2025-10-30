@@ -968,20 +968,22 @@
       async function loadPublicConfig() {
         const appLogo = document.getElementById('app-logo');
         const loginLogo = document.getElementById('login-logo');
-        const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
-
+        
         try {
             const response = await fetch('/api/configuracion');
-            if (!response.ok) throw new Error(`Network response was not ok`);
-            
+            if (!response.ok) {
+                throw new Error(`Error de red: ${response.statusText}`);
+            }
             const config = await response.json();
+            
+            const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
             
             if (config && config.logo_base_64) {
                 appLogo.src = config.logo_base_64;
                 loginLogo.src = config.logo_base_64;
             } else {
-                appLogo.src = defaultLogo;
-                loginLogo.src = defaultLogo;
+                 appLogo.src = defaultLogo;
+                 loginLogo.src = defaultLogo;
             }
 
             const root = document.documentElement;
@@ -990,11 +992,9 @@
             if (config && config.dark_background_color) root.style.setProperty('--dark-background-color', config.dark_background_color);
 
         } catch (error) {
-            console.error("Failed to load public configuration. Using defaults.", error);
-            appLogo.src = defaultLogo;
-            loginLogo.src = defaultLogo;
+            console.error("No se pudo cargar la configuración de apariencia desde el servidor.", error);
         }
-    }
+      }
       
       function actualizarTituloConNotificacion(count) {
         if (count > 0) {
@@ -1160,14 +1160,10 @@
             
             sessionStorage.removeItem('lastActiveSection');
             
-            const style = document.head.querySelector('style[data-flicker-guard]');
-            if (style) {
-                style.textContent = '#login-container { display: none !important; } #app-wrapper { display: flex !important; }';
-            }
-            await showApp();
+            window.location.reload(); // Simple reload to re-trigger auth logic
+            
         } catch (error) {
             showToast(error.message, 'error');
-        } finally {
             setButtonLoading(loginButton, false, 'Entrar');
         }
       });
@@ -2264,7 +2260,7 @@
       }
 
       async function restaurarItem(id, tipoEndpoint) {
-        if (confirm(`¿Restaurar este elemento? Volverá a su lista principal.`)) {
+        if (confirm(`¿Restaurar este elemento?`)) {
           try {
             await fetchAPI(`/api/${tipoEndpoint}/${id}/restaurar`, { method: 'PUT' });
             cargarPapelera();
@@ -2273,7 +2269,7 @@
       }
 
       async function eliminarPermanentemente(id, tipoEndpoint) {
-        if (confirm(`¡ADVERTENCIA! Esta acción es irreversible. ¿Eliminar permanentemente este elemento?`)) {
+        if (confirm(`¡ADVERTENCIA! ¿Eliminar permanentemente?`)) {
           try {
             await fetchAPI(`/api/${tipoEndpoint}/${id}/permanente`, { method: 'DELETE' });
             cargarPapelera();
@@ -2282,12 +2278,12 @@
       }
       
       async function vaciarPapelera(tipoEndpoint) {
-        if (confirm(`¡ADVERTENCIA! Se eliminarán permanentemente TODOS los elementos de esta sección. ¿Deseas continuar?`)) {
+        if (confirm(`¡ADVERTENCIA! ¿Vaciar toda la papelera de ${tipoEndpoint}?`)) {
             try {
                 await fetchAPI(`/api/${tipoEndpoint}/papelera/vaciar`, { method: 'DELETE' });
                 cargarPapelera();
             } catch(err) {
-                alert(`Error al vaciar la papelera: ${err.message}`);
+                alert(`Error al vaciar: ${err.message}`);
             }
         }
       }
@@ -2358,7 +2354,7 @@
       
       function generarReportePDF() {
         if (ventasFiltradasGlobal.length === 0) {
-            alert("No hay ventas en el período seleccionado para generar un reporte.");
+            alert("No hay ventas para generar un reporte.");
             return;
         }
         const textoResumen = document.getElementById('resumen-ventas').textContent;
@@ -2368,10 +2364,10 @@
         const pdf = new jsPDF();
         pdf.setFontSize(18);
         pdf.setFont('helvetica', 'bold');
-        pdf.text("Reporte de Ventas - Dulces Amigas", 105, 20, { align: 'center' });
+        pdf.text("Reporte de Ventas", 105, 20, { align: 'center' });
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(`Filtros Aplicados: ${filtros}`, 10, 35);
+        pdf.text(`Filtros: ${filtros}`, 10, 35);
         pdf.text(`Fecha del Reporte: ${new Date().toLocaleString()}`, 10, 40);
         pdf.setFontSize(14);
         pdf.setFont('helvetica', 'bold');
@@ -2384,22 +2380,12 @@
 
         const head = [['ID', 'Cliente', 'Total', 'Pago', 'Estatus', 'Fecha']];
         const body = ventasFiltradasGlobal.map(v => [
-            v.id.slice(-6),
-            v.clienteNombre,
-            `$${v.total.toFixed(2)}`,
-            v.metodoPago || 'N/A',
-            v.estatus || 'N/A',
-            new Date(v.fecha).toLocaleDateString()
+            v.id.slice(-6), v.clienteNombre, `$${v.total.toFixed(2)}`,
+            v.metodoPago || 'N/A', v.estatus || 'N/A', new Date(v.fecha).toLocaleDateString()
         ]);
 
-        pdf.autoTable({
-            head: head,
-            body: body,
-            startY: finalYResumen,
-            theme: 'grid'
-        });
-
-        pdf.save("reporte-ventas-completo.pdf");
+        pdf.autoTable({ head, body, startY: finalYResumen, theme: 'grid' });
+        pdf.save("reporte-ventas.pdf");
     }
       
       function enviarResumenWhatsapp() {
@@ -2438,32 +2424,23 @@
       }
 
       function generarDetallePDF() {
-          if (ventasFiltradasGlobal.length === 0) { alert('No hay detalles de ventas para generar el PDF.'); return; }
+          if (ventasFiltradasGlobal.length === 0) { alert('No hay detalles para generar PDF.'); return; }
           const { jsPDF } = window.jspdf;
           const pdf = new jsPDF();
           const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
 
           const head = [['ID Venta', 'Cliente', 'Total', 'Estatus', 'Fecha']];
           const body = ventasFiltradasGlobal.map(v => [
-              v.id.slice(-6),
-              v.clienteNombre,
-              `$${v.total.toFixed(2)}`,
-              v.estatus || 'N/A',
-              new Date(v.fecha).toLocaleDateString()
+              v.id.slice(-6), v.clienteNombre, `$${v.total.toFixed(2)}`,
+              v.estatus || 'N/A', new Date(v.fecha).toLocaleDateString()
           ]);
 
           pdf.setFontSize(18);
           pdf.text("Detalle de Ventas del Período", 14, 22);
-          pdf.autoTable({
-              head: head,
-              body: body,
-              startY: 30,
-              theme: 'grid'
-          });
+          pdf.autoTable({ head, body, startY: 30, theme: 'grid' });
           const finalY = pdf.lastAutoTable.finalY || 50;
           pdf.setFontSize(12);
           pdf.text(totalTexto, 14, finalY + 10);
-
           pdf.save('detalle-ventas.pdf');
       }
       
@@ -2483,81 +2460,62 @@
             const card = document.createElement('div');
             card.className = 'pedido-card';
 
-            let itemsHtml = '';
+            let itemsHtml = ``;
             (p.items || []).forEach(item => {
                 itemsHtml += `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong></li>`;
                 
-                const toppings = item.toppings || [];
-                const jarabes = item.jarabes || [];
-                const extras = [...toppings, ...jarabes];
-
+                const extras = [...(item.toppings || []), ...(item.jarabes || [])];
                 if (extras.length > 0) {
-                    itemsHtml += '<ul style="padding-left: 20px;">';
-                    extras.forEach(extra => {
-                        const nombreExtra = typeof extra === 'object' ? extra.nombre : extra;
-                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${nombreExtra}</li>`;
-                    });
-                    itemsHtml += '</ul>';
+                    itemsHtml += '<ul style="padding-left: 20px;">' + extras.map(extra => 
+                        `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${typeof extra === 'object' ? extra.nombre : extra}</li>`
+                    ).join('') + '</ul>';
                 }
-
-                if (item.nota && item.nota.trim() !== "") {
-                    itemsHtml += `<div class="pedido-card-nota" style="margin-left: 20px;">Nota producto: ${item.nota}</div>`;
+                if (item.nota) {
+                    itemsHtml += `<div class="pedido-card-nota" style="margin-left: 20px;">Nota: ${item.nota}</div>`;
                 }
             });
 
-            const repartidorInfo = p.repartidorId && p.repartidorId.username ? `<div class="repartidor-info">Repartidor: ${p.repartidorId.username}</div>` : '';
-            const fechaInfo = p.fechaEntregaId && p.fechaEntregaId.fecha ? `<div class="repartidor-info">Entregar: ${new Date(p.fechaEntregaId.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'})}</div>` : '';
-            
-            const notaGeneralHtml = p.nota && p.nota.trim() !== "" ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.nota}</div>` : '';
+            const repartidorInfo = p.repartidorId?.username ? `<div class="repartidor-info">Repartidor: ${p.repartidorId.username}</div>` : '';
+            const fechaInfo = p.fechaEntregaId?.fecha ? `<div class="repartidor-info">Entregar: ${new Date(p.fechaEntregaId.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'})}</div>` : '';
+            const notaGeneralHtml = p.nota ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.nota}</div>` : '';
 
             card.innerHTML = `
-                <div class="pedido-card-header">
-                    <h4>${p.nombreCliente}</h4>
-                    <span>${new Date(p.createdAt).toLocaleTimeString()}</span>
-                </div>
-                <div class="pedido-card-body">
-                    <ul>${itemsHtml}</ul>
-                    ${notaGeneralHtml} 
-                    ${repartidorInfo}
-                    ${fechaInfo}
-                </div>
-                <div class="pedido-card-footer">
-                    <span class="total">Total: $${p.total.toFixed(2)}</span>
-                    <div class="pedido-actions"></div>
-                </div>
-            `;
+                <div class="pedido-card-header"><h4>${p.nombreCliente}</h4><span>${new Date(p.createdAt).toLocaleTimeString()}</span></div>
+                <div class="pedido-card-body"><ul>${itemsHtml}</ul>${notaGeneralHtml}${repartidorInfo}${fechaInfo}</div>
+                <div class="pedido-card-footer"><span class="total">Total: $${p.total.toFixed(2)}</span><div class="pedido-actions"></div></div>`;
+            
             const actions = card.querySelector('.pedido-actions');
             
             const btnCancelar = document.createElement('button');
             btnCancelar.className = 'btn-cancelar';
             btnCancelar.textContent = 'Cancelar';
-            btnCancelar.addEventListener('click', () => cancelarPedido(p.id, p.nombreCliente));
+            btnCancelar.onclick = () => cancelarPedido(p.id, p.nombreCliente);
             
             if (p.estatus === 'recibido') {
                 const btnW = document.createElement('button');
                 btnW.className = 'btn-whatsapp';
                 btnW.textContent = 'Contactar';
-                btnW.addEventListener('click', () => window.open(`https://wa.me/${p.telefonoCliente.replace(/\D/g, '')}?text=¡Hola ${p.nombreCliente}! Recibimos tu pedido y estamos por prepararlo.`, '_blank'));
+                btnW.onclick = () => window.open(`https://wa.me/${p.telefonoCliente.replace(/\D/g, '')}?text=¡Hola ${p.nombreCliente}! Recibimos tu pedido.`, '_blank');
                 actions.appendChild(btnW);
 
                 const btnP = document.createElement('button');
                 btnP.className = 'btn-preparar';
                 btnP.textContent = 'Preparar';
-                btnP.addEventListener('click', () => cambiarEstatusPedido(p.id, 'en_preparacion'));
+                btnP.onclick = () => cambiarEstatusPedido(p.id, 'en_preparacion');
                 actions.appendChild(btnP);
                 cols.recibidos.appendChild(card);
             } else if (p.estatus === 'en_preparacion') {
                 const btnL = document.createElement('button');
                 btnL.className = 'btn-listo';
                 btnL.textContent = 'Listo';
-                btnL.addEventListener('click', () => cambiarEstatusPedido(p.id, 'listo'));
+                btnL.onclick = () => cambiarEstatusPedido(p.id, 'listo');
                 actions.appendChild(btnL);
                 cols.preparacion.appendChild(card);
             } else if (p.estatus === 'listo') {
                 const btnA = document.createElement('button');
                 btnA.className = 'btn-asignar';
-                btnA.textContent = 'Asignar Reparto';
-                btnA.addEventListener('click', () => asignarRepartidor(p.id));
+                btnA.textContent = 'Asignar';
+                btnA.onclick = () => asignarRepartidor(p.id);
                 actions.appendChild(btnA);
                 cols.listos.appendChild(card);
             } else if (p.estatus === 'en_reparto') {
@@ -2565,13 +2523,18 @@
             }
             actions.appendChild(btnCancelar);
         });
+        Object.entries(cols).forEach(([key, col]) => {
+            if(col.children.length === 0) {
+                col.innerHTML = emptyStateHTML(`No hay pedidos en estado "${key}".`);
+            }
+        })
       }
 
       async function asignarRepartidor(pedidoId) {
           try {
               const repartidores = await fetchAPI('/api/usuarios/repartidores');
               if (!repartidores || repartidores.length === 0) {
-                  alert('No hay repartidores disponibles. Crea un usuario con el rol "repartidor" primero.');
+                  showToast('No hay repartidores disponibles.', 'error');
                   return;
               }
 
@@ -2582,7 +2545,7 @@
 
               const indice = parseInt(eleccion, 10) - 1;
               if (isNaN(indice) || indice < 0 || indice >= repartidores.length) {
-                  alert('Selección inválida. Por favor, introduce un número de la lista.');
+                  showToast('Selección inválida.', 'error');
                   return;
               }
 
@@ -2592,46 +2555,37 @@
                   body: JSON.stringify({ repartidorId: repartidorSeleccionado.id })
               });
 
-              alert(`Pedido asignado a ${repartidorSeleccionado.username}.`);
+              showToast(`Pedido asignado a ${repartidorSeleccionado.username}.`);
               cargarPedidos();
 
           } catch (error) {
-              alert('Error al asignar el repartidor: ' + error.message);
+              showToast('Error al asignar repartidor: ' + error.message, 'error');
           }
       }
 
       async function cambiarEstatusPedido(id, nuevoEstatus) {
         await fetchAPI(`/api/pedidos/${id}`, { method: 'PUT', body: JSON.stringify({ estatus: nuevoEstatus }) });
+        showToast("Estatus del pedido actualizado.");
         cargarPedidos();
       }
 
       async function cancelarPedido(id, nombre) {
-        if(confirm(`¿Estás seguro de que quieres cancelar el pedido de ${nombre}? El pedido se moverá a la papelera.`)) {
+        if(confirm(`¿Cancelar el pedido de ${nombre}? Se moverá a la papelera.`)) {
             await fetchAPI(`/api/pedidos/${id}`, { method: 'DELETE' });
+            showToast("Pedido cancelado.");
             cargarPedidos();
         }
       }
       
-      async function convertirPedidoAVenta(pedido) {
-          if (confirm(`¿Convertir el pedido de ${pedido.nombreCliente} a una venta registrada? El pedido se eliminará de esta lista y aparecerá en el Historial.`)) {
-              try {
-                  await fetchAPI(`/api/pedidos/${pedido.id}/convertir-a-venta`, { method: 'POST' });
-                  alert('Pedido convertido a venta con éxito.');
-                  cargarPedidos();
-              } catch(err) {
-                  alert(`Error al convertir el pedido: ${err.message}`);
-              }
-          }
-      }
-
       async function toggleAgotado(id, tipo = 'producto') {
           try {
               await fetchAPI(`/api/${tipo}s/${id}/toggle-agotado`, { method: 'PUT' });
+              showToast("Disponibilidad actualizada.");
               if (tipo === 'producto') await cargarProductos();
               if (tipo === 'topping') await cargarToppings();
               if (tipo === 'jarabe') await cargarJarabes();
           } catch (err) {
-              alert(`Error al cambiar estado: ${err.message}`);
+              showToast(`Error: ${err.message}`, 'error');
           }
       }
 
@@ -2640,6 +2594,10 @@
             const fechas = await fetchAPI('/api/fechas-entrega');
             const lista = document.getElementById('listaFechasEntrega');
             lista.innerHTML = '';
+            if(fechas.length === 0) {
+                lista.innerHTML = emptyStateHTML("No hay fechas de entrega programadas.");
+                return;
+            }
             fechas.forEach(fecha => {
                 const dateObj = new Date(fecha.fecha);
                 const opciones = { timeZone: 'UTC', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -2672,28 +2630,31 @@
                   body: JSON.stringify({ fecha })
               });
               fechaInput.value = '';
+              showToast("Fecha añadida.");
               cargarFechasDeEntrega();
           } catch (error) {
-              alert('Error al añadir la fecha: ' + error.message);
+              showToast('Error al añadir fecha: ' + error.message, 'error');
           }
       }
       
       async function toggleFecha(id) {
           try {
               await fetchAPI(`/api/fechas-entrega/${id}/toggle`, { method: 'PUT' });
+              showToast("Estado de fecha actualizado.");
               cargarFechasDeEntrega();
           } catch (error) {
-              alert('Error al cambiar el estado de la fecha: ' + error.message);
+              showToast('Error al cambiar estado: ' + error.message, 'error');
           }
       }
 
       async function eliminarFecha(id) {
-          if (confirm('¿Estás seguro de que quieres eliminar esta fecha?')) {
+          if (confirm('¿Eliminar esta fecha?')) {
               try {
                   await fetchAPI(`/api/fechas-entrega/${id}`, { method: 'DELETE' });
+                  showToast("Fecha eliminada.");
                   cargarFechasDeEntrega();
               } catch (error) {
-                  alert('Error al eliminar la fecha: ' + error.message);
+                  showToast('Error al eliminar fecha: ' + error.message, 'error');
               }
           }
       }
@@ -2701,6 +2662,98 @@
       function setFechaYRecargar(start, end) {
         const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
         selectorFecha.setDate([start, end], true);
+      }
+      
+      async function cargarDashboard(){
+        try {
+            const hoy = new Date();
+            const fechaInicio = new Date(hoy.setHours(0, 0, 0, 0)).toISOString();
+            const fechaFin = new Date(hoy.setHours(23, 59, 59, 999)).toISOString();
+
+            const ventasHoy = await fetchAPI(`/api/ventas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+            const { count: nuevosPedidos } = await fetchAPI('/api/pedidos/nuevos/contador');
+
+            const totalVentas = ventasHoy.reduce((acc, v) => acc + v.total, 0);
+            document.getElementById('stat-ventas-hoy').textContent = `$${totalVentas.toFixed(2)}`;
+
+            document.getElementById('stat-pedidos-nuevos').textContent = nuevosPedidos;
+
+            const productosContador = {};
+            let totalProductos = 0;
+            ventasHoy.forEach(v => {
+                v.items.forEach(item => {
+                    const nombre = item.productoNombre || item.nombre;
+                    const cantidad = item.cantidad || 1;
+                    productosContador[nombre] = (productosContador[nombre] || 0) + cantidad;
+                    totalProductos += cantidad;
+                });
+            });
+            document.getElementById('stat-productos-vendidos').textContent = totalProductos;
+            
+            const topProductosContainer = document.getElementById('dashboard-top-productos');
+            const sortedProductos = Object.entries(productosContador).sort(([,a],[,b]) => b-a).slice(0, 5);
+            if(sortedProductos.length === 0){
+                topProductosContainer.innerHTML = emptyStateHTML('No hay datos de ventas para hoy.');
+            } else {
+                topProductosContainer.innerHTML = '<ul style="list-style:none; padding:0;">' + sortedProductos.map(([nombre, cantidad]) => 
+                    `<li style="display:flex; justify-content:space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);"><span>${nombre}</span><strong>${cantidad} vendidos</strong></li>`
+                ).join('') + '</ul>';
+            }
+
+        } catch(e){
+            console.error("Error al cargar dashboard:", e);
+            showToast("No se pudo cargar la información del dashboard.", "error");
+        }
+      }
+
+      function setupDragAndDrop() {
+        const container = document.getElementById('sidebar-nav-container');
+        let draggedItem = null;
+
+        container.addEventListener('dragstart', e => {
+            const target = e.target.closest('.nav-link');
+            if (target) {
+                draggedItem = target;
+                setTimeout(() => {
+                    target.classList.add('dragging');
+                }, 0);
+            }
+        });
+
+        container.addEventListener('dragend', e => {
+             if (draggedItem) {
+                draggedItem.classList.remove('dragging');
+                draggedItem = null;
+
+                const newOrder = [...container.querySelectorAll('.nav-link')].map(link => link.dataset.seccion);
+                localStorage.setItem('sidebarOrder', JSON.stringify(newOrder));
+            }
+        });
+
+        container.addEventListener('dragover', e => {
+            e.preventDefault();
+            if(!draggedItem) return;
+
+            const afterElement = getDragAfterElement(container, e.clientY);
+            if (afterElement == null) {
+                container.appendChild(draggedItem);
+            } else {
+                container.insertBefore(draggedItem, afterElement);
+            }
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.nav-link:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
       }
 
       function setupEventListeners() {
@@ -2730,10 +2783,13 @@
         document.getElementById('btnRegistrarPendiente').addEventListener('click', () => registrarVenta('Pendiente de Pago'));
         document.getElementById('btnActualizarVenta').addEventListener('click', () => registrarVenta(null));
         document.getElementById('btnEnviarACocina').addEventListener('click', enviarACocina);
-        document.querySelectorAll('nav a').forEach(b => b.addEventListener('click', (e) => {
-            e.preventDefault();
-            mostrarSeccion(b.dataset.seccion);
-        }));
+        document.getElementById('sidebar-nav-container').addEventListener('click', (e) => {
+            const link = e.target.closest('.nav-link');
+            if (link) {
+                e.preventDefault();
+                mostrarSeccion(link.dataset.seccion);
+            }
+        });
         mainContent.addEventListener('click', (e) => {
           if (nav.classList.contains('nav-open') && window.innerWidth < 992) {
             if (!e.target.closest('.sidebar') && !e.target.closest('#menu-toggle')) {
@@ -2762,7 +2818,7 @@
         document.getElementById('btnGenerarReporte').addEventListener('click', generarReportePDF);
         document.getElementById('btnGenerarPDF').addEventListener('click', () => {
           const ticketElement = document.getElementById('ticket');
-          if (ticketElement.textContent.trim() === '') { alert('Primero debe registrar una venta para generar un ticket.'); return; }
+          if (ticketElement.textContent.trim() === '') { showToast('Primero debe registrar una venta para generar un ticket.', 'error'); return; }
           html2canvas(ticketElement).then(canvas => {
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF();
@@ -2775,7 +2831,7 @@
         });
         document.getElementById('btnEnviarWhatsapp').addEventListener('click', () => {
           const textoTicket = document.getElementById('ticket').textContent;
-          if (textoTicket.trim() === '') { alert('No hay un ticket generado para enviar.'); return; }
+          if (textoTicket.trim() === '') { showToast('No hay un ticket generado para enviar.', 'error'); return; }
           window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoTicket)}`, '_blank');
         });
         themeSwitch.addEventListener('change', () => {
@@ -2797,6 +2853,11 @@
         document.querySelectorAll('.papelera-header button').forEach(btn => {
             btn.addEventListener('click', () => vaciarPapelera(btn.dataset.tipo));
         });
+        
+        document.getElementById('searchProductos').addEventListener('input', (e) => renderizarLista(inventarioCache.productos, 'Producto', ['nombre', 'precio'], e.target.value));
+        document.getElementById('searchToppings').addEventListener('input', (e) => renderizarLista(inventarioCache.toppings, 'Topping', ['nombre', 'precio'], e.target.value));
+        document.getElementById('searchJarabes').addEventListener('input', (e) => renderizarLista(inventarioCache.jarabes, 'Jarabe', ['nombre', 'precio'], e.target.value));
+        document.getElementById('searchClientes').addEventListener('input', (e) => renderizarLista(clientesCacheados, 'Cliente', ['nombre', 'telefono'], e.target.value));
 
         document.body.addEventListener('click', unlockAudio, { once: true });
         document.body.addEventListener('touchstart', unlockAudio, { once: true });
@@ -2814,7 +2875,6 @@
           toggleAgotado, 
           cancelarPedido, 
           cambiarEstatusPedido, 
-          convertirPedidoAVenta, 
           asignarRepartidor,
           toggleFecha, 
           eliminarFecha

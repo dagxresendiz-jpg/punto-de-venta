@@ -968,15 +968,14 @@
       async function loadPublicConfig() {
         const appLogo = document.getElementById('app-logo');
         const loginLogo = document.getElementById('login-logo');
-        
+        const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
+
         try {
             const response = await fetch('/api/configuracion');
             if (!response.ok) {
                 throw new Error(`Error de red: ${response.statusText}`);
             }
             const config = await response.json();
-            
-            const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
             
             if (config && config.logo_base_64) {
                 appLogo.src = config.logo_base_64;
@@ -993,6 +992,8 @@
 
         } catch (error) {
             console.error("No se pudo cargar la configuración de apariencia desde el servidor.", error);
+            appLogo.src = defaultLogo;
+            loginLogo.src = defaultLogo;
         }
       }
       
@@ -1160,7 +1161,7 @@
             
             sessionStorage.removeItem('lastActiveSection');
             
-            window.location.reload(); // Simple reload to re-trigger auth logic
+            window.location.reload();
             
         } catch (error) {
             showToast(error.message, 'error');

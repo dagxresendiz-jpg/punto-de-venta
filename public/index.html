@@ -100,7 +100,7 @@
         overflow-y: auto;
     }
     .sidebar-header { text-align: center; margin-bottom: 2rem; }
-    #app-logo { max-width: 180px; max-height: 80px; cursor: pointer; transition: transform 0.2s ease; }
+    #app-logo, #login-logo { max-width: 180px; max-height: 80px; cursor: pointer; transition: transform 0.2s ease; content: url('https://via.placeholder.com/180x60.png?text=Cargando...'); }
     #app-logo:hover { transform: scale(1.05); }
     .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; }
     .nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px; text-decoration: none; color: var(--text-color-light); font-weight: 500; transition: all 0.2s ease; cursor: pointer; user-select: none; }
@@ -297,6 +297,38 @@
   </style>
   
   <script>
+    // SCRIPT DE PRE-CARGA PARA EL LOGO Y COLORES (SOLUCIÓN DEFINITIVA)
+    (function() {
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/configuracion', false); // 'false' for synchronous request
+        xhr.send(null);
+
+        if (xhr.status === 200) {
+          var config = JSON.parse(xhr.responseText);
+          var style = document.createElement('style');
+          var css = '';
+
+          if (config && config.logo_base_64) {
+            css += `#app-logo, #login-logo { content: url('${config.logo_base_64}'); }`;
+          }
+          
+          // Apply theme colors immediately to prevent flashing
+          if (config && config.primary_color) css += `:root { --primary-color: ${config.primary_color}; }`;
+          if (config && config.accent_color) css += `:root { --accent-color: ${config.accent_color}; }`;
+          if (config && config.dark_background_color) css += `:root { --dark-background-color: ${config.dark_background_color}; }`;
+
+          if (css) {
+            style.textContent = css;
+            document.head.appendChild(style);
+          }
+        }
+      } catch (e) {
+        console.error('Error loading initial config synchronously:', e);
+      }
+    })();
+
+    // SCRIPT PARA EVITAR FLICKERING
     (function() {
       const token = localStorage.getItem('token');
       let userRole = null;
@@ -345,7 +377,7 @@
 
   <div id="login-container" class="card">
     <div style="text-align: center; margin-bottom: 1.5rem;">
-        <img id="login-logo" src="https://via.placeholder.com/180x60.png?text=Cargando..." alt="Logotipo" style="max-width: 180px; max-height: 70px;">
+        <img id="login-logo" alt="Logotipo">
     </div>
     <div class="card-header"><h2 style="text-align: center; width: 100%;">Iniciar Sesión</h2></div>
     <form id="login-form">
@@ -372,7 +404,7 @@
   <div id="app-wrapper" style="display:none;">
     <nav class="sidebar">
       <div class="sidebar-header">
-        <img id="app-logo" src="https://via.placeholder.com/180x60.png?text=Cargando..." alt="Logotipo">
+        <img id="app-logo" alt="Logotipo">
       </div>
       <div class="sidebar-nav" id="sidebar-nav-container">
         <a class="nav-link" draggable="true" data-seccion="dashboard">
@@ -956,48 +988,14 @@
                   const reader = new FileReader();
                   reader.onload = (e) => {
                       const logo_base_64 = e.target.result;
-                      document.getElementById('app-logo').src = logo_base_64;
-                      document.getElementById('login-logo').src = logo_base_64;
+                      document.getElementById('app-logo').style.content = `url('${logo_base_64}')`;
+                      document.getElementById('login-logo').style.content = `url('${logo_base_64}')`;
                       guardarConfiguracionServidor({ logo_base_64 });
                   };
                   reader.readAsDataURL(file);
               }
           });
           // Simplified - other color picker listeners would go here
-      }
-
-      async function loadPublicConfig() {
-          const appLogo = document.getElementById('app-logo');
-          const loginLogo = document.getElementById('login-logo');
-          const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
-          
-          try {
-              const response = await fetch('/api/configuracion');
-              if (!response.ok) {
-                  throw new Error(`Server responded with status: ${response.status}`);
-              }
-              const config = await response.json();
-
-              // CORRECCIÓN FINAL: Lógica de carga de logo simplificada y robusta.
-              if (config && config.logo_base_64) {
-                  appLogo.src = config.logo_base_64;
-                  loginLogo.src = config.logo_base_64;
-              } else {
-                  appLogo.src = defaultLogo;
-                  loginLogo.src = defaultLogo;
-              }
-
-              // Apply theme colors
-              const root = document.documentElement;
-              if (config && config.primary_color) root.style.setProperty('--primary-color', config.primary_color);
-              if (config && config.accent_color) root.style.setProperty('--accent-color', config.accent_color);
-              if (config && config.dark_background_color) root.style.setProperty('--dark-background-color', config.dark_background_color);
-
-          } catch (error) {
-              console.error("Failed to load public configuration. Using defaults.", error);
-              appLogo.src = defaultLogo;
-              loginLogo.src = defaultLogo;
-          }
       }
       
       function actualizarTituloConNotificacion(count) {
@@ -2902,8 +2900,6 @@
           toggleFecha, 
           eliminarFecha
       };
-
-      await loadPublicConfig();
 
       if (localStorage.getItem('token')) {
         await showApp();

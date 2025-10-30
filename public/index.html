@@ -965,7 +965,7 @@
               if (file) {
                   const reader = new FileReader();
                   reader.onload = (e) => {
-                      const logo_base_64 = e.target.result;
+                      const logo_base64 = e.target.result;
                       document.getElementById('app-logo').src = logo_base_64;
                       document.getElementById('login-logo').src = logo_base_64;
                       guardarConfiguracionServidor({ logo_base_64 });
@@ -997,47 +997,50 @@
         const appLogo = document.getElementById('app-logo');
         const loginLogo = document.getElementById('login-logo');
         const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
-
-        // Set default immediately to avoid broken image icon
+        
         appLogo.src = defaultLogo;
         loginLogo.src = defaultLogo;
 
         try {
             const response = await fetch('/api/configuracion');
-            if (response.ok) {
-                const config = await response.json();
-                
-                if (config && config.logo_base_64) {
-                    appLogo.src = config.logo_base_64;
-                    loginLogo.src = config.logo_base_64;
-                }
+            if (!response.ok) {
+                throw new Error(`Error de red: ${response.statusText}`);
+            }
+            const config = await response.json();
 
-                const root = document.documentElement;
-                const primaryColorPicker = document.getElementById('primary-color-picker');
-                const accentColorPicker = document.getElementById('accent-color-picker');
-                const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
+            if (config && config.logo_base_64) {
+                let logoSrc = config.logo_base_64;
+                if (!logoSrc.startsWith('data:image')) {
+                    // This is a safeguard in case the stored data is just raw base64
+                    logoSrc = `data:image/png;base64,${logoSrc}`;
+                }
+                appLogo.src = logoSrc;
+                loginLogo.src = logoSrc;
+            }
 
-                if (config && config.primary_color) {
-                    root.style.setProperty('--primary-color', config.primary_color);
-                    primaryColorPicker.value = config.primary_color;
-                }
-                if (config && config.accent_color) {
-                    root.style.setProperty('--accent-color', config.accent_color);
-                    accentColorPicker.value = config.accent_color;
-                }
-                if (config && config.dark_background_color) {
-                    root.style.setProperty('--dark-background-color', config.dark_background_color);
-                    darkBgColorPicker.value = config.dark_background_color;
-                } else {
-                    darkBgColorPicker.value = '#1e293b';
-                }
+            const root = document.documentElement;
+            const primaryColorPicker = document.getElementById('primary-color-picker');
+            const accentColorPicker = document.getElementById('accent-color-picker');
+            const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
+
+            if (config && config.primary_color) {
+                root.style.setProperty('--primary-color', config.primary_color);
+                primaryColorPicker.value = config.primary_color;
+            }
+            if (config && config.accent_color) {
+                root.style.setProperty('--accent-color', config.accent_color);
+                accentColorPicker.value = config.accent_color;
+            }
+            if (config && config.dark_background_color) {
+                root.style.setProperty('--dark-background-color', config.dark_background_color);
+                darkBgColorPicker.value = config.dark_background_color;
             } else {
-                console.error("Respuesta de red no fue ok al cargar configuración.");
+                darkBgColorPicker.value = '#1e293b';
             }
         } catch (error) {
             console.error("No se pudo cargar la configuración de apariencia desde el servidor. Usando valores por defecto.", error);
         }
-    }
+      }
       
       function actualizarTituloConNotificacion(count) {
         if (count > 0) {
@@ -1126,11 +1129,11 @@
             for (const permiso in mapaPermisos) {
                 const tieneAcceso = esAdmin || (permisos && permisos[permiso]);
                 if (mapaPermisos[permiso]) {
-                    mapaPermisos[permiso].parentElement.style.display = tieneAcceso ? 'flex' : 'none';
+                    mapaPermisos[permiso].style.display = tieneAcceso ? 'flex' : 'none';
                 }
             }
              if (esAdmin) {
-                mapaPermisos['fechas'].parentElement.style.display = 'flex';
+                mapaPermisos['fechas'].style.display = 'flex';
             } else {
                 const btnFechas = document.querySelector('[data-seccion="gestion-fechas"]');
                 if (btnFechas) btnFechas.style.display = 'none';
@@ -1322,18 +1325,19 @@
 
       function setupCollapsibles() {
         document.querySelectorAll(".collapsible").forEach(c => {
-            const newC = c.cloneNode(true);
-            c.parentNode.replaceChild(newC, c);
-            
-            newC.addEventListener("click", function() {
+            // Check if listener is already attached to avoid duplicates
+            if (c.dataset.listenerAttached) return;
+
+            c.addEventListener("click", function() {
                 this.classList.toggle("active");
                 const content = this.nextElementSibling;
                 if (content.style.maxHeight && content.style.maxHeight !== '0px') {
-                content.style.maxHeight = '0px';
+                    content.style.maxHeight = '0px';
                 } else {
-                content.style.maxHeight = content.scrollHeight + "px";
+                    content.style.maxHeight = content.scrollHeight + "px";
                 }
             });
+            c.dataset.listenerAttached = 'true';
         });
       }
       

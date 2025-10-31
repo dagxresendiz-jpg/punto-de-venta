@@ -103,14 +103,11 @@
     #app-logo { max-width: 180px; max-height: 80px; cursor: pointer; transition: transform 0.2s ease; }
     #app-logo:hover { transform: scale(1.05); }
     .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; }
-    .nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px; text-decoration: none; color: var(--text-color-light); font-weight: 500; transition: all 0.2s ease; cursor: grab; user-select: none; }
+    .nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px; text-decoration: none; color: var(--text-color-light); font-weight: 500; transition: all 0.2s ease; cursor: pointer; user-select: none; }
     .nav-link:hover { background-color: var(--background-color); color: var(--primary-color); }
     .nav-link.active-link { background-color: var(--primary-color); color: white; }
-    .nav-link.dragging { opacity: 0.5; background: var(--primary-color); cursor: grabbing; }
+    .nav-link.dragging { opacity: 0.5; background: var(--primary-color); }
     .nav-link svg { width: 20px; height: 20px; stroke-width: 2; }
-    .nav-order-controls { display: none; margin-left: auto; gap: 0.25rem; }
-    .nav-order-btn { background: none; border: 1px solid transparent; color: inherit; opacity: 0.6; padding: 0.2rem; line-height: 1; border-radius: 4px; }
-    .nav-order-btn:hover { background-color: rgba(0,0,0,0.1); opacity: 1; }
     .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); }
     #logout-button { width: 100%; justify-content: center; background-color: var(--danger-color); color: white; border: none; font-weight: 500; }
     #logout-button:hover { background-color: var(--danger-hover); }
@@ -283,6 +280,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+
     @media (max-width: 768px) {
       .menu-toggle { display: block; }
       .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transform: translateX(-100%); }
@@ -291,9 +289,6 @@
       main { padding: 1rem; }
       .card { padding: 1rem; }
       
-      .nav-link { cursor: default; }
-      .nav-order-controls { display: flex; }
-
       #tablaVentasDesktop { display: none; }
       .detalle-ventas-mobile { display: block; }
     }
@@ -337,7 +332,6 @@
   </script>
 </head>
 <body>
-
   <div id="toast-container"></div>
   <div id="audio-unlock-banner" style="display:none; position: fixed; top: 0; width: 100%; background-color: #f59e0b; color: white; padding: 1rem; text-align: center; z-index: 9999; cursor: pointer;">
     <strong>¡Hay un nuevo pedido!</strong> Haz clic aquí para activar las notificaciones con sonido.
@@ -379,49 +373,22 @@
         <a class="nav-link" data-seccion="dashboard" draggable="true">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
             <span>Dashboard</span>
-            <div class="nav-order-controls"><button class="nav-order-btn" data-direction="up">↑</button><button class="nav-order-btn" data-direction="down">↓</button></div>
         </a>
         <a class="nav-link" data-seccion="gestion-pedidos" id="btn-pedidos" draggable="true">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375-3.375-3.375m0 0L12.75 14.5m3-3-3.375-3.375" /></svg>
             <span>Pedidos Online</span>
             <span class="notification-badge" id="pedidos-badge"></span>
-            <div class="nav-order-controls"><button class="nav-order-btn" data-direction="up">↑</button><button class="nav-order-btn" data-direction="down">↓</button></div>
         </a>
-        <a class="nav-link" data-seccion="registrar-venta" draggable="true">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.838-6.967c.124-.467-.202-1.026-.693-1.026H6.118" /></svg>
-            <span>Registrar Venta</span>
-            <div class="nav-order-controls"><button class="nav-order-btn" data-direction="up">↑</button><button class="nav-order-btn" data-direction="down">↓</button></div>
-        </a>
-        <a class="nav-link" data-seccion="gestion-completa" id="btn-gestion" draggable="true">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
-            <span>Gestión</span>
-            <div class="nav-order-controls"><button class="nav-order-btn" data-direction="up">↑</button><button class="nav-order-btn" data-direction="down">↓</button></div>
-        </a>
+        <a class="nav-link" data-seccion="registrar-venta" draggable="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.838-6.967c.124-.467-.202-1.026-.693-1.026H6.118" /></svg><span>Registrar Venta</span></a>
+        <a class="nav-link" data-seccion="gestion-completa" id="btn-gestion" draggable="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg><span>Gestión</span></a>
         <a class="nav-link" data-seccion="gestion-fechas" id="btn-fechas" draggable="true">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 12.75h.008v.008H12v-.008z" /></svg>
             <span>Fechas de Entrega</span>
-            <div class="nav-order-controls"><button class="nav-order-btn" data-direction="up">↑</button><button class="nav-order-btn" data-direction="down">↓</button></div>
         </a>
-        <a class="nav-link" data-seccion="gestion-clientes" id="btn-clientes" draggable="true">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-4.663c.278.472.548.972.786 1.503z" /></svg>
-            <span>Clientes</span>
-            <div class="nav-order-controls"><button class="nav-order-btn" data-direction="up">↑</button><button class="nav-order-btn" data-direction="down">↓</button></div>
-        </a>
-        <a class="nav-link" data-seccion="gestion-usuarios" id="btn-usuarios" draggable="true">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962c.57-1.023.994-2.131 1.253-3.284C13.437 11.08 14 9.61 14 8c0-1.61-.563-3.08-1.5-4.216m-4.5 14.15a9.083 9.083 0 01-1.253-3.284C6.563 13.08 6 11.61 6 10c0-1.61.563-3.08 1.5-4.216m0 0a5.012 5.012 0 011.5 0c.828 1.136 1.5 2.606 1.5 4.216 0 1.61-.563-3.08-1.5 4.216m0 0l-2.25 2.25a5.012 5.012 0 01-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 00-1.5 0l-2.25 2.25a5.012 5.012 0 00-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 01-1.5 0l-2.25 2.25" /></svg>
-            <span>Usuarios</span>
-            <div class="nav-order-controls"><button class="nav-order-btn" data-direction="up">↑</button><button class="nav-order-btn" data-direction="down">↓</button></div>
-        </a>
-        <a class="nav-link" data-seccion="historial-ventas" id="btn-historial" draggable="true">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 1.5m1-1.5l1-1.5m0 0l1 1.5m-2-1.5v-6.375c0-1.125.9-2.025 2-2.025h.5c1.1 0 2 .9 2 2.025v6.375m-4.5-3.375V8.25" /></svg>
-            <span>Historial</span>
-            <div class="nav-order-controls"><button class="nav-order-btn" data-direction="up">↑</button><button class="nav-order-btn" data-direction="down">↓</button></div>
-        </a>
-        <a class="nav-link" data-seccion="papelera-reciclaje" id="btn-papelera" draggable="true">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.067-2.09 1.02-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-            <span>Papelera</span>
-            <div class="nav-order-controls"><button class="nav-order-btn" data-direction="up">↑</button><button class="nav-order-btn" data-direction="down">↓</button></div>
-        </a>
+        <a class="nav-link" data-seccion="gestion-clientes" id="btn-clientes" draggable="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-4.663c.278.472.548.972.786 1.503z" /></svg><span>Clientes</span></a>
+        <a class="nav-link" data-seccion="gestion-usuarios" id="btn-usuarios" draggable="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962c.57-1.023.994-2.131 1.253-3.284C13.437 11.08 14 9.61 14 8c0-1.61-.563-3.08-1.5-4.216m-4.5 14.15a9.083 9.083 0 01-1.253-3.284C6.563 13.08 6 11.61 6 10c0-1.61.563-3.08 1.5-4.216m0 0a5.012 5.012 0 011.5 0c.828 1.136 1.5 2.606 1.5 4.216 0 1.61-.563-3.08-1.5 4.216m0 0l-2.25 2.25a5.012 5.012 0 01-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 00-1.5 0l-2.25 2.25a5.012 5.012 0 00-1.5 0l-2.25-2.25m0 0a5.012 5.012 0 01-1.5 0l-2.25 2.25" /></svg><span>Usuarios</span></a>
+        <a class="nav-link" data-seccion="historial-ventas" id="btn-historial" draggable="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 1.5m1-1.5l1-1.5m0 0l1 1.5m-2-1.5v-6.375c0-1.125.9-2.025 2-2.025h.5c1.1 0 2 .9 2 2.025v6.375m-4.5-3.375V8.25" /></svg><span>Historial</span></a>
+        <a class="nav-link" data-seccion="papelera-reciclaje" id="btn-papelera" draggable="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.067-2.09 1.02-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg><span>Papelera</span></a>
       </div>
       <div class="sidebar-footer">
         <div id="customization-container" style="display: none;">
@@ -487,10 +454,6 @@
                 <div class="card">
                     <h3>Productos Más Vendidos (Hoy)</h3>
                     <div class="chart-container"><canvas id="dashboard-chart-productos"></canvas></div>
-                </div>
-                <div class="card full-width-card">
-                    <h3>Métodos de Pago (Hoy)</h3>
-                    <div class="chart-container" style="max-height: 280px; margin: 0 auto; max-width: 500px;"><canvas id="dashboard-chart-pagos"></canvas></div>
                 </div>
             </div>
         </section>
@@ -1152,6 +1115,7 @@
             };
 
             for (const permiso in mapaPermisos) {
+                // El dashboard y registrar venta son visibles para todos
                 if (['dashboard', 'registrar-venta'].includes(permiso)) continue;
 
                 const tieneAcceso = esAdmin || (permisos && permisos[permiso]);
@@ -1168,7 +1132,7 @@
             
             let seccionInicial = sessionStorage.getItem('lastActiveSection');
             if (!seccionInicial) {
-                seccionInicial = 'dashboard';
+                seccionInicial = 'dashboard'; // Nueva sección por defecto
             }
             
             const mapaSeccionesAPermisos = {

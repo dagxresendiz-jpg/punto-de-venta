@@ -135,7 +135,7 @@
     .password-wrapper input { padding-right: 3rem; }
     #toggle-password { position: absolute; right: 1rem; top: 0.75rem; cursor: pointer; color: var(--text-color-light); }
     #toggle-password svg { width: 20px; height: 20px; }
-    button { cursor: pointer; border-radius: 8px; border: none; padding: 0.75rem 1.25rem; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+    button { cursor: pointer; border-radius: 8px; border: none; padding: 0.75rem 1.25rem; font-weight: 600; transition: all 0.2s; }
     button:disabled { background-color: #9ca3af; cursor: not-allowed; }
     button[type="submit"], #btnAgregarVenta { background-color: var(--primary-color); color: white; }
     button[type="submit"]:hover, #btnAgregarVenta:hover { background-color: var(--primary-hover); }
@@ -215,7 +215,7 @@
     .fecha-item.inactiva { background-color: #f1f5f9; color: var(--text-color-light); text-decoration: line-through; }
     .form-row { display: flex; gap: 1rem; align-items: flex-start; } 
     .form-group { flex: 1; }
-    #filtro-rapido-fechas { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    #filtro-rapido-fechas { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
     #filtro-rapido-fechas button { padding: 0.5rem 1rem; font-size: 0.9em; }
     
     .detalle-ventas-mobile { display: none; }
@@ -262,102 +262,6 @@
     .kpi-card { text-align: center; }
     .kpi-value { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); }
     .kpi-label { font-size: 1rem; font-weight: 500; color: var(--text-color-light); margin-top: 0.5rem; }
-
-    /* Toast Notifications */
-    #toast-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .toast {
-      background-color: var(--card-background);
-      color: var(--text-color-dark);
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      border-left: 5px solid;
-      opacity: 0;
-      transform: translateX(100%);
-      transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-      min-width: 250px;
-      max-width: 350px;
-    }
-    .toast.show {
-      opacity: 1;
-      transform: translateX(0);
-    }
-    .toast.success { border-color: var(--success-color); }
-    .toast.error { border-color: var(--danger-color); }
-    .toast.info { border-color: var(--info-color); }
-
-    /* Confirmation & Corte Modals */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.6);
-      display: none; /* Initially hidden */
-      justify-content: center;
-      align-items: center;
-      z-index: 1001;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-    .modal-overlay.show {
-      display: flex;
-      opacity: 1;
-    }
-    .modal-content {
-      background-color: var(--card-background);
-      padding: 2rem;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 450px;
-      text-align: center;
-    }
-    .modal-content p {
-      margin-bottom: 1.5rem;
-      font-size: 1.1rem;
-      color: var(--text-color-dark);
-    }
-    .modal-actions {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-    .modal-actions .btn-confirm.btn-confirm-danger {
-        background-color: var(--danger-color);
-        color: white;
-    }
-    .modal-actions .btn-confirm.btn-confirm-danger:hover {
-        background-color: var(--danger-hover);
-    }
-    .modal-actions .btn-confirm.btn-confirm-safe {
-        background-color: var(--success-color);
-        color: white;
-    }
-    .modal-actions .btn-confirm.btn-confirm-safe:hover {
-        background-color: var(--success-hover);
-    }
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-    .spinner {
-        animation: spin 1s linear infinite;
-        width: 20px;
-        height: 20px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
-        border-top-color: #fff;
-        margin-right: 0.5rem;
-    }
 
     @media (max-width: 768px) {
       .menu-toggle { display: block; }
@@ -497,7 +401,7 @@
     </nav>
     <div class="main-content">
       <header class="main-header">
-        <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú">&#9776;</button>
+        <button class="menu-toggle" id="menu-toggle">&#9776;</button>
         <div class="user-info">
           <span id="welcome-user"></span>
         </div>
@@ -678,19 +582,16 @@
             <div class="card">
               <div class="card-header"><h2>Gestión de Inventario</h2></div>
               <h3>Productos</h3>
-              <input type="search" id="searchProductos" placeholder="Buscar producto por nombre..." style="margin-bottom: 1rem;">
               <form id="formProducto"><input type="hidden" id="idProducto" /><input type="text" id="nombreProducto" placeholder="Nombre producto" required /><input type="number" step="0.01" id="precioProducto" placeholder="Precio" required /><button type="submit">Guardar Producto</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
               <ul id="listaProductos"></ul>
             </div>
             <div class="card">
               <h3>Toppings</h3>
-              <input type="search" id="searchToppings" placeholder="Buscar topping por nombre..." style="margin-bottom: 1rem;">
               <form id="formTopping"><input type="hidden" id="idTopping" /><input type="text" id="nombreTopping" placeholder="Nombre topping" required /><input type="number" step="0.01" id="precioTopping" placeholder="Precio" required /><button type="submit">Guardar Topping</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
               <ul id="listaToppings"></ul>
             </div>
             <div class="card">
               <h3>Jarabes</h3>
-              <input type="search" id="searchJarabes" placeholder="Buscar jarabe por nombre..." style="margin-bottom: 1rem;">
               <form id="formJarabe"><input type="hidden" id="idJarabe" /><input type="text" id="nombreJarabe" placeholder="Nombre jarabe" required /><input type="number" step="0.01" id="precioJarabe" placeholder="Precio" required /><button type="submit">Guardar Jarabe</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
               <ul id="listaJarabes"></ul>
             </div>
@@ -699,7 +600,6 @@
         <section id="gestion-clientes">
           <div class="card">
             <div class="card-header"><h2>Gestión de Clientes</h2></div>
-            <input type="search" id="searchClientes" placeholder="Buscar cliente por nombre o teléfono..." style="margin-bottom: 1rem;">
             <form id="formCliente"><input type="hidden" id="idCliente" /><input type="text" id="nombreCliente" placeholder="Nombre del cliente" required /><input type="text" id="telCliente" placeholder="Teléfono (opcional)" /><input type="text" id="dirCliente" placeholder="Dirección (opcional)" /><button type="submit">Guardar Cliente</button><button type="button" class="btn-secondary" onclick="this.form.reset()">Limpiar</button></form>
             <ul id="listaClientes"></ul>
           </div>
@@ -741,7 +641,6 @@
               <button id="btn-filtro-hoy" class="btn-secondary">Hoy</button>
               <button id="btn-filtro-semana" class="btn-secondary">Esta Semana</button>
               <button id="btn-filtro-mes" class="btn-secondary">Este Mes</button>
-              <button id="btn-corte-caja" class="btn-secondary" style="background-color: var(--success-color); color: white;">Hacer Corte del Día</button>
             </div>
 
             <div id="filtros-historial">
@@ -792,12 +691,12 @@
                 <div class="card-header">
                     <h3>Detalle de Ventas</h3>
                     <div class="export-buttons" style="display:flex; gap: 0.5rem;">
-                        <button id="btnDetalleWhatsapp" class="btn-secondary" title="Enviar Detalle por WhatsApp" aria-label="Enviar Detalle por WhatsApp">
+                        <button id="btnDetalleWhatsapp" class="btn-secondary" title="Enviar Detalle por WhatsApp">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
                             </svg>
                         </button>
-                        <button id="btnDetallePDF" class="btn-secondary" title="Generar PDF del Detalle" aria-label="Generar PDF del Detalle">
+                        <button id="btnDetallePDF" class="btn-secondary" title="Generar PDF del Detalle">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
                                 <path d="M4.603 14.087a.8.8 0 0 1-1.128.001l-2.023-1.91a.5.5 0 0 1 .757-.793l2.023 1.91a.3.3 0 0 0 .424 0l4.869-4.633a.5.5 0 0 1 .645.768l-4.869 4.633a.8.8 0 0 1-.569.241z"/>
@@ -900,36 +799,12 @@
     </div>
   </div>
 
-  <div id="toast-container"></div>
-
-  <div id="confirmation-modal" class="modal-overlay">
-    <div class="modal-content">
-      <p id="modal-text"></p>
-      <div class="modal-actions">
-        <button id="modal-cancel-btn" class="btn-secondary">Cancelar</button>
-        <button id="modal-confirm-btn" class="btn-confirm"></button>
-      </div>
-    </div>
-  </div>
-
-  <div id="corte-modal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 500px; text-align: left;">
-      <h3 style="text-align: center; margin-bottom: 1.5rem;">Corte de Caja del Día</h3>
-      <pre id="corte-resumen" style="white-space: pre-wrap; background: var(--background-color); padding: 1rem; border-radius: 8px; max-height: 40vh; overflow-y: auto;"></pre>
-      <div class="modal-actions" style="margin-top: 1.5rem;">
-        <button id="corte-whatsapp-btn" class="btn-secondary">Enviar por WhatsApp</button>
-        <button id="corte-print-btn" class="btn-secondary">Imprimir</button>
-        <button id="corte-cancel-btn" class="btn-secondary">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       let ventaActual = {}; 
       let miGraficaDeVentas, miGraficaDeProductos, dashboardChartVentas, dashboardChartProductos;
-      let ventasEnMemoria = [], ventasFiltradasGlobal = [];
-      let allProducts = [], allToppings = [], allJarabes = [], allClientes = [], allUsuarios = [];
+      let ventasEnMemoria = [];
+      let ventasFiltradasGlobal = [];
       let procesandoVenta = false;
       const COSTO_DOMICILIO_PREDET = 30.00;
       let pollingIntervalId = null;
@@ -956,61 +831,6 @@
       const passwordInput = document.getElementById('password');
       const eyeOpen = document.getElementById('eye-open');
       const eyeClosed = document.getElementById('eye-closed');
-      
-      // --- UI HELPER FUNCTIONS ---
-      function showToast(message, type = 'info', duration = 4000) {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
-        container.appendChild(toast);
-        setTimeout(() => toast.classList.add('show'), 10);
-        setTimeout(() => {
-            toast.classList.remove('show');
-            toast.addEventListener('transitionend', () => toast.remove());
-        }, duration);
-      }
-
-      function showConfirmationModal({ title, confirmText = 'Confirmar', confirmClass = 'btn-confirm-danger' }) {
-          return new Promise((resolve) => {
-              const modal = document.getElementById('confirmation-modal');
-              const modalText = document.getElementById('modal-text');
-              const confirmBtn = document.getElementById('modal-confirm-btn');
-              const cancelBtn = document.getElementById('modal-cancel-btn');
-
-              modalText.textContent = title;
-              confirmBtn.textContent = confirmText;
-              confirmBtn.className = `btn-confirm ${confirmClass}`;
-
-              modal.classList.add('show');
-              
-              const confirmHandler = () => { closeModal(); resolve(true); };
-              const cancelHandler = () => { closeModal(); resolve(false); };
-
-              const closeModal = () => {
-                  modal.classList.remove('show');
-                  confirmBtn.removeEventListener('click', confirmHandler);
-                  cancelBtn.removeEventListener('click', cancelHandler);
-              };
-
-              confirmBtn.addEventListener('click', confirmHandler, { once: true });
-              cancelBtn.addEventListener('click', cancelHandler, { once: true });
-          });
-      }
-
-      function toggleButtonLoading(button, isLoading, originalText = '') {
-          if (!button) return;
-          if (isLoading) {
-              button.disabled = true;
-              button.dataset.originalText = button.innerHTML;
-              button.innerHTML = `<span class="spinner"></span> Procesando...`;
-          } else {
-              button.disabled = false;
-              button.innerHTML = button.dataset.originalText || originalText;
-          }
-      }
-
-      // --- END UI HELPER FUNCTIONS ---
       
       togglePassword.addEventListener('click', () => {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -1047,10 +867,10 @@
                   method: 'POST', 
                   body: JSON.stringify(config) 
               }, true);
-              showToast("¡Apariencia guardada correctamente!", 'success');
+              alert("¡Apariencia guardada correctamente!");
           } catch (error) {
               console.error("Error guardando configuración:", error);
-              showToast("No se pudo guardar la configuración.", 'error');
+              alert("No se pudo guardar la configuración. Revisa la conexión con el servidor.");
           }
       }
 
@@ -1070,10 +890,12 @@
               if (file) {
                   const reader = new FileReader();
                   reader.onload = (e) => {
-                      const logo_base_64 = e.target.result;
-                      document.getElementById('app-logo').src = logo_base_64;
-                      document.getElementById('login-logo').src = logo_base_64;
-                      pendingAppearanceChanges.logo_base_64 = logo_base_64;
+                      const logo_base64 = e.target.result;
+                      // Vista previa
+                      document.getElementById('app-logo').src = logo_base64;
+                      document.getElementById('login-logo').src = logo_base64;
+                      // Guardar para enviar
+                      pendingAppearanceChanges.logo_base_64 = logo_base64;
                   };
                   reader.readAsDataURL(file);
               }
@@ -1102,7 +924,7 @@
                   await guardarConfiguracionServidor(pendingAppearanceChanges);
                   pendingAppearanceChanges = {};
               } else {
-                  showToast("No hay cambios en la apariencia para guardar.", 'info');
+                  alert("No hay cambios en la apariencia para guardar.");
               }
           });
       }
@@ -1114,16 +936,19 @@
           const accentColorPicker = document.getElementById('accent-color-picker');
           const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
           const root = document.documentElement;
-          const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
           
           try {
               const response = await fetch('/api/configuracion');
-              if (!response.ok) throw new Error(`Error de red: ${response.statusText}`);
+              if (!response.ok) {
+                  throw new Error(`Error de red: ${response.statusText}`);
+              }
               const config = await response.json();
               
-              if (config && typeof config.logo_base64 === 'string' && config.logo_base_64.startsWith('data:image')) {
-                  appLogo.src = config.logo_base_64;
-                  loginLogo.src = config.logo_base_64;
+              const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
+              
+              if (config && config.logo_base64) {
+                  appLogo.src = config.logo_base64;
+                  loginLogo.src = config.logo_base64;
               } else {
                    appLogo.src = defaultLogo;
                    loginLogo.src = defaultLogo;
@@ -1148,8 +973,9 @@
 
           } catch (error) {
               console.error("No se pudo cargar la configuración de apariencia desde el servidor.", error);
-              appLogo.src = defaultLogo;
-              loginLogo.src = defaultLogo;
+              const errorLogo = 'https://via.placeholder.com/180x60.png?text=Error';
+              appLogo.src = errorLogo;
+              loginLogo.src = errorLogo;
           }
       }
       
@@ -1195,7 +1021,9 @@
       }
 
       function iniciarPollingDePedidos() {
-          if (pollingIntervalId) clearInterval(pollingIntervalId);
+          if (pollingIntervalId) {
+              clearInterval(pollingIntervalId);
+          }
           verificarNuevosPedidos();
           pollingIntervalId = setInterval(verificarNuevosPedidos, 15000);
       }
@@ -1238,7 +1066,9 @@
             };
 
             for (const permiso in mapaPermisos) {
+                // El dashboard y registrar venta son visibles para todos
                 if (permiso === 'dashboard') continue;
+
                 const tieneAcceso = esAdmin || (permisos && permisos[permiso]);
                 if (mapaPermisos[permiso]) {
                     mapaPermisos[permiso].style.display = tieneAcceso ? 'flex' : 'none';
@@ -1251,7 +1081,10 @@
             
             initApp();
             
-            let seccionInicial = sessionStorage.getItem('lastActiveSection') || 'dashboard';
+            let seccionInicial = sessionStorage.getItem('lastActiveSection');
+            if (!seccionInicial) {
+                seccionInicial = 'dashboard'; // Nueva sección por defecto
+            }
             
             const mapaSeccionesAPermisos = {
                 'gestion-pedidos': 'pedidos', 'gestion-completa': 'gestion', 'gestion-fechas': 'admin',
@@ -1260,11 +1093,25 @@
             };
             
             const permisoNecesario = mapaSeccionesAPermisos[seccionInicial];
-            let seccionEsValida = esAdmin || ['dashboard', 'registrar-venta'].includes(seccionInicial) || (permisos && permisoNecesario && permisos[permisoNecesario]);
+            let seccionEsValida = false;
+
+            if (esAdmin) {
+                seccionEsValida = true;
+            } else if (['dashboard', 'registrar-venta'].includes(seccionInicial)) {
+                seccionEsValida = true;
+            } else if (permisos && permisoNecesario && permisos[permisoNecesario]) {
+                seccionEsValida = true;
+            }
             
-            mostrarSeccion(seccionEsValida ? seccionInicial : 'dashboard');
+            if (seccionEsValida) {
+                mostrarSeccion(seccionInicial);
+            } else {
+                mostrarSeccion('dashboard');
+            }
             
-            if (esAdmin || (permisos && permisos.pedidos)) iniciarPollingDePedidos();
+            if (esAdmin || (permisos && permisos.pedidos)) {
+                iniciarPollingDePedidos();
+            }
 
         } catch (e) { 
             console.error("Error en showApp:", e); 
@@ -1335,15 +1182,14 @@
             const data = await response.json();
             if (!response.ok) {
                 if (response.status === 401) { showLogin(); throw new Error('Sesión expirada.'); }
-                const errorMessage = data.error || `Error en la petición a ${url}`;
-                if (!suppressError) throw new Error(errorMessage);
-                console.error(`Error en la petición a ${url}:`, errorMessage);
-                return;
+                if (suppressError) { console.error(`Error en la petición a ${url}:`, data.error); return; }
+                throw new Error(data.error || `Error en la petición a ${url}`);
             }
             return data;
         } else {
+            console.error("Respuesta inesperada del servidor (no es JSON). Probablemente la sesión expiró.");
             const text = await response.text();
-            console.error("Respuesta inesperada (no-JSON):", text);
+            console.error("Respuesta recibida:", text);
             showLogin();
             throw new Error('Sesión expirada. Por favor, inicia sesión de nuevo.');
         }
@@ -1355,20 +1201,6 @@
         setupCollapsibles();
         applyMenuOrder();
         initDraggableMenu();
-        const savedVenta = sessionStorage.getItem('ventaActual');
-        if (savedVenta) {
-            try {
-                ventaActual = JSON.parse(savedVenta);
-                if (Object.keys(ventaActual).length > 0) {
-                    document.getElementById('ventaCliente').disabled = true;
-                    mostrarVentaActual();
-                    showToast('Se recuperó una venta no finalizada.', 'info');
-                }
-            } catch (e) {
-                console.error("No se pudo restaurar la venta guardada", e);
-                sessionStorage.removeItem('ventaActual');
-            }
-        }
       }
       
       async function mostrarSeccion(id) {
@@ -1416,123 +1248,113 @@
 
       function setupCollapsibles() {
         document.querySelectorAll(".collapsible").forEach(c => {
-          c.addEventListener("click", function() {
+          const newC = c.cloneNode(true);
+          c.parentNode.replaceChild(newC, c);
+          
+          newC.addEventListener("click", function() {
             this.classList.toggle("active");
             const content = this.nextElementSibling;
-            content.style.maxHeight = content.style.maxHeight ? null : content.scrollHeight + "px";
+            if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+              content.style.maxHeight = '0px';
+            } else {
+              content.style.maxHeight = content.scrollHeight + "px";
+            }
           });
         });
       }
       
-      function editItem(tipo, id) {
-        const dataMap = { 'Producto': allProducts, 'Topping': allToppings, 'Jarabe': allJarabes, 'Cliente': allClientes, 'Usuario': allUsuarios };
-        const item = dataMap[tipo].find(i => i.id === id);
-        if (!item) return;
-
-        if (tipo === 'Usuario') {
-            cargarUsuarioEnForm(item);
-        } else if (tipo === 'Cliente') {
-            document.getElementById(`id${tipo}`).value = item.id;
-            document.getElementById(`nombre${tipo}`).value = item.nombre;
-            document.getElementById(`tel${tipo}`).value = item.telefono || '';
-            document.getElementById(`dir${tipo}`).value = item.direccion || '';
-        } else { // Producto, Topping, Jarabe
-            document.getElementById(`id${tipo}`).value = item.id;
-            document.getElementById(`nombre${tipo}`).value = item.nombre;
-            document.getElementById(`precio${tipo}`).value = item.precio;
-        }
-      }
-
       const renderizarLista = (items = [], tipo, campos) => {
         const lista = document.getElementById(`lista${tipo}s`);
         if(!lista) return;
         lista.innerHTML = '';
         items.forEach(item => {
-            const li = document.createElement('li');
-            li.className = 'product-item';
+          const li = document.createElement('li');
+          li.className = 'product-item';
+          const texto = document.createElement('span');
+          let displayText = item[campos[0]] || '';
+          if (campos[1] && typeof item[campos[1]] === 'number') {
+            displayText += ` - $${item[campos[1]].toFixed(2)}`;
+          } else if (campos[1] && item[campos[1]]) {
+            displayText += ` - ${item[campos[1]]}`;
+          }
+          texto.textContent = displayText;
 
-            let displayText = item[campos[0]] || '';
-            if (campos[1] && typeof item[campos[1]] === 'number') displayText += ` - $${item[campos[1]].toFixed(2)}`;
-            else if (campos[1] && item[campos[1]]) displayText += ` - ${item[campos[1]]}`;
-            
-            const texto = document.createElement('span');
-            texto.textContent = displayText;
+          const divControles = document.createElement('div');
+          divControles.style.display = 'flex';
+          divControles.style.alignItems = 'center';
+          divControles.style.gap = '1rem';
 
-            const divControles = document.createElement('div');
-            
-            if (['Producto', 'Topping', 'Jarabe'].includes(tipo)) {
-                divControles.innerHTML = `
-                <div class="agotado-switch">
-                    <span>Agotado</span>
-                    <label class="theme-switch">
-                        <input type="checkbox" onchange="window.app.toggleAgotado('${item.id}', '${tipo.toLowerCase()}')" ${item.agotado ? 'checked' : ''}>
-                        <span class="slider"></span>
-                    </label>
-                </div>`;
-            }
+          if (['Producto', 'Topping', 'Jarabe'].includes(tipo)) {
+            const switchContainer = document.createElement('div');
+            switchContainer.className = 'agotado-switch';
+            switchContainer.innerHTML = `
+              <span>Agotado</span>
+              <label class="theme-switch">
+                <input type="checkbox" onchange="window.app.toggleAgotado('${item.id}', '${tipo.toLowerCase()}')" ${item.agotado ? 'checked' : ''}>
+                <span class="slider"></span>
+              </label>
+            `;
+            divControles.appendChild(switchContainer);
+          }
+          
+          const divBotones = document.createElement('div');
+          const btnEditar = document.createElement('button');
+          btnEditar.textContent = 'Editar';
+          btnEditar.onclick = () => {
+              if(tipo === 'Usuario') {
+                  cargarUsuarioEnForm(item);
+              } else {
+                  document.getElementById(`id${tipo}`).value = item.id;
+                  document.getElementById(`nombre${tipo}`).value = item.nombre;
+                  if (tipo === 'Cliente') {
+                    document.getElementById(`tel${tipo}`).value = item.telefono || '';
+                    document.getElementById(`dir${tipo}`).value = item.direccion || '';
+                  } else { document.getElementById(`precio${tipo}`).value = item.precio; }
+              }
+          };
+          const btnEliminar = document.createElement('button');
+          btnEliminar.textContent = 'Eliminar';
+          btnEliminar.className = 'btn-eliminar-item';
+          btnEliminar.onclick = () => eliminarItem(item.id, tipo);
+          divBotones.appendChild(btnEditar);
+          divBotones.appendChild(btnEliminar);
 
-            const divBotones = document.createElement('div');
-            const btnEditar = document.createElement('button');
-            btnEditar.textContent = 'Editar';
-            btnEditar.onclick = () => editItem(tipo, item.id);
-
-            const btnEliminar = document.createElement('button');
-            btnEliminar.textContent = 'Eliminar';
-            btnEliminar.className = 'btn-eliminar-item';
-            btnEliminar.onclick = () => eliminarItem(item.id, tipo);
-
-            divBotones.appendChild(btnEditar);
-            divBotones.appendChild(btnEliminar);
-            divControles.appendChild(divBotones);
-            
-            li.appendChild(texto);
-            li.appendChild(divControles);
-            lista.appendChild(li);
+          divControles.appendChild(divBotones);
+          
+          li.appendChild(texto);
+          li.appendChild(divControles);
+          lista.appendChild(li);
         });
       };
       
       async function guardarItem(e, tipo) {
         e.preventDefault();
         const form = e.target;
-        const button = form.querySelector('button[type="submit"]');
-        toggleButtonLoading(button, true);
-
-        try {
-            const id = document.getElementById(`id${tipo}`).value;
-            let body;
-            if (tipo === 'Cliente') {
-                body = { nombre: document.getElementById(`nombre${tipo}`).value, telefono: document.getElementById(`tel${tipo}`).value, direccion: document.getElementById(`dir${tipo}`).value };
-                if (!body.nombre) throw new Error('El nombre del cliente es obligatorio.');
-            } else {
-                body = { nombre: document.getElementById(`nombre${tipo}`).value, precio: parseFloat(document.getElementById(`precio${tipo}`).value) };
-                if (!body.nombre || isNaN(body.precio)) throw new Error('Completa todos los datos correctamente.');
-            }
-            const metodo = id ? 'PUT' : 'POST';
-            const url = id ? `/api/${tipo.toLowerCase()}s/${id}` : `/api/${tipo.toLowerCase()}s`;
-            await fetchAPI(url, { method: metodo, body: JSON.stringify(body) });
-            form.reset();
-            document.getElementById(`id${tipo}`).value = '';
-            showToast(`${tipo} guardado con éxito.`, 'success');
-            await actualizarUIGlobal(tipo);
-        } catch (err) { 
-            showToast(`Error: ${err.message}`, 'error'); 
-        } finally {
-            toggleButtonLoading(button, false);
+        const id = document.getElementById(`id${tipo}`).value;
+        let body;
+        if (tipo === 'Cliente') {
+            body = { nombre: document.getElementById(`nombre${tipo}`).value, telefono: document.getElementById(`tel${tipo}`).value, direccion: document.getElementById(`dir${tipo}`).value };
+            if (!body.nombre) { alert('El nombre del cliente es obligatorio.'); return; }
+        } else {
+            body = { nombre: document.getElementById(`nombre${tipo}`).value, precio: parseFloat(document.getElementById(`precio${tipo}`).value) };
+            if (!body.nombre || isNaN(body.precio)) { alert('Completa los datos'); return; }
         }
+        const metodo = id ? 'PUT' : 'POST';
+        const url = id ? `/api/${tipo.toLowerCase()}s/${id}` : `/api/${tipo.toLowerCase()}s`;
+        try {
+          await fetchAPI(url, { method: metodo, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+          form.reset();
+          document.getElementById(`id${tipo}`).value = '';
+          await actualizarUIGlobal(tipo);
+        } catch (err) { alert(`Error: ${err.message}`); }
       }
 
       async function eliminarItem(id, tipo) {
-        const confirmed = await showConfirmationModal({
-            title: `¿Mover este ${tipo.toLowerCase()} a la papelera?`,
-            confirmText: 'Sí, mover',
-            confirmClass: 'btn-confirm-danger'
-        });
-        if (confirmed) {
+        if (confirm(`¿Mover este ${tipo.toLowerCase()} a la papelera?`)) {
           try {
             await fetchAPI(`/api/${tipo.toLowerCase()}s/${id}`, { method: 'DELETE' });
-            showToast(`${tipo} movido a la papelera.`, 'success');
             await actualizarUIGlobal(tipo);
-          } catch (err) { showToast(`Error: ${err.message}`, 'error'); }
+          } catch (err) { alert(`Error: ${err.message}`); }
         }
       }
       
@@ -1545,10 +1367,19 @@
         for (const func of funciones) { await func(); }
       }
 
-      async function cargarProductos() { try { allProducts = await fetchAPI('/api/productos'); renderizarLista(allProducts, 'Producto', ['nombre', 'precio']); } catch (e) { console.error(e); } }
-      async function cargarToppings() { try { allToppings = await fetchAPI('/api/toppings'); renderizarLista(allToppings, 'Topping', ['nombre', 'precio']); } catch (e) { console.error(e); } }
-      async function cargarJarabes() { try { allJarabes = await fetchAPI('/api/jarabes'); renderizarLista(allJarabes, 'Jarabe', ['nombre', 'precio']); } catch (e) { console.error(e); } }
-      async function cargarClientes() { try { allClientes = await fetchAPI('/api/clientes'); renderizarLista(allClientes, 'Cliente', ['nombre', 'telefono']); } catch (e) { console.error(e); } }
+      async function cargarProductos() { try { const data = await fetchAPI('/api/productos'); renderizarLista(data, 'Producto', ['nombre', 'precio']); } catch (e) { console.error(e); renderizarLista([], 'Producto', ['nombre', 'precio']); } }
+      async function cargarToppings() { try { const data = await fetchAPI('/api/toppings'); renderizarLista(data, 'Topping', ['nombre', 'precio']); } catch (e) { console.error(e); renderizarLista([], 'Topping', ['nombre', 'precio']); } }
+      async function cargarJarabes() { try { const data = await fetchAPI('/api/jarabes'); renderizarLista(data, 'Jarabe', ['nombre', 'precio']); } catch (e) { console.error(e); renderizarLista([], 'Jarabe', ['nombre', 'precio']); } }
+      async function cargarClientes() { 
+        try { 
+            const data = await fetchAPI('/api/clientes'); 
+            clientesCacheados = data;
+            renderizarLista(data, 'Cliente', ['nombre', 'telefono']); 
+        } catch (e) { 
+            console.error(e); 
+            renderizarLista([], 'Cliente', ['nombre', 'telefono']); 
+        } 
+      }
       
       async function cargarOpcionesParaVenta() { 
         try {
@@ -1560,13 +1391,16 @@
                 cargarDataParaSelector('/api/fechas-entrega', 'fechaEntregaVenta', 'id', fecha => new Date(fecha.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'}))
             ]);
             setupCollapsibles();
-        } catch(e) { console.error("Fallo al cargar opciones para la venta:", e); }
+        } catch(e) {
+            console.error("Fallo al cargar opciones para la venta:", e);
+        }
       }
       
       async function cargarDataParaSelector(url, selectId, valueField, textField, checkAgotado = false) {
         try {
           const data = await fetchAPI(url);
           if (!data) return;
+
           if(url === '/api/clientes') clientesCacheados = data;
           
           const select = document.getElementById(selectId);
@@ -1589,11 +1423,11 @@
           try{
               const data = await fetchAPI(url);
               const container = document.getElementById(containerId);
-              if (!container || !data) return;
+              if (!container) return;
               container.innerHTML = '';
+              if (!data) return;
               data.forEach(item => {
                   const button = document.createElement('button');
-                  button.type = 'button';
                   button.className = 'option-btn';
                   button.textContent = `${item.nombre} - $${item.precio.toFixed(2)}`;
                   button.dataset.id = item.id;
@@ -1619,7 +1453,7 @@
           document.querySelectorAll(".collapsible.active").forEach(c => {
              if(c.id !== 'collapsible-domicilio-btn') {
                 c.classList.remove('active');
-                c.nextElementSibling.style.maxHeight = null;
+                c.nextElementSibling.style.maxHeight = '0px';
              }
           });
       }
@@ -1633,158 +1467,248 @@
       
       function agregarAVenta() {
         const productoSelect = document.getElementById('ventaProducto');
-        if (!productoSelect.value) { showToast('Selecciona un producto', 'error'); return; }
+        if (!productoSelect.value) { alert('Selecciona un producto'); return; }
         const productoNombre = productoSelect.options[productoSelect.selectedIndex].text.replace(/ \(Agotado\)/, '').split(' - ')[0];
         const cantidad = parseInt(document.getElementById('ventaCantidad').value) || 1;
         const toppings = Array.from(document.querySelectorAll('#toppings-container .option-btn.selected')).map(btn => ({ nombre: btn.dataset.nombre, precio: parseFloat(btn.dataset.precio) }));
         const jarabes = Array.from(document.querySelectorAll('#jarabes-container .option-btn.selected')).map(btn => ({ nombre: btn.dataset.nombre, precio: parseFloat(btn.dataset.precio) }));
         const nota = document.getElementById('ventaNota').value.trim();
         let precioUnitario = parseFloat(productoSelect.options[productoSelect.selectedIndex].dataset.precio);
-        precioUnitario += toppings.reduce((acc, item) => acc + item.precio, 0) + jarabes.reduce((acc, item) => acc + item.precio, 0);
+        precioUnitario += toppings.reduce((acc, item) => acc + item.precio, 0);
+        precioUnitario += jarabes.reduce((acc, item) => acc + item.precio, 0);
 
         const nuevoItem = { productoNombre, toppings, jarabes, nota, precioUnitario };
         const idUnico = generarIdVenta(nuevoItem);
 
-        ventaActual[idUnico] ? ventaActual[idUnico].cantidad += cantidad : ventaActual[idUnico] = { ...nuevoItem, cantidad: cantidad, id: idUnico };
-        if (Object.keys(ventaActual).length > 0) document.getElementById('ventaCliente').disabled = true;
+        if (ventaActual[idUnico]) {
+            ventaActual[idUnico].cantidad += cantidad;
+        } else {
+            ventaActual[idUnico] = { ...nuevoItem, cantidad: cantidad, id: idUnico };
+        }
+        
+        if (Object.keys(ventaActual).length > 0) {
+            document.getElementById('ventaCliente').disabled = true;
+        }
 
-        updateAndPersistVentaActual();
+        mostrarVentaActual();
         resetearFormularioItem();
       }
 
       async function registrarVenta(estatus) {
-        if (procesandoVenta) return;
-        if (Object.keys(ventaActual).length === 0) { showToast('Agrega al menos un producto a la venta', 'error'); return; }
+        if (procesandoVenta) return; 
         procesandoVenta = true;
         
-        const botonesIds = ['btnRegistrarPagado', 'btnRegistrarPendiente', 'btnActualizarVenta', 'btnEnviarACocina'];
-        const botones = botonesIds.map(id => document.getElementById(id)).filter(Boolean);
-        botones.forEach(btn => toggleButtonLoading(btn, true));
+        const botones = ['btnRegistrarPagado', 'btnRegistrarPendiente', 'btnActualizarVenta', 'btnEnviarACocina'];
+        botones.forEach(id => { 
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = true; 
+        });
         
         try {
+            if (Object.keys(ventaActual).length === 0) {
+                alert('Agrega al menos un producto a la venta');
+                return;
+            }
             const clienteSelect = document.getElementById('ventaCliente');
             const costoDomicilio = parseFloat(document.getElementById('costoDomicilio').value || 0);
             const subtotal = Object.values(ventaActual).reduce((a, i) => a + (i.precioUnitario * i.cantidad), 0);
+            
             const idVentaEditada = document.getElementById('idVenta').value;
             const ventaOriginal = idVentaEditada ? ventasEnMemoria.find(v => v.id === idVentaEditada) : {};
+
             const pagoCon = parseFloat(document.getElementById('pagoCon').value) || 0;
-            const total = subtotal + costoDomicilio;
-            const cambio = pagoCon > total ? pagoCon - total : 0;
+            const cambio = pagoCon > (subtotal + costoDomicilio) ? pagoCon - (subtotal + costoDomicilio) : 0;
 
             const ventaData = { 
                 fecha: new Date().toISOString(), 
                 clienteId: clienteSelect.value || null,
                 clienteNombre: clienteSelect.value ? clienteSelect.options[clienteSelect.selectedIndex].text : 'Público General',
-                items: Object.values(ventaActual), subtotal, costoDomicilio, total,
+                items: Object.values(ventaActual), 
+                subtotal: subtotal, 
+                costoDomicilio: costoDomicilio, 
+                total: subtotal + costoDomicilio,
                 metodoPago: document.getElementById('metodoPago').value,
-                estatus: estatus || ventaOriginal.estatus, pagoCon, cambio
+                estatus: estatus || ventaOriginal.estatus,
+                pagoCon: pagoCon,
+                cambio: cambio
             };
             
             const url = idVentaEditada ? `/api/ventas/${idVentaEditada}` : '/api/ventas';
             const metodo = idVentaEditada ? 'PUT' : 'POST';
 
-            const ventaGuardada = await fetchAPI(url, { method: metodo, body: JSON.stringify(ventaData) });
-            showToast(`Venta ${idVentaEditada ? 'actualizada' : 'guardada'} con éxito`, 'success');
+            const ventaGuardada = await fetchAPI(url, { method: metodo, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(ventaData) });
+            alert(`Venta ${idVentaEditada ? 'actualizada' : 'guardada como ' + estatus} con éxito`);
             document.getElementById('ticket').textContent = generarTextoTicket(ventaGuardada);
             resetearFormularioCompleto();
             
         } catch (e) {
-            showToast(`Error: ${e.message}`, 'error');
+            alert(`Error: ${e.message}`);
         } finally {
             procesandoVenta = false;
-            botones.forEach(btn => toggleButtonLoading(btn, false));
+            botones.forEach(id => { 
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = false; 
+            });
         }
       }
 
       async function enviarACocina() {
-        if (Object.keys(ventaActual).length === 0) { showToast('Agrega al menos un producto.', 'error'); return; }
+        if (Object.keys(ventaActual).length === 0) {
+            alert('Agrega al menos un producto para enviar a cocina.');
+            return;
+        }
         
-        let clienteData;
         const isDomicilio = document.getElementById('collapsible-domicilio-btn').classList.contains('active');
+        let clienteData;
+        
         if (isDomicilio) {
-            clienteData = { nombre: document.getElementById('nombreClienteDomicilio').value.trim(), telefono: document.getElementById('telClienteDomicilio').value.trim(), direccion: document.getElementById('dirClienteDomicilio').value.trim() };
-            if (!clienteData.nombre || !clienteData.direccion) { showToast('Para domicilio, nombre y dirección son obligatorios.', 'error'); return; }
+            clienteData = {
+                nombre: document.getElementById('nombreClienteDomicilio').value.trim(),
+                telefono: document.getElementById('telClienteDomicilio').value.trim(),
+                direccion: document.getElementById('dirClienteDomicilio').value.trim()
+            };
+            if (!clienteData.nombre || !clienteData.direccion) {
+                alert('Para un pedido a domicilio, el nombre y la dirección son obligatorios.');
+                return;
+            }
         } else {
              const clienteSelect = document.getElementById('ventaCliente');
-             clienteData = clienteSelect.value ? clientesCacheados.find(c => c.id === clienteSelect.value) : { nombre: 'Público General', telefono: '', direccion: 'Recoger en tienda' };
+             const clienteId = clienteSelect.value;
+             if (clienteId) {
+                const cliente = clientesCacheados.find(c => c.id === clienteId);
+                clienteData = {
+                    nombre: cliente.nombre,
+                    telefono: cliente.telefono || '',
+                    direccion: cliente.direccion || 'Recoger en tienda'
+                };
+             } else {
+                clienteData = { nombre: 'Público General', telefono: '', direccion: 'Recoger en tienda' };
+             }
         }
         
         const costoDomicilio = parseFloat(document.getElementById('costoDomicilio').value || 0);
         const total = Object.values(ventaActual).reduce((acc, item) => acc + (item.precioUnitario * item.cantidad), 0) + costoDomicilio;
         const fechaEntregaId = document.getElementById('fechaEntregaVenta').value;
-        const itemsParaPedido = Object.values(ventaActual).map(v => ({ nombre: v.productoNombre, toppings: v.toppings.map(t => t.nombre), jarabes: v.jarabes.map(j => j.nombre), cantidad: v.cantidad, nota: v.nota, total: v.precioUnitario * v.cantidad }));
+        
+        const itemsParaPedido = Object.values(ventaActual).map(v => ({
+            nombre: v.productoNombre,
+            toppings: v.toppings.map(t => t.nombre),
+            jarabes: v.jarabes.map(j => j.nombre),
+            cantidad: v.cantidad,
+            nota: v.nota,
+            total: v.precioUnitario * v.cantidad
+        }));
+        
         const notaGeneral = document.getElementById('notaVentaGeneral').value.trim();
         const pagoCon = parseFloat(document.getElementById('pagoCon').value) || 0;
         const cambio = pagoCon > total ? pagoCon - total : 0;
         
-        const pedidoData = { nombreCliente: clienteData.nombre, telefonoCliente: clienteData.telefono, direccionEntrega: clienteData.direccion, items: itemsParaPedido, total, fechaEntregaId: fechaEntregaId || null, nota: notaGeneral, pagoCon, cambio };
-        
+        const pedidoData = {
+            nombreCliente: clienteData.nombre,
+            telefonoCliente: clienteData.telefono,
+            direccionEntrega: clienteData.direccion,
+            items: itemsParaPedido,
+            total: total,
+            fechaEntregaId: fechaEntregaId || null,
+            nota: notaGeneral,
+            pagoCon: pagoCon,
+            cambio: cambio
+        };
         try {
             await fetchAPI('/api/ventas/crear-pedido', { method: 'POST', body: JSON.stringify(pedidoData) });
-            showToast('¡Pedido enviado a cocina con éxito!', 'success');
+            alert('¡Pedido enviado a cocina con éxito!');
             
-            if (document.getElementById('idVenta').value) await eliminarItem(document.getElementById('idVenta').value, 'Venta');
+            const idVentaEditada = document.getElementById('idVenta').value;
+            if (idVentaEditada) {
+                await eliminarItem(idVentaEditada, 'Venta');
+            }
 
             resetearFormularioCompleto();
             mostrarSeccion('gestion-pedidos');
-        } catch (error) { showToast('Error al enviar el pedido: ' + error.message, 'error'); }
-      }
-
-      function updateAndPersistVentaActual() {
-        mostrarVentaActual();
-        sessionStorage.setItem('ventaActual', JSON.stringify(ventaActual));
+        } catch (error) {
+            alert('Error al enviar el pedido a cocina: ' + error.message);
+        }
       }
 
       function mostrarVentaActual() {
         const lista = document.getElementById('listaVentaActual');
-        document.getElementById('lista-venta-divider').style.display = Object.keys(ventaActual).length ? 'block' : 'none';
+        const divider = document.getElementById('lista-venta-divider');
         lista.innerHTML = '';
-        Object.values(ventaActual).forEach(item => {
+        
+        if (Object.keys(ventaActual).length === 0) {
+            divider.style.display = 'none';
+        } else {
+            divider.style.display = 'block';
+        }
+
+        for (const idUnico in ventaActual) {
+            const item = ventaActual[idUnico];
             const li = document.createElement('li');
             li.className = 'list-item-venta';
-            li.innerHTML = `
-                <div class="list-item-details">
-                    <span>${item.cantidad}x ${item.productoNombre} - $${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
-                    ${item.nota ? `<span class="list-item-nota">Nota: ${item.nota}</span>` : ''}
-                </div>
-                <div class="quantity-selector-venta">
-                    <button class="quantity-btn-venta" data-id="${item.id}" data-action="decrease" aria-label="Disminuir cantidad">-</button>
-                    <span>${item.cantidad}</span>
-                    <button class="quantity-btn-venta" data-id="${item.id}" data-action="increase" aria-label="Aumentar cantidad">+</button>
-                    <button class="remove-btn-venta" data-id="${item.id}" aria-label="Quitar producto">X</button>
-                </div>`;
+            
+            const itemDetails = document.createElement('div');
+            itemDetails.className = 'list-item-details';
+            itemDetails.innerHTML = `<span>${item.cantidad}x ${item.productoNombre} - $${(item.precioUnitario * item.cantidad).toFixed(2)}</span>`;
+            if (item.nota) {
+                itemDetails.innerHTML += `<span class="list-item-nota">Nota: ${item.nota}</span>`;
+            }
+            
+            const quantitySelector = document.createElement('div');
+            quantitySelector.className = 'quantity-selector-venta';
+            quantitySelector.innerHTML = `
+                <button class="quantity-btn-venta" data-id="${idUnico}" data-action="decrease">-</button>
+                <span>${item.cantidad}</span>
+                <button class="quantity-btn-venta" data-id="${idUnico}" data-action="increase">+</button>
+                <button class="remove-btn-venta" data-id="${idUnico}">X</button>
+            `;
+            
+            li.appendChild(itemDetails);
+            li.appendChild(quantitySelector);
             lista.appendChild(li);
-        });
+        }
         
-        lista.querySelectorAll('button').forEach(btn => btn.addEventListener('click', handleVentaItemAction));
+        addVentaEventListeners();
         actualizarTotalVenta();
       }
 
-      function handleVentaItemAction(e) {
-        const button = e.currentTarget;
-        const id = button.dataset.id;
-        if (!ventaActual[id]) return;
+      function addVentaEventListeners() {
+          document.querySelectorAll('.quantity-btn-venta').forEach(btn => {
+              btn.addEventListener('click', () => {
+                  const id = btn.dataset.id;
+                  const action = btn.dataset.action;
+                  if (!ventaActual[id]) return;
+                  if (action === 'increase') {
+                      ventaActual[id].cantidad++;
+                  } else if (action === 'decrease') {
+                      ventaActual[id].cantidad--;
+                      if (ventaActual[id].cantidad <= 0) {
+                          delete ventaActual[id];
+                      }
+                  }
+                  if (Object.keys(ventaActual).length === 0 && !document.getElementById('idVenta').value) {
+                      document.getElementById('ventaCliente').disabled = false;
+                  }
+                  mostrarVentaActual();
+              });
+          });
 
-        if (button.classList.contains('quantity-btn-venta')) {
-            if (button.dataset.action === 'increase') ventaActual[id].cantidad++;
-            else {
-                ventaActual[id].cantidad--;
-                if (ventaActual[id].cantidad <= 0) delete ventaActual[id];
-            }
-        } else if (button.classList.contains('remove-btn-venta')) {
-            delete ventaActual[id];
-        }
-        
-        if (Object.keys(ventaActual).length === 0 && !document.getElementById('idVenta').value) {
-            document.getElementById('ventaCliente').disabled = false;
-        }
-        updateAndPersistVentaActual();
+          document.querySelectorAll('.remove-btn-venta').forEach(btn => {
+              btn.addEventListener('click', () => {
+                  const id = btn.dataset.id;
+                  delete ventaActual[id];
+                  if (Object.keys(ventaActual).length === 0 && !document.getElementById('idVenta').value) {
+                      document.getElementById('ventaCliente').disabled = false;
+                  }
+                  mostrarVentaActual();
+              });
+          });
       }
       
       function calcularCambio() {
         const total = parseFloat(document.getElementById('totalAPagar').textContent.replace('$', '')) || 0;
         const pago = parseFloat(document.getElementById('pagoCon').value) || 0;
-        document.getElementById('cambioVenta').textContent = `$${(pago > total ? pago - total : 0).toFixed(2)}`;
+        const cambio = pago > total ? pago - total : 0;
+        document.getElementById('cambioVenta').textContent = `$${cambio.toFixed(2)}`;
       }
 
       function actualizarTotalVenta() {
@@ -1798,19 +1722,28 @@
 
       function resetearFormularioCompleto() {
         ventaActual = {};
-        sessionStorage.removeItem('ventaActual');
         document.getElementById('formVenta').reset();
         document.getElementById('ventaCliente').disabled = false;
         document.getElementById('idVenta').value = '';
+
         document.getElementById('nombreClienteDomicilio').value = '';
         document.getElementById('telClienteDomicilio').value = '';
         document.getElementById('dirClienteDomicilio').value = '';
         document.getElementById('costoDomicilio').value = '';
         const domicilioCollapsible = document.getElementById('collapsible-domicilio-btn');
-        if (domicilioCollapsible.classList.contains('active')) domicilioCollapsible.click();
+        if (domicilioCollapsible.classList.contains('active')) {
+            domicilioCollapsible.click();
+        }
         
         document.getElementById('pagoCon').value = '';
+
         document.querySelectorAll('.option-btn.selected').forEach(btn => btn.classList.remove('selected'));
+        document.querySelectorAll(".collapsible.active").forEach(c => {
+            if(c.id !== 'collapsible-domicilio-btn') {
+                c.classList.remove('active');
+                c.nextElementSibling.style.maxHeight = '0px';
+            }
+        });
         document.getElementById('metodoPago').value = "Efectivo";
         document.getElementById('fechaEntregaVenta').value = "";
         document.getElementById('notaVentaGeneral').value = "";
@@ -1848,8 +1781,8 @@
       
       async function cargarUsuarios() {
           try {
-              allUsuarios = await fetchAPI('/api/usuarios');
-              renderizarLista(allUsuarios, 'Usuario', ['username', 'role']);
+              const usuarios = await fetchAPI('/api/usuarios');
+              renderizarLista(usuarios, 'Usuario', ['username', 'role']);
           } catch (e) { renderizarLista([], 'Usuario', ['username', 'role']); }
       }
 
@@ -1857,7 +1790,7 @@
           document.getElementById('formUsuario').reset();
           document.getElementById('idUsuario').value = '';
           document.getElementById('permisos-container').style.display = 'block';
-          document.getElementById('passwordUsuario').placeholder = 'Contraseña';
+          document.getElementById('passwordUsuario').setAttribute('placeholder', 'Contraseña');
           document.getElementById('formUsuario').querySelector('button[type="submit"]').textContent = 'Crear Usuario';
       }
 
@@ -1866,12 +1799,15 @@
           document.getElementById('idUsuario').value = usuario.id;
           document.getElementById('usernameUsuario').value = usuario.username;
           document.getElementById('roleUsuario').value = usuario.role;
-          document.getElementById('passwordUsuario').placeholder = 'Dejar en blanco para no cambiar';
+          document.getElementById('passwordUsuario').setAttribute('placeholder', 'Dejar en blanco para no cambiar');
           document.getElementById('formUsuario').querySelector('button[type="submit"]').textContent = 'Actualizar Usuario';
           
-          document.getElementById('permisos-container').style.display = 'block';
+          const permisosContainer = document.getElementById('permisos-container');
+          const permisosCheckboxes = permisosContainer.querySelectorAll('input[type="checkbox"]');
+          
+          permisosContainer.style.display = 'block';
           if (usuario.permissions) {
-              document.querySelectorAll('#permisos-container input[type="checkbox"]').forEach(cb => {
+              permisosCheckboxes.forEach(cb => {
                   cb.checked = usuario.permissions[cb.value] || false;
               });
           }
@@ -1879,83 +1815,120 @@
 
       async function guardarUsuario(e) {
         e.preventDefault();
-        const button = e.target.querySelector('button[type="submit"]');
-        toggleButtonLoading(button, true);
+        const id = document.getElementById('idUsuario').value;
+        const username = document.getElementById('usernameUsuario').value;
+        const password = document.getElementById('passwordUsuario').value;
+        const role = document.getElementById('roleUsuario').value;
+        
+        const permissions = {};
+        document.querySelectorAll('#permisos-container input[type="checkbox"]').forEach(cb => {
+            permissions[cb.value] = cb.checked;
+        });
+
+        if (!username || !role) {
+            alert('Nombre de usuario y rol son obligatorios.');
+            return;
+        }
+        if (!id && !password) {
+            alert('La contraseña es obligatoria para nuevos usuarios.');
+            return;
+        }
+
+        const body = { username, role, permissions };
+        if (password) {
+            // Nota: El hashing debe ocurrir en el backend. 
+            // Enviar la contraseña en texto plano al backend para que la hashee.
+            body.password = password; 
+        }
+
+        const metodo = id ? 'PUT' : 'POST';
+        const url = id ? `/api/usuarios/${id}` : `/api/usuarios`;
+
         try {
-            const id = document.getElementById('idUsuario').value;
-            const username = document.getElementById('usernameUsuario').value;
-            const password = document.getElementById('passwordUsuario').value;
-            const role = document.getElementById('roleUsuario').value;
-            
-            const permissions = Array.from(document.querySelectorAll('#permisos-container input:checked')).reduce((acc, cb) => ({...acc, [cb.value]: true }), {});
-
-            if (!username || !role) throw new Error('Nombre de usuario y rol son obligatorios.');
-            if (!id && !password) throw new Error('La contraseña es obligatoria para nuevos usuarios.');
-
-            const body = { username, role, permissions };
-            if (password) body.password = password;
-
-            const metodo = id ? 'PUT' : 'POST';
-            const url = id ? `/api/usuarios/${id}` : `/api/usuarios`;
-
-            await fetchAPI(url, { method: metodo, body: JSON.stringify(body) });
-            showToast(`Usuario ${id ? 'actualizado' : 'creado'} con éxito.`, 'success');
+            await fetchAPI(url, { method: metodo, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+            alert(`Usuario ${id ? 'actualizado' : 'creado'} con éxito.`);
             limpiarFormularioUsuario();
             await cargarUsuarios();
             
             const token = localStorage.getItem('token');
             const payload = JSON.parse(atob(token.split('.')[1]));
             if (id === payload.id) {
-              showToast("Tus permisos han sido actualizados. Se cerrará la sesión.", 'info', 5000);
-              setTimeout(() => showLogin(), 5000);
+              alert("Tus propios permisos han sido actualizados. Se cerrará la sesión para aplicar los cambios.");
+              showLogin();
             }
         } catch(err) {
-            showToast(`Error: ${err.message}`, 'error');
-        } finally {
-            toggleButtonLoading(button, false);
+            alert(`Error: ${err.message}`);
         }
       }
 
       async function marcarComoPagado(ventaId) {
-          const metodoPagoFinal = prompt("Introduce el método de pago final (Efectivo, Tarjeta, Transferencia):", "Efectivo");
+          const metodoPagoFinal = prompt("Por favor, introduce el método de pago final (Efectivo, Tarjeta, Transferencia):", "Efectivo");
           if (metodoPagoFinal && metodoPagoFinal.trim() !== "") {
-              const confirmed = await showConfirmationModal({ title: `¿Marcar como "Pagado" con "${metodoPagoFinal}"?`, confirmText: 'Sí, Marcar', confirmClass: 'btn-confirm-safe' });
-              if (confirmed) {
+              if (confirm(`¿Marcar esta orden como "Pagado" con el método "${metodoPagoFinal}"?`)) {
                   try {
-                      await fetchAPI(`/api/ventas/${ventaId}`, { method: 'PUT', body: JSON.stringify({ estatus: "Pagado", metodoPago: metodoPagoFinal.trim() }) });
-                      showToast("Venta actualizada a 'Pagado'.", 'success');
+                      await fetchAPI(`/api/ventas/${ventaId}`, {
+                          method: 'PUT',
+                          body: JSON.stringify({
+                              estatus: "Pagado",
+                              metodoPago: metodoPagoFinal.trim()
+                          })
+                      });
+                      alert("¡Venta actualizada a 'Pagado'!");
                       await cargarVentasHistorial();
-                  } catch (error) { showToast(`Error al actualizar: ${error.message}`, 'error'); }
+                  } catch (error) {
+                      alert(`Error al actualizar la venta: ${error.message}`);
+                  }
               }
           }
       }
       
       async function cambiarEstatus(ventaId, estatusActual) {
-        if (!estatusActual || estatusActual === "N/A") { showToast("No se puede cambiar el estatus de este registro.", 'info'); return; }
+        if (!estatusActual || estatusActual === "N/A") {
+          alert("No se puede cambiar el estatus de un registro antiguo.");
+          return;
+        }
         const nuevoEstatus = estatusActual === 'Pagado' ? 'Pendiente de Pago' : 'Pagado';
-        const confirmed = await showConfirmationModal({ title: `¿Cambiar estatus a "${nuevoEstatus}"?`, confirmText: 'Sí, Cambiar', confirmClass: 'btn-confirm-safe' });
-        if (confirmed) {
+        if (confirm(`¿Deseas cambiar el estatus de esta venta a "${nuevoEstatus}"?`)) {
           try {
-            await fetchAPI(`/api/ventas/${ventaId}`, { method: 'PUT', body: JSON.stringify({ estatus: nuevoEstatus }) });
-            showToast("Estatus actualizado.", 'success');
+            await fetchAPI(`/api/ventas/${ventaId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ estatus: nuevoEstatus })
+            });
+            alert("¡Estatus de la venta actualizado!");
             await cargarVentasHistorial();
-          } catch (error) { showToast(`Error al actualizar: ${error.message}`, 'error'); }
+          } catch (error) {
+            alert(`Error al actualizar el estatus: ${error.message}`);
+          }
         }
       }
       
       async function cambiarFechaVenta(ventaId, element) {
           const venta = ventasEnMemoria.find(v => v.id === ventaId);
           if (!venta) return;
+
           flatpickr(element, {
-              defaultDate: venta.fecha, enableTime: true, dateFormat: "Y-m-d H:i", locale: "es",
-              plugins: [new confirmDatePlugin({ confirmText: "Aceptar", showAlways: true, theme: document.body.classList.contains('dark-mode') ? "dark" : "light" })],
+              defaultDate: venta.fecha,
+              enableTime: true,
+              dateFormat: "Y-m-d H:i",
+              locale: "es",
+              plugins: [new confirmDatePlugin({
+                  confirmText: "Aceptar",
+                  showAlways: true,
+                  theme: "light" 
+              })],
               onClose: async (selectedDates, dateStr, instance) => {
                   if (selectedDates.length > 0 && instance.isConfirmed) {
+                      const nuevaFecha = selectedDates[0];
                       try {
-                          await fetchAPI(`/api/ventas/${ventaId}/fecha`, { method: 'PUT', body: JSON.stringify({ nuevaFecha: selectedDates[0].toISOString() }) });
-                          showToast('Fecha de la venta actualizada.', 'success');
+                          await fetchAPI(`/api/ventas/${ventaId}/fecha`, {
+                              method: 'PUT',
+                              body: JSON.stringify({ nuevaFecha: nuevaFecha.toISOString() })
+                          });
+                          alert('¡Fecha de la venta actualizada correctamente!');
                           await cargarVentasHistorial();
-                      } catch (error) { showToast(`Error al cambiar fecha: ${error.message}`, 'error'); }
+                      } catch (error) {
+                          alert(`Error al cambiar la fecha: ${error.message}`);
+                      }
                   }
               }
           }).open();
@@ -1966,8 +1939,10 @@
           if (venta) {
               document.getElementById('ticket').textContent = generarTextoTicket(venta);
               mostrarSeccion('registrar-venta');
-              showToast("Ticket cargado para enviar o generar PDF.", 'info');
-          } else { showToast("No se encontró la venta.", 'error'); }
+              alert("Ticket cargado. Ahora puedes enviarlo por WhatsApp o generar el PDF.");
+          } else {
+              alert("No se encontró la venta para reimprimir el ticket.");
+          }
       }
 
       function editarVenta(ventaId) {
@@ -1979,68 +1954,138 @@
           
           ventaActual = (venta.items || []).reduce((acc, item) => {
               const idUnico = generarIdVenta(item);
-              acc[idUnico] = { ...item, precioUnitario: item.precioUnitario || ((item.total || 0) / (item.cantidad || 1)), id: idUnico };
+              const precioUnitario = item.precioUnitario || ((item.total || 0) / (item.cantidad || 1));
+              
+              acc[idUnico] = { ...item, precioUnitario, id: idUnico };
               return acc;
           }, {});
           
-          updateAndPersistVentaActual();
+          mostrarVentaActual();
+
           document.getElementById('ventaCliente').disabled = true;
           document.getElementById('btnRegistrarPagado').style.display = 'none';
           document.getElementById('btnRegistrarPendiente').style.display = 'none';
           document.getElementById('btnEnviarACocina').style.display = 'block';
           document.getElementById('btnActualizarVenta').style.display = 'block';
+
           mostrarSeccion('registrar-venta');
-        } else { showToast("No se encontró la venta para editar.", 'error'); }
+        } else {
+            alert("No se encontró la venta para editar.");
+        }
       }
 
       function inicializarSelectorFecha() {
           flatpickr("#filtroFecha", {
-              mode: "range", dateFormat: "Y-m-d", locale: "es", defaultDate: new Date(),
-              onChange: (selectedDates) => { if(selectedDates.length > 0) cargarVentasHistorial(); },
+              mode: "range",
+              dateFormat: "Y-m-d", 
+              locale: "es",
+              defaultDate: new Date(),
+              onChange: function(selectedDates, dateStr, instance) {
+                if(selectedDates.length > 0) {
+                  cargarVentasHistorial();
+                }
+              },
           });
       }
       
       function createActionButtons(venta) {
           const container = document.createElement('div');
           container.className = 'venta-card-mobile-actions';
-          container.innerHTML = `
-              ${venta.estatus === 'Pendiente de Pago' ? `<button class="btn-marcar-pagado" onclick="window.app.marcarComoPagado('${venta.id}')">Marcar como Pagado</button>` : ''}
-              ${currentUserRole === 'admin' ? `<button class="btn-cambiar-fecha" title="Cambiar Fecha" aria-label="Cambiar Fecha" onclick="window.app.cambiarFechaVenta('${venta.id}', this)"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 12.75h.008v.008H12v-.008z" /></svg></button>` : ''}
-              <button class="btn-editar-venta" title="Editar Venta" aria-label="Editar Venta" onclick="window.app.editarVenta('${venta.id}')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>
-              <button class="btn-reimprimir" title="Reimprimir Ticket" aria-label="Reimprimir Ticket" onclick="window.app.reimprimirTicket('${venta.id}')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg></button>
-              <button class="btn-eliminar-venta" onclick="window.app.eliminarItem('${venta.id}', 'Venta')">X</button>
-          `;
+
+          if (venta.estatus === 'Pendiente de Pago') {
+              const btnPagado = document.createElement('button');
+              btnPagado.className = 'btn-marcar-pagado';
+              btnPagado.textContent = 'Marcar como Pagado';
+              btnPagado.addEventListener('click', () => marcarComoPagado(venta.id));
+              container.appendChild(btnPagado);
+          }
+
+          if (currentUserRole === 'admin') {
+              const btnFecha = document.createElement('button');
+              btnFecha.className = 'btn-cambiar-fecha';
+              btnFecha.title = 'Cambiar Fecha de Venta';
+              btnFecha.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 12.75h.008v.008H12v-.008z" /></svg>`;
+              btnFecha.addEventListener('click', (e) => cambiarFechaVenta(venta.id, e.currentTarget));
+              container.appendChild(btnFecha);
+          }
+          
+          const btnEditar = document.createElement('button');
+          btnEditar.className = 'btn-editar-venta';
+          btnEditar.title = 'Editar Venta';
+          btnEditar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>`;
+          btnEditar.addEventListener('click', () => editarVenta(venta.id));
+          container.appendChild(btnEditar);
+          
+          const btnReimprimir = document.createElement('button');
+          btnReimprimir.className = 'btn-reimprimir';
+          btnReimprimir.title = 'Reimprimir Ticket';
+          btnReimprimir.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg>`;
+          btnReimprimir.addEventListener('click', () => reimprimirTicket(venta.id));
+          container.appendChild(btnReimprimir);
+          
+          const btnEliminar = document.createElement('button');
+          btnEliminar.className = 'btn-eliminar-venta';
+          btnEliminar.textContent = 'X';
+          btnEliminar.addEventListener('click', () => eliminarItem(venta.id, 'Venta'));
+          container.appendChild(btnEliminar);
+
           return container;
       }
 
       async function cargarVentasHistorial() {
         try {
           const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
-          if (!selectorFecha?.selectedDates?.length) return;
-          
-          const [fechaInicio, fechaFin] = [new Date(selectorFecha.selectedDates[0]), new Date(selectorFecha.selectedDates.length > 1 ? selectorFecha.selectedDates[1] : selectorFecha.selectedDates[0])];
-          fechaInicio.setHours(0, 0, 0, 0);
-          fechaFin.setHours(23, 59, 59, 999);
-          
+          if (!selectorFecha || !selectorFecha.selectedDates || selectorFecha.selectedDates.length === 0) {
+            return;
+          }
+          const fechasSeleccionadas = selectorFecha.selectedDates;
           const clienteId = document.getElementById('filtroCliente').value;
           const usuarioId = document.getElementById('filtroUsuario').value;
           const estatus = document.getElementById('filtroEstatus').value;
           
-          const url = `/api/ventas?fechaInicio=${fechaInicio.toISOString()}&fechaFin=${fechaFin.toISOString()}`;
+          let url = '/api/ventas?';
+          const fechaInicio = new Date(fechasSeleccionadas[0]);
+          fechaInicio.setHours(0, 0, 0, 0);
+          const fechaFin = new Date(fechasSeleccionadas.length > 1 ? fechasSeleccionadas[1] : fechasSeleccionadas[0]);
+          fechaFin.setHours(23, 59, 59, 999);
+          url += `fechaInicio=${fechaInicio.toISOString()}&fechaFin=${fechaFin.toISOString()}`;
+
           ventasEnMemoria = await fetchAPI(url);
-          ventasFiltradasGlobal = ventasEnMemoria.filter(v => (!clienteId || v.clienteId == clienteId) && (!usuarioId || v.vendedorId == usuarioId) && (!estatus || v.estatus === estatus));
+          let ventasFiltradas = ventasEnMemoria;
+
+          if (clienteId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.clienteId == clienteId); }
+          if (usuarioId) { ventasFiltradas = ventasFiltradas.filter(venta => venta.vendedorId == usuarioId); }
+          if (estatus) { ventasFiltradas = ventasFiltradas.filter(venta => venta.estatus === estatus); }
+          
+          ventasFiltradasGlobal = ventasFiltradas;
           
           const tbody = document.getElementById('tablaVentasBody');
           const mobileContainer = document.getElementById('detalleVentasMobile');
-          tbody.innerHTML = ''; mobileContainer.innerHTML = '';
+          tbody.innerHTML = '';
+          mobileContainer.innerHTML = '';
 
-          ventasFiltradasGlobal.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
-              const estatusClass = venta.estatus === 'Pagado' ? 'status-pagado' : venta.estatus === 'Pendiente de Pago' ? 'status-pendiente' : 'status-na';
+          ventasFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(venta => {
               const estatusActual = venta.estatus || 'N/A';
-              
+              let estatusClass = 'status-na';
+              if (estatusActual === 'Pagado') estatusClass = 'status-pagado';
+              if (estatusActual === 'Pendiente de Pago') estatusClass = 'status-pendiente';
+
               const tr = tbody.insertRow();
-              tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td>`;
-              tr.insertCell().innerHTML = `<span class="status-badge ${estatusClass}">${estatusActual}</span> ${currentUserRole === 'admin' ? `<button class="btn-cambiar-estatus" onclick="window.app.cambiarEstatus('${venta.id}', '${estatusActual}')" title="Cambiar Estatus" aria-label="Cambiar Estatus"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>` : ''}`;
+              tr.insertCell().textContent = venta.id.slice(-6);
+              tr.insertCell().textContent = venta.vendedorUsername;
+              tr.insertCell().textContent = venta.clienteNombre;
+              tr.insertCell().textContent = `$${venta.total.toFixed(2)}`;
+              tr.insertCell().textContent = venta.metodoPago || 'N/A';
+              const estatusCell = tr.insertCell();
+              estatusCell.innerHTML = `<span class="status-badge ${estatusClass}">${estatusActual}</span>`;
+              if (currentUserRole === 'admin') {
+                  const btnCambiarEstatus = document.createElement('button');
+                  btnCambiarEstatus.className = 'btn-cambiar-estatus';
+                  btnCambiarEstatus.title = 'Cambiar Estatus';
+                  btnCambiarEstatus.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>`;
+                  btnCambiarEstatus.addEventListener('click', () => cambiarEstatus(venta.id, estatusActual));
+                  estatusCell.appendChild(btnCambiarEstatus);
+              }
               tr.insertCell().textContent = new Date(venta.fecha).toLocaleString('es-MX');
               tr.insertCell().appendChild(createActionButtons(venta));
               
@@ -2056,276 +2101,815 @@
               mobileContainer.appendChild(cardMobile);
           });
           
-          const totalPeriodo = ventasFiltradasGlobal.reduce((acc, v) => acc + v.total, 0);
+          const totalPeriodo = ventasFiltradas.reduce((acc, v) => acc + v.total, 0);
           document.getElementById('totalPeriodoHistorial').textContent = `Total del Período Filtrado: $${totalPeriodo.toFixed(2)}`;
-          prepararDatosParaGraficas(ventasFiltradasGlobal, 'historial');
-          generarResumen(ventasFiltradasGlobal);
+          prepararDatosParaGraficas(ventasFiltradas, 'historial');
+          generarResumen(ventasFiltradas);
         } catch (e) { console.error("Error al cargar historial:", e); }
       }
       
-      async function cargarUsuariosParaFiltro() { try { const data = await fetchAPI('/api/usuarios'); const select = document.getElementById('filtroUsuario'); select.innerHTML = '<option value="">Todos</option>' + data.map(u => `<option value="${u.id}">${u.username}</option>`).join(''); } catch (e) {} }
-      async function cargarClientesParaFiltro() { try { const data = await fetchAPI('/api/clientes'); const select = document.getElementById('filtroCliente'); select.innerHTML = '<option value="">Todos</option>' + data.map(c => `<option value="${c.id}">${c.nombre}</option>`).join(''); } catch (e) {} }
+      async function cargarUsuariosParaFiltro() {
+        try {
+          const data = await fetchAPI('/api/usuarios');
+          const select = document.getElementById('filtroUsuario');
+          select.innerHTML = '<option value="">Todos los Vendedores</option>';
+          data.forEach(user => select.innerHTML += `<option value="${user.id}">${user.username}</option>`);
+        } catch (e) { /* Error manejado en fetchAPI */ }
+      }
+
+      async function cargarClientesParaFiltro() {
+        try {
+          const data = await fetchAPI('/api/clientes');
+          const select = document.getElementById('filtroCliente');
+          select.innerHTML = '<option value="">Todos los Clientes</option>';
+          data.forEach(c => select.innerHTML += `<option value="${c.id}">${c.nombre}</option>`);
+        } catch (e) { /* Error manejado en fetchAPI */ }
+      }
       
       async function cargarPapelera() {
         try {
-            const [productos, toppings, jarabes, clientes, usuarios, ventas, pedidos] = await Promise.all(['productos','toppings','jarabes','clientes','usuarios','ventas','pedidos'].map(e => fetchAPI(`/api/${e}/papelera`)));
-            renderizarPapelera(productos, 'productos');
-            renderizarPapelera(toppings, 'toppings');
-            renderizarPapelera(jarabes, 'jarabes');
-            renderizarPapelera(clientes, 'clientes');
-            renderizarPapelera(usuarios, 'usuarios');
+            const [productos, toppings, jarabes, clientes, usuarios, ventas, pedidos] = await Promise.all([
+                fetchAPI('/api/productos/papelera'), fetchAPI('/api/toppings/papelera'),
+                fetchAPI('/api/jarabes/papelera'), fetchAPI('/api/clientes/papelera'),
+                fetchAPI('/api/usuarios/papelera'), fetchAPI('/api/ventas/papelera'),
+                fetchAPI('/api/pedidos/papelera')
+            ]);
+            renderizarPapelera(productos, 'Producto', 'productos');
+            renderizarPapelera(toppings, 'Topping', 'toppings');
+            renderizarPapelera(jarabes, 'Jarabe', 'jarabes');
+            renderizarPapelera(clientes, 'Cliente', 'clientes');
+            renderizarPapelera(usuarios, 'Usuario', 'usuarios');
             renderizarPapeleraVentas(ventas);
             renderizarPapeleraPedidos(pedidos);
-        } catch (error) { showToast("Error al cargar la papelera: " + error.message, 'error'); }
+        } catch (error) {
+            alert("Error al cargar la papelera: " + error.message);
+        }
       }
 
-      function renderizarPapelera(items, endpoint) {
+      function renderizarPapelera(items, tipo, endpoint) {
         const lista = document.getElementById(`papelera-${endpoint}`);
         if(!lista) return;
-        lista.innerHTML = items.map(item => `
-            <li class="product-item">
-                <span>${item.nombre || item.username}</span>
-                <div>
-                    <button class="btn-restaurar" onclick="window.app.restaurarItem('${item.id}', '${endpoint}')">Restaurar</button>
-                    <button class="btn-eliminar-perm" onclick="window.app.eliminarPermanentemente('${item.id}', '${endpoint}')">Eliminar Permanente</button>
-                </div>
-            </li>`).join('');
+        lista.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.className = 'product-item';
+          const texto = document.createElement('span');
+          texto.textContent = item.nombre || item.username;
+          
+          const divBotones = document.createElement('div');
+          const btnRestaurar = document.createElement('button');
+          btnRestaurar.textContent = 'Restaurar';
+          btnRestaurar.className = 'btn-restaurar';
+          btnRestaurar.onclick = () => restaurarItem(item.id, endpoint);
+
+          const btnEliminarPerm = document.createElement('button');
+          btnEliminarPerm.textContent = 'Eliminar Permanente';
+          btnEliminarPerm.className = 'btn-eliminar-perm';
+          btnEliminarPerm.onclick = () => eliminarPermanentemente(item.id, endpoint);
+
+          divBotones.appendChild(btnRestaurar);
+          divBotones.appendChild(btnEliminarPerm);
+          li.appendChild(texto);
+          li.appendChild(divBotones);
+          lista.appendChild(li);
+        });
       }
 
       function renderizarPapeleraVentas(items) {
-          document.getElementById('papelera-ventas').innerHTML = items.map(item => `
-              <tr>
-                  <td>${item.clienteNombre || 'N/A'}</td><td>${new Date(item.fecha).toLocaleString()}</td><td>$${item.total.toFixed(2)}</td>
+          const tbody = document.getElementById('papelera-ventas');
+          tbody.innerHTML = '';
+          items.forEach(item => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                  <td>${item.clienteNombre || 'N/A'}</td>
+                  <td>${new Date(item.fecha).toLocaleString()}</td>
+                  <td>$${item.total.toFixed(2)}</td>
                   <td>
-                      <button class="btn-restaurar" onclick="window.app.restaurarItem('${item.id}', 'ventas')">Restaurar</button>
-                      <button class="btn-eliminar-perm" onclick="window.app.eliminarPermanentemente('${item.id}', 'ventas')">Eliminar Permanente</button>
+                      <button class="btn-restaurar" onclick="restaurarItem('${item.id}', 'ventas')">Restaurar</button>
+                      <button class="btn-eliminar-perm" onclick="eliminarPermanentemente('${item.id}', 'ventas')">Eliminar Permanente</button>
                   </td>
-              </tr>`).join('');
+              `;
+              tbody.appendChild(tr);
+          });
       }
       
       function renderizarPapeleraPedidos(items) {
-          document.getElementById('papelera-pedidos').innerHTML = items.map(item => `
-              <div class="pedido-card">
-                  <div class="pedido-card-header"><h4>${item.nombreCliente}</h4><span>Cancelado: ${new Date(item.updatedAt).toLocaleDateString()}</span></div>
-                  <div class="pedido-card-footer"><span class="total">Total: $${item.total.toFixed(2)}</span>
-                      <div><button class="btn-restaurar" onclick="window.app.restaurarItem('${item.id}', 'pedidos')">Restaurar</button><button class="btn-eliminar-perm" onclick="window.app.eliminarPermanentemente('${item.id}', 'pedidos')">Eliminar Permanente</button></div>
-                  </div>
-              </div>`).join('');
+          const container = document.getElementById('papelera-pedidos');
+          container.innerHTML = '';
+          items.forEach(item => {
+              const card = document.createElement('div');
+              card.className = 'pedido-card';
+              card.innerHTML = `
+                <div class="pedido-card-header">
+                    <h4>${item.nombreCliente}</h4>
+                    <span>Cancelado: ${new Date(item.updatedAt).toLocaleDateString()}</span>
+                </div>
+                <div class="pedido-card-footer">
+                    <span class="total">Total: $${item.total.toFixed(2)}</span>
+                    <div>
+                        <button class="btn-restaurar" onclick="restaurarItem('${item.id}', 'pedidos')">Restaurar</button>
+                        <button class="btn-eliminar-perm" onclick="eliminarPermanentemente('${item.id}', 'pedidos')">Eliminar Permanente</button>
+                    </div>
+                </div>
+              `;
+              container.appendChild(card);
+          });
       }
 
       async function restaurarItem(id, tipoEndpoint) {
-        const confirmed = await showConfirmationModal({ title: `¿Restaurar este elemento?`, confirmText: 'Sí, Restaurar', confirmClass: 'btn-confirm-safe' });
-        if (confirmed) {
+        if (confirm(`¿Restaurar este elemento? Volverá a su lista principal.`)) {
           try {
             await fetchAPI(`/api/${tipoEndpoint}/${id}/restaurar`, { method: 'PUT' });
-            showToast('Elemento restaurado.', 'success');
             cargarPapelera();
-          } catch (err) { showToast(`Error: ${err.message}`, 'error'); }
+          } catch (err) { alert(`Error: ${err.message}`); }
         }
       }
 
       async function eliminarPermanentemente(id, tipoEndpoint) {
-        const confirmed = await showConfirmationModal({ title: `¡ADVERTENCIA! Esta acción es irreversible. ¿Eliminar permanentemente?`, confirmText: 'Sí, Eliminar', confirmClass: 'btn-confirm-danger' });
-        if (confirmed) {
+        if (confirm(`¡ADVERTENCIA! Esta acción es irreversible. ¿Eliminar permanentemente este elemento?`)) {
           try {
             await fetchAPI(`/api/${tipoEndpoint}/${id}/permanente`, { method: 'DELETE' });
-            showToast('Elemento eliminado permanentemente.', 'success');
             cargarPapelera();
-          } catch (err) { showToast(`Error: ${err.message}`, 'error'); }
+          } catch (err) { alert(`Error: ${err.message}`); }
         }
       }
       
       async function vaciarPapelera(tipoEndpoint) {
-        const confirmed = await showConfirmationModal({ title: `¡ADVERTENCIA! Se eliminarán permanentemente TODOS los elementos de esta sección. ¿Continuar?`, confirmText: 'Sí, Vaciar Todo', confirmClass: 'btn-confirm-danger' });
-        if (confirmed) {
+        if (confirm(`¡ADVERTENCIA! Se eliminarán permanentemente TODOS los elementos de esta sección. ¿Deseas continuar?`)) {
             try {
                 await fetchAPI(`/api/${tipoEndpoint}/papelera/vaciar`, { method: 'DELETE' });
-                showToast(`Papelera de ${tipoEndpoint} vaciada.`, 'success');
                 cargarPapelera();
-            } catch(err) { showToast(`Error al vaciar la papelera: ${err.message}`, 'error'); }
+            } catch(err) {
+                alert(`Error al vaciar la papelera: ${err.message}`);
+            }
         }
       }
 
       function prepararDatosParaGraficas(ventas, context = 'dashboard') {
+        const formatoFecha = { hour: 'numeric', minute: 'numeric' };
+        
         let ventasPorHora = {};
         ventas.forEach(venta => {
-          const clave = new Date(venta.fecha).toLocaleTimeString('es-ES', { hour: 'numeric', minute: 'numeric' });
+          const clave = new Date(venta.fecha).toLocaleTimeString('es-ES', formatoFecha);
           ventasPorHora[clave] = (ventasPorHora[clave] || 0) + venta.total;
         });
+
         const labelsVentas = Object.keys(ventasPorHora).sort();
         const dataVentas = labelsVentas.map(label => ventasPorHora[label]);
         
-        context === 'historial' ? actualizarGraficaBarras(Object.keys(ventasPorHora).reverse(), Object.values(ventasPorHora).reverse()) : actualizarGraficaLineas(labelsVentas, dataVentas);
+        if (context === 'historial') {
+            actualizarGraficaBarras(Object.keys(ventasPorHora).reverse(), Object.values(ventasPorHora).reverse());
+        } else {
+            actualizarGraficaLineas(labelsVentas, dataVentas);
+        }
         
         let productosVendidos = {};
-        ventas.forEach(v => (v.items || []).forEach(item => { productosVendidos[item.productoNombre || item.nombre] = (productosVendidos[item.productoNombre || item.nombre] || 0) + (item.cantidad || 1); }));
+        ventas.forEach(venta => {
+            (venta.items || []).forEach(item => {
+                const nombre = item.productoNombre || item.nombre;
+                productosVendidos[nombre] = (productosVendidos[nombre] || 0) + (item.cantidad || 1);
+            });
+        });
         actualizarGraficaCircular(Object.keys(productosVendidos), Object.values(productosVendidos), context);
       }
       
-      const updateChart = (chartInstance, canvasId, type, labels, data, label) => {
-          if (chartInstance) chartInstance.destroy();
-          const ctx = document.getElementById(canvasId)?.getContext('2d');
-          if (!ctx) return null;
-          const options = type === 'doughnut' ? { responsive: true, maintainAspectRatio: true, aspectRatio: 1.5 } : { responsive: true, maintainAspectRatio: true, aspectRatio: 2, scales: { y: { beginAtZero: true } } };
-          const datasets = type === 'doughnut' ? [{ label, data, backgroundColor: ['#4f46e5', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'], hoverOffset: 4 }] : [{ label, data, backgroundColor: 'rgba(79, 70, 229, 0.5)', borderColor: 'rgba(79, 70, 229, 1)', borderWidth: 1 }];
-          if(type === 'line') { datasets[0].backgroundColor = 'rgba(79, 70, 229, 0.1)'; datasets[0].borderWidth = 2; datasets[0].tension = 0.3; datasets[0].fill = true; }
-          return new Chart(ctx, { type, data: { labels, datasets }, options });
-      };
+      function actualizarGraficaBarras(labels, data) {
+        if (miGraficaDeVentas) { miGraficaDeVentas.destroy(); }
+        const ctx = document.getElementById('graficaVentas')?.getContext('2d');
+        if (!ctx) return;
+        miGraficaDeVentas = new Chart(ctx, { 
+            type: 'bar', 
+            data: { labels, datasets: [{ label: `Ventas Totales`, data, backgroundColor: 'rgba(79, 70, 229, 0.5)', borderColor: 'rgba(79, 70, 229, 1)', borderWidth: 1 }] }, 
+            options: { responsive: true, maintainAspectRatio: true, aspectRatio: 2, scales: { y: { beginAtZero: true } } } 
+        });
+      }
 
-      function actualizarGraficaBarras(labels, data) { miGraficaDeVentas = updateChart(miGraficaDeVentas, 'graficaVentas', 'bar', labels, data, 'Ventas Totales'); }
-      function actualizarGraficaLineas(labels, data) { dashboardChartVentas = updateChart(dashboardChartVentas, 'dashboard-chart-ventas', 'line', labels, data, 'Ventas del Día'); }
-      function actualizarGraficaCircular(labels, data, context) {
-          if (context === 'historial') miGraficaDeProductos = updateChart(miGraficaDeProductos, 'graficaProductos', 'doughnut', labels, data, 'Productos Vendidos');
-          else dashboardChartProductos = updateChart(dashboardChartProductos, 'dashboard-chart-productos', 'doughnut', labels, data, 'Productos Vendidos');
+       function actualizarGraficaLineas(labels, data) {
+        if (dashboardChartVentas) { dashboardChartVentas.destroy(); }
+        const ctx = document.getElementById('dashboard-chart-ventas')?.getContext('2d');
+        if (!ctx) return;
+        dashboardChartVentas = new Chart(ctx, { 
+            type: 'line', 
+            data: { labels, datasets: [{ label: `Ventas del Día`, data, backgroundColor: 'rgba(79, 70, 229, 0.1)', borderColor: 'rgba(79, 70, 229, 1)', borderWidth: 2, tension: 0.3, fill: true }] }, 
+            options: { responsive: true, maintainAspectRatio: true, aspectRatio: 2, scales: { y: { beginAtZero: true } } } 
+        });
+      }
+
+      function actualizarGraficaCircular(labels, data, context = 'dashboard') {
+        let chartInstance, canvasId;
+        if (context === 'historial') {
+            chartInstance = miGraficaDeProductos;
+            canvasId = 'graficaProductos';
+        } else {
+            chartInstance = dashboardChartProductos;
+            canvasId = 'dashboard-chart-productos';
+        }
+
+        if (chartInstance) { chartInstance.destroy(); }
+        const ctx = document.getElementById(canvasId)?.getContext('2d');
+        if (!ctx) return;
+        
+        const newChart = new Chart(ctx, { 
+            type: 'doughnut', 
+            data: { labels, datasets: [{ label: 'Productos Vendidos', data, backgroundColor: ['#4f46e5', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'], hoverOffset: 4 }] }, 
+            options: { responsive: true, maintainAspectRatio: true, aspectRatio: 1.5, } 
+        });
+
+        if (context === 'historial') {
+            miGraficaDeProductos = newChart;
+        } else {
+            dashboardChartProductos = newChart;
+        }
       }
 
       function generarResumen(ventas) {
-          const resumenes = { productos: {}, toppings: {}, jarabes: {} };
-          ventas.forEach(v => (v.items || []).forEach(item => {
-              resumenes.productos[item.productoNombre || item.nombre] = (resumenes.productos[item.productoNombre || item.nombre] || 0) + (item.cantidad || 1);
-              (item.toppings || []).forEach(t => { const n = typeof t === 'object' ? t.nombre : t; if(n) resumenes.toppings[n] = (resumenes.toppings[n] || 0) + (item.cantidad || 1); });
-              (item.jarabes || []).forEach(j => { const n = typeof j === 'object' ? j.nombre : j; if(n) resumenes.jarabes[n] = (resumenes.jarabes[n] || 0) + (item.cantidad || 1); });
-          }));
-          const formatResumen = (titulo, data) => Object.keys(data).length ? `\n\n--- ${titulo} ---\n` + Object.entries(data).sort(([,a],[,b]) => b-a).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n') : '';
-          document.getElementById('resumen-ventas').textContent = `--- RESUMEN DE PRODUCTOS ---\n${Object.entries(resumenes.productos).sort(([,a],[,b]) => b-a).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n')}` + formatResumen('RESUMEN DE TOPPINGS', resumenes.toppings) + formatResumen('RESUMEN DE JARABES', resumenes.jarabes);
+          const resumenProductos = {}, resumenToppings = {}, resumenJarabes = {};
+          ventas.forEach(venta => {
+              (venta.items || []).forEach(item => {
+                  const nombreProducto = item.productoNombre || item.nombre;
+                  resumenProductos[nombreProducto] = (resumenProductos[nombreProducto] || 0) + (item.cantidad || 1);
+                  (item.toppings || []).forEach(t => { 
+                      const nombreTopping = typeof t === 'object' ? t.nombre : t;
+                      if(nombreTopping) resumenToppings[nombreTopping] = (resumenToppings[nombreTopping] || 0) + (item.cantidad || 1); 
+                  });
+                  (item.jarabes || []).forEach(j => { 
+                      const nombreJarabe = typeof j === 'object' ? j.nombre : j;
+                      if(nombreJarabe) resumenJarabes[nombreJarabe] = (resumenJarabes[nombreJarabe] || 0) + (item.cantidad || 1); 
+                  });
+              });
+          });
+          let textoResumen = "--- RESUMEN DE PRODUCTOS ---\n" + Object.entries(resumenProductos).sort(([,a],[,b]) => b-a).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
+          if (Object.keys(resumenToppings).length) textoResumen += "\n\n--- RESUMEN DE TOPPINGS ---\n" + Object.entries(resumenToppings).sort(([,a],[,b]) => b-a).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
+          if (Object.keys(resumenJarabes).length) textoResumen += "\n\n--- RESUMEN DE JARABES ---\n" + Object.entries(resumenJarabes).sort(([,a],[,b]) => b-a).map(([n, c]) => `${n.padEnd(20, ' ')}: ${c}`).join('\n');
+          document.getElementById('resumen-ventas').textContent = textoResumen;
       }
       
       function generarReportePDF() {
-        if (ventasFiltradasGlobal.length === 0) { showToast("No hay ventas para generar un reporte.", 'info'); return; }
+        if (ventasFiltradasGlobal.length === 0) {
+            alert("No hay ventas en el período seleccionado para generar un reporte.");
+            return;
+        }
+        const textoResumen = document.getElementById('resumen-ventas').textContent;
+        const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
+        const filtros = `Período: ${document.getElementById('filtroFecha')._flatpickr.input.value}, Cliente: ${document.getElementById('filtroCliente').options[document.getElementById('filtroCliente').selectedIndex].text}, Vendedor: ${document.getElementById('filtroUsuario').options[document.getElementById('filtroUsuario').selectedIndex].text}`;
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF();
-        pdf.setFontSize(18).setFont('helvetica', 'bold').text("Reporte de Ventas", 105, 20, { align: 'center' });
-        pdf.setFontSize(10).setFont('helvetica', 'normal');
-        pdf.text(`Período: ${document.getElementById('filtroFecha')._flatpickr.input.value}`, 10, 35);
+        pdf.setFontSize(18);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text("Reporte de Ventas - Dulces Amigas", 105, 20, { align: 'center' });
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Filtros Aplicados: ${filtros}`, 10, 35);
         pdf.text(`Fecha del Reporte: ${new Date().toLocaleString()}`, 10, 40);
-        pdf.setFontSize(14).setFont('helvetica', 'bold').text(document.getElementById('totalPeriodoHistorial').textContent, 10, 50);
-        pdf.setFont('courier', 'normal').setFontSize(11).text(document.getElementById('resumen-ventas').textContent, 10, 65);
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(totalTexto, 10, 50);
+        pdf.setFont('courier', 'normal');
+        pdf.setFontSize(11);
+        pdf.text(textoResumen, 10, 65);
+
+        const finalYResumen = pdf.splitTextToSize(textoResumen, 180).length * 5 + 75;
 
         const head = [['ID', 'Cliente', 'Total', 'Pago', 'Estatus', 'Fecha']];
-        const body = ventasFiltradasGlobal.map(v => [v.id.slice(-6), v.clienteNombre, `$${v.total.toFixed(2)}`, v.metodoPago || 'N/A', v.estatus || 'N/A', new Date(v.fecha).toLocaleDateString()]);
-        pdf.autoTable({ head, body, startY: pdf.splitTextToSize(document.getElementById('resumen-ventas').textContent, 180).length * 5 + 75, theme: 'grid' });
+        const body = ventasFiltradasGlobal.map(v => [
+            v.id.slice(-6),
+            v.clienteNombre,
+            `$${v.total.toFixed(2)}`,
+            v.metodoPago || 'N/A',
+            v.estatus || 'N/A',
+            new Date(v.fecha).toLocaleDateString()
+        ]);
+
+        pdf.autoTable({
+            head: head,
+            body: body,
+            startY: finalYResumen,
+            theme: 'grid'
+        });
+
         pdf.save("reporte-ventas-completo.pdf");
-      }
+    }
       
-      const enviarTextoWhatsapp = (texto) => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
-      function enviarResumenWhatsapp() { const texto = document.getElementById('resumen-ventas').textContent; if (!texto.trim()) { showToast('No hay resumen para enviar.', 'info'); return; } enviarTextoWhatsapp(`*Resumen de Ventas*\n\n${texto}\n\n${document.getElementById('totalPeriodoHistorial').textContent}`); }
-      function generarResumenPDFSimple() { /* ... */ }
-      function enviarDetalleWhatsapp() { /* ... */ }
-      function generarDetallePDF() { /* ... */ }
+      function enviarResumenWhatsapp() {
+          const textoResumen = document.getElementById('resumen-ventas').textContent;
+          const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
+          if (!textoResumen.trim()) { alert('No hay resumen para enviar.'); return; }
+          const mensaje = `*Resumen de Ventas*\n\n${textoResumen}\n\n${totalTexto}`;
+          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`, '_blank');
+      }
+
+      function generarResumenPDFSimple() {
+          const textoResumen = document.getElementById('resumen-ventas').textContent;
+          const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
+          if (!textoResumen.trim()) { alert('No hay resumen para generar.'); return; }
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF();
+          pdf.setFont('courier', 'normal');
+          pdf.setFontSize(12);
+          pdf.text("Resumen de Ventas del Período", 10, 10);
+          pdf.text(textoResumen, 10, 20);
+          const yPosFinal = pdf.splitTextToSize(textoResumen, 180).length * 5 + 30;
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(totalTexto, 10, yPosFinal);
+          pdf.save("resumen-ventas.pdf");
+      }
+
+      function enviarDetalleWhatsapp() {
+          if (ventasFiltradasGlobal.length === 0) { alert('No hay detalles de ventas para enviar.'); return; }
+          let mensaje = '*Detalle de Ventas del Período*\n\n';
+          ventasFiltradasGlobal.forEach(v => {
+              mensaje += `ID: ${v.id.slice(-6)}, Cliente: ${v.clienteNombre}, Total: $${v.total.toFixed(2)}, Estatus: ${v.estatus}\n`;
+          });
+          const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
+          mensaje += `\n${totalTexto}`;
+          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`, '_blank');
+      }
+
+      function generarDetallePDF() {
+          if (ventasFiltradasGlobal.length === 0) { alert('No hay detalles de ventas para generar el PDF.'); return; }
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF();
+          const totalTexto = document.getElementById('totalPeriodoHistorial').textContent;
+
+          const head = [['ID Venta', 'Cliente', 'Total', 'Estatus', 'Fecha']];
+          const body = ventasFiltradasGlobal.map(v => [
+              v.id.slice(-6),
+              v.clienteNombre,
+              `$${v.total.toFixed(2)}`,
+              v.estatus || 'N/A',
+              new Date(v.fecha).toLocaleDateString()
+          ]);
+
+          pdf.setFontSize(18);
+          pdf.text("Detalle de Ventas del Período", 14, 22);
+          pdf.autoTable({
+              head: head,
+              body: body,
+              startY: 30,
+              theme: 'grid'
+          });
+          const finalY = pdf.lastAutoTable.finalY || 50;
+          pdf.setFontSize(12);
+          pdf.text(totalTexto, 14, finalY + 10);
+
+          pdf.save('detalle-ventas.pdf');
+      }
       
       async function cargarPedidos() {
         const pedidos = await fetchAPI('/api/pedidos');
         if (!pedidos) return;
 
-        const cols = { recibidos: document.getElementById('pedidos-recibidos'), preparacion: document.getElementById('pedidos-en-preparacion'), listos: document.getElementById('pedidos-listos'), enReparto: document.getElementById('pedidos-en-reparto') };
+        const cols = {
+            recibidos: document.getElementById('pedidos-recibidos'),
+            preparacion: document.getElementById('pedidos-en-preparacion'),
+            listos: document.getElementById('pedidos-listos'),
+            enReparto: document.getElementById('pedidos-en-reparto')
+        };
         Object.values(cols).forEach(c => c.innerHTML = '');
 
         pedidos.forEach(p => {
             const card = document.createElement('div');
             card.className = 'pedido-card';
-            let itemsHtml = (p.items || []).map(item => `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong></li>` + ([...(item.toppings || []), ...(item.jarabes || [])].length ? `<ul style="padding-left: 20px;">${[...(item.toppings || []), ...(item.jarabes || [])].map(extra => `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${typeof extra === 'object' ? extra.nombre : extra}</li>`).join('')}</ul>` : '') + (item.nota ? `<div class="pedido-card-nota" style="margin-left: 20px;">Nota: ${item.nota}</div>` : '')).join('');
-            card.innerHTML = `<div class="pedido-card-header"><h4>${p.nombreCliente}</h4><span>${new Date(p.createdAt).toLocaleTimeString()}</span></div><div class="pedido-card-body"><ul>${itemsHtml}</ul>${p.nota ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.nota}</div>` : ''}${p.repartidorId?.username ? `<div class="repartidor-info">Repartidor: ${p.repartidorId.username}</div>` : ''}${p.fechaEntregaId?.fecha ? `<div class="repartidor-info">Entregar: ${new Date(p.fechaEntregaId.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'})}</div>` : ''}</div><div class="pedido-card-footer"><span class="total">Total: $${p.total.toFixed(2)}</span><div class="pedido-actions"></div></div>`;
+
+            let itemsHtml = '';
+            (p.items || []).forEach(item => {
+                itemsHtml += `<li><strong>- ${item.cantidad || 1}x ${item.nombre || item.productoNombre}</strong></li>`;
+                
+                const toppings = item.toppings || [];
+                const jarabes = item.jarabes || [];
+                const extras = [...toppings, ...jarabes];
+
+                if (extras.length > 0) {
+                    itemsHtml += '<ul style="padding-left: 20px;">';
+                    extras.forEach(extra => {
+                        const nombreExtra = typeof extra === 'object' ? extra.nombre : extra;
+                        itemsHtml += `<li style="font-size: 0.9em; color: var(--text-color-light);">+ ${nombreExtra}</li>`;
+                    });
+                    itemsHtml += '</ul>';
+                }
+
+                if (item.nota && item.nota.trim() !== "") {
+                    itemsHtml += `<div class="pedido-card-nota" style="margin-left: 20px;">Nota producto: ${item.nota}</div>`;
+                }
+            });
+
+            const repartidorInfo = p.repartidorId && p.repartidorId.username ? `<div class="repartidor-info">Repartidor: ${p.repartidorId.username}</div>` : '';
+            const fechaInfo = p.fechaEntregaId && p.fechaEntregaId.fecha ? `<div class="repartidor-info">Entregar: ${new Date(p.fechaEntregaId.fecha).toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'})}</div>` : '';
+            
+            const notaGeneralHtml = p.nota && p.nota.trim() !== "" ? `<div class="pedido-card-nota"><strong>Nota General:</strong> ${p.nota}</div>` : '';
+
+            card.innerHTML = `
+                <div class="pedido-card-header">
+                    <h4>${p.nombreCliente}</h4>
+                    <span>${new Date(p.createdAt).toLocaleTimeString()}</span>
+                </div>
+                <div class="pedido-card-body">
+                    <ul>${itemsHtml}</ul>
+                    ${notaGeneralHtml} 
+                    ${repartidorInfo}
+                    ${fechaInfo}
+                </div>
+                <div class="pedido-card-footer">
+                    <span class="total">Total: $${p.total.toFixed(2)}</span>
+                    <div class="pedido-actions"></div>
+                </div>
+            `;
             const actions = card.querySelector('.pedido-actions');
-            if (p.estatus === 'recibido') { actions.innerHTML = `<button class="btn-whatsapp" onclick="window.open('https://wa.me/${p.telefonoCliente.replace(/\D/g, '')}?text=¡Hola ${p.nombreCliente}! Recibimos tu pedido.', '_blank')">Contactar</button><button class="btn-preparar" onclick="window.app.cambiarEstatusPedido('${p.id}', 'en_preparacion')">Preparar</button>`; cols.recibidos.appendChild(card); }
-            else if (p.estatus === 'en_preparacion') { actions.innerHTML = `<button class="btn-listo" onclick="window.app.cambiarEstatusPedido('${p.id}', 'listo')">Listo</button>`; cols.preparacion.appendChild(card); }
-            else if (p.estatus === 'listo') { actions.innerHTML = `<button class="btn-asignar" onclick="window.app.asignarRepartidor('${p.id}')">Asignar</button>`; cols.listos.appendChild(card); }
-            else if (p.estatus === 'en_reparto') { cols.enReparto.appendChild(card); }
-            actions.innerHTML += `<button class="btn-cancelar" onclick="window.app.cancelarPedido('${p.id}', '${p.nombreCliente}')">Cancelar</button>`;
+            
+            const btnCancelar = document.createElement('button');
+            btnCancelar.className = 'btn-cancelar';
+            btnCancelar.textContent = 'Cancelar';
+            btnCancelar.addEventListener('click', () => cancelarPedido(p.id, p.nombreCliente));
+            
+            if (p.estatus === 'recibido') {
+                const btnW = document.createElement('button');
+                btnW.className = 'btn-whatsapp';
+                btnW.textContent = 'Contactar';
+                btnW.addEventListener('click', () => window.open(`https://wa.me/${p.telefonoCliente.replace(/\D/g, '')}?text=¡Hola ${p.nombreCliente}! Recibimos tu pedido y estamos por prepararlo.`, '_blank'));
+                actions.appendChild(btnW);
+
+                const btnP = document.createElement('button');
+                btnP.className = 'btn-preparar';
+                btnP.textContent = 'Preparar';
+                btnP.addEventListener('click', () => cambiarEstatusPedido(p.id, 'en_preparacion'));
+                actions.appendChild(btnP);
+                cols.recibidos.appendChild(card);
+            } else if (p.estatus === 'en_preparacion') {
+                const btnL = document.createElement('button');
+                btnL.className = 'btn-listo';
+                btnL.textContent = 'Listo';
+                btnL.addEventListener('click', () => cambiarEstatusPedido(p.id, 'listo'));
+                actions.appendChild(btnL);
+                cols.preparacion.appendChild(card);
+            } else if (p.estatus === 'listo') {
+                const btnA = document.createElement('button');
+                btnA.className = 'btn-asignar';
+                btnA.textContent = 'Asignar Reparto';
+                btnA.addEventListener('click', () => asignarRepartidor(p.id));
+                actions.appendChild(btnA);
+                cols.listos.appendChild(card);
+            } else if (p.estatus === 'en_reparto') {
+                cols.enReparto.appendChild(card);
+            }
+            actions.appendChild(btnCancelar);
         });
       }
 
-      async function asignarRepartidor(pedidoId) { /* ... */ }
-      async function cambiarEstatusPedido(id, nuevoEstatus) { await fetchAPI(`/api/pedidos/${id}`, { method: 'PUT', body: JSON.stringify({ estatus: nuevoEstatus }) }); cargarPedidos(); }
-      async function cancelarPedido(id, nombre) { const confirmed = await showConfirmationModal({ title: `¿Cancelar el pedido de ${nombre}? Se moverá a la papelera.` }); if(confirmed) { await fetchAPI(`/api/pedidos/${id}`, { method: 'DELETE' }); cargarPedidos(); showToast('Pedido cancelado.', 'success'); } }
-      async function toggleAgotado(id, tipo) { try { await fetchAPI(`/api/${tipo}s/${id}/toggle-agotado`, { method: 'PUT' }); if (tipo === 'producto') await cargarProductos(); if (tipo === 'topping') await cargarToppings(); if (tipo === 'jarabe') await cargarJarabes(); } catch (err) { showToast(`Error: ${err.message}`, 'error'); } }
-      async function cargarFechasDeEntrega() { /* ... */ }
-      async function agregarFechaDeEntrega(e) { /* ... */ }
-      async function toggleFecha(id) { /* ... */ }
-      async function eliminarFecha(id) { /* ... */ }
-      async function cargarDashboardData() { /* ... */ }
-      function saveMenuOrder() { /* ... */ }
-      function applyMenuOrder() { /* ... */ }
-      function initDraggableMenu() { /* ... */ }
-      function getDragAfterElement(container, y) { /* ... */ }
+      async function asignarRepartidor(pedidoId) {
+          try {
+              const repartidores = await fetchAPI('/api/usuarios/repartidores');
+              if (!repartidores || repartidores.length === 0) {
+                  alert('No hay repartidores disponibles. Crea un usuario con el rol "repartidor" primero.');
+                  return;
+              }
 
-      // --- CORTE DE CAJA FUNCTION ---
-      async function generarCorteDeCaja() {
-        const hoy = new Date();
-        const inicioHoy = new Date(hoy.setHours(0, 0, 0, 0)).toISOString();
-        const finHoy = new Date(hoy.setHours(23, 59, 59, 999)).toISOString();
-        try {
-            const ventasPagadas = (await fetchAPI(`/api/ventas?fechaInicio=${inicioHoy}&fechaFin=${finHoy}`)).filter(v => v.estatus === 'Pagado');
-            if (ventasPagadas.length === 0) { showToast('No hay ventas pagadas hoy para generar un corte.', 'info'); return; }
+              const listaPrompt = repartidores.map((r, i) => `${i + 1}. ${r.username}`).join('\n');
+              const eleccion = prompt(`Selecciona un repartidor:\n\n${listaPrompt}`);
+              
+              if (eleccion === null || eleccion.trim() === '') return;
 
-            const resumen = ventasPagadas.reduce((acc, v) => {
-                acc.totalVentas += v.total;
-                const metodo = v.metodoPago || 'Otro';
-                acc.metodos[metodo] = (acc.metodos[metodo] || 0) + v.total;
-                return acc;
-            }, { totalVentas: 0, numTransacciones: ventasPagadas.length, metodos: { Efectivo: 0, Tarjeta: 0, Transferencia: 0 } });
-            
-            const textoCorte = `--- CORTE DE CAJA ---\nFecha: ${new Date().toLocaleString('es-MX')}\n\nTotal de Ventas: $${resumen.totalVentas.toFixed(2)}\nNum. Transacciones: ${resumen.numTransacciones}\n\n--- Desglose por Método de Pago ---\n` +
-            Object.entries(resumen.metodos).map(([m, t]) => `${m.padEnd(15, ' ')}: $${t.toFixed(2)}`).join('\n') + `\n------------------------------------`;
+              const indice = parseInt(eleccion, 10) - 1;
+              if (isNaN(indice) || indice < 0 || indice >= repartidores.length) {
+                  alert('Selección inválida. Por favor, introduce un número de la lista.');
+                  return;
+              }
 
-            const modal = document.getElementById('corte-modal');
-            document.getElementById('corte-resumen').textContent = textoCorte;
-            modal.classList.add('show');
-            
-            const closeModal = () => modal.classList.remove('show');
-            document.getElementById('corte-cancel-btn').onclick = closeModal;
-            document.getElementById('corte-whatsapp-btn').onclick = () => enviarTextoWhatsapp(textoCorte);
-            document.getElementById('corte-print-btn').onclick = () => {
-                const p = window.open('', 'PRINT'); p.document.write(`<pre>${textoCorte}</pre>`); p.document.close(); p.focus(); p.print(); p.close();
-            };
-        } catch (e) { showToast('Error al generar el corte: ' + e.message, 'error'); }
+              const repartidorSeleccionado = repartidores[indice];
+              await fetchAPI(`/api/pedidos/${pedidoId}/asignar`, {
+                  method: 'POST',
+                  body: JSON.stringify({ repartidorId: repartidorSeleccionado.id })
+              });
+
+              alert(`Pedido asignado a ${repartidorSeleccionado.username}.`);
+              cargarPedidos();
+
+          } catch (error) {
+              alert('Error al asignar el repartidor: ' + error.message);
+          }
       }
 
+      async function cambiarEstatusPedido(id, nuevoEstatus) {
+        await fetchAPI(`/api/pedidos/${id}`, { method: 'PUT', body: JSON.stringify({ estatus: nuevoEstatus }) });
+        cargarPedidos();
+      }
+
+      async function cancelarPedido(id, nombre) {
+        if(confirm(`¿Estás seguro de que quieres cancelar el pedido de ${nombre}? El pedido se moverá a la papelera.`)) {
+            await fetchAPI(`/api/pedidos/${id}`, { method: 'DELETE' });
+            cargarPedidos();
+        }
+      }
+      
+      async function convertirPedidoAVenta(pedido) {
+          if (confirm(`¿Convertir el pedido de ${pedido.nombreCliente} a una venta registrada? El pedido se eliminará de esta lista y aparecerá en el Historial.`)) {
+              try {
+                  await fetchAPI(`/api/pedidos/${pedido.id}/convertir-a-venta`, { method: 'POST' });
+                  alert('Pedido convertido a venta con éxito.');
+                  cargarPedidos();
+              } catch(err) {
+                  alert(`Error al convertir el pedido: ${err.message}`);
+              }
+          }
+      }
+
+      async function toggleAgotado(id, tipo = 'producto') {
+          try {
+              await fetchAPI(`/api/${tipo}s/${id}/toggle-agotado`, { method: 'PUT' });
+              if (tipo === 'producto') await cargarProductos();
+              if (tipo === 'topping') await cargarToppings();
+              if (tipo === 'jarabe') await cargarJarabes();
+          } catch (err) {
+              alert(`Error al cambiar estado: ${err.message}`);
+          }
+      }
+
+      async function cargarFechasDeEntrega() {
+        try {
+            const fechas = await fetchAPI('/api/fechas-entrega');
+            const lista = document.getElementById('listaFechasEntrega');
+            lista.innerHTML = '';
+            fechas.forEach(fecha => {
+                const dateObj = new Date(fecha.fecha);
+                const opciones = { timeZone: 'UTC', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const fechaFormateada = dateObj.toLocaleDateString('es-MX', opciones);
+
+                const li = document.createElement('li');
+                li.className = `fecha-item ${!fecha.activa ? 'inactiva' : ''}`;
+                li.innerHTML = `
+                    <span>${fechaFormateada}</span>
+                    <div>
+                        <button onclick="window.app.toggleFecha('${fecha.id}')">${fecha.activa ? 'Desactivar' : 'Activar'}</button>
+                        <button class="btn-eliminar-item" onclick="window.app.eliminarFecha('${fecha.id}')">Eliminar</button>
+                    </div>
+                `;
+                lista.appendChild(li);
+            });
+        } catch (error) {
+            console.error("Error al cargar fechas de entrega:", error);
+        }
+      }
+
+      async function agregarFechaDeEntrega(e) {
+          e.preventDefault();
+          const fechaInput = document.getElementById('inputFecha');
+          const fecha = fechaInput.value;
+          if (!fecha) return;
+          try {
+              await fetchAPI('/api/fechas-entrega', {
+                  method: 'POST',
+                  body: JSON.stringify({ fecha })
+              });
+              fechaInput.value = '';
+              cargarFechasDeEntrega();
+          } catch (error) {
+              alert('Error al añadir la fecha: ' + error.message);
+          }
+      }
+      
+      async function toggleFecha(id) {
+          try {
+              await fetchAPI(`/api/fechas-entrega/${id}/toggle`, { method: 'PUT' });
+              cargarFechasDeEntrega();
+          } catch (error) {
+              alert('Error al cambiar el estado de la fecha: ' + error.message);
+          }
+      }
+
+      async function eliminarFecha(id) {
+          if (confirm('¿Estás seguro de que quieres eliminar esta fecha?')) {
+              try {
+                  await fetchAPI(`/api/fechas-entrega/${id}`, { method: 'DELETE' });
+                  cargarFechasDeEntrega();
+              } catch (error) {
+                  alert('Error al eliminar la fecha: ' + error.message);
+              }
+          }
+      }
+      
+      function setFechaYRecargar(start, end) {
+        const selectorFecha = document.querySelector("#filtroFecha")._flatpickr;
+        selectorFecha.setDate([start, end], true);
+      }
+
+      // --- Funciones del Dashboard ---
+      async function cargarDashboardData() {
+        try {
+            // Cargar KPIs
+            const hoy = new Date();
+            const inicioHoy = new Date(hoy.setHours(0, 0, 0, 0)).toISOString();
+            const finHoy = new Date(hoy.setHours(23, 59, 59, 999)).toISOString();
+
+            const ventasHoy = await fetchAPI(`/api/ventas?fechaInicio=${inicioHoy}&fechaFin=${finHoy}`);
+            const totalVentasHoy = ventasHoy.reduce((acc, venta) => acc + venta.total, 0);
+            const numPedidosHoy = ventasHoy.length;
+
+            document.getElementById('kpi-ventas-hoy').textContent = `$${totalVentasHoy.toFixed(2)}`;
+            document.getElementById('kpi-pedidos-hoy').textContent = numPedidosHoy;
+
+            const pedidosPendientesData = await fetchAPI('/api/pedidos/nuevos/contador');
+            document.getElementById('kpi-pedidos-pendientes').textContent = pedidosPendientesData.count || 0;
+            
+            // Cargar Gráficos
+            prepararDatosParaGraficas(ventasHoy, 'dashboard');
+        } catch (error) {
+            console.error("Error al cargar datos del dashboard:", error);
+        }
+      }
+
+      // --- Funciones del Menú Reordenable ---
+      function saveMenuOrder() {
+        const navContainer = document.getElementById('sidebar-nav-container');
+        const order = Array.from(navContainer.children).map(item => item.dataset.seccion);
+        localStorage.setItem('menuOrder', JSON.stringify(order));
+      }
+
+      function applyMenuOrder() {
+        const navContainer = document.getElementById('sidebar-nav-container');
+        const savedOrder = JSON.parse(localStorage.getItem('menuOrder'));
+        if (savedOrder) {
+            savedOrder.forEach(sectionId => {
+                const elem = navContainer.querySelector(`[data-seccion="${sectionId}"]`);
+                if (elem) {
+                    navContainer.appendChild(elem);
+                }
+            });
+        }
+      }
+      
+      function initDraggableMenu() {
+        const navContainer = document.getElementById('sidebar-nav-container');
+        let draggedItem = null;
+
+        navContainer.addEventListener('dragstart', e => {
+            if (e.target.classList.contains('nav-link')) {
+                draggedItem = e.target;
+                setTimeout(() => {
+                    e.target.classList.add('dragging');
+                }, 0);
+            }
+        });
+
+        navContainer.addEventListener('dragend', e => {
+            if (draggedItem) {
+                draggedItem.classList.remove('dragging');
+                draggedItem = null;
+                saveMenuOrder();
+            }
+        });
+
+        navContainer.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(navContainer, e.clientY);
+            const currentDragged = document.querySelector('.dragging');
+            if (currentDragged) {
+                if (afterElement == null) {
+                    navContainer.appendChild(currentDragged);
+                } else {
+                    navContainer.insertBefore(currentDragged, afterElement);
+                }
+            }
+        });
+      }
+      
+      function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.nav-link:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+      }
+
+
       function setupEventListeners() {
-        document.getElementById('btn-corte-caja').addEventListener('click', generarCorteDeCaja);
-        document.getElementById('searchProductos').addEventListener('input', e => renderizarLista(allProducts.filter(p => p.nombre.toLowerCase().includes(e.target.value.toLowerCase())), 'Producto', ['nombre', 'precio']));
-        document.getElementById('searchToppings').addEventListener('input', e => renderizarLista(allToppings.filter(p => p.nombre.toLowerCase().includes(e.target.value.toLowerCase())), 'Topping', ['nombre', 'precio']));
-        document.getElementById('searchJarabes').addEventListener('input', e => renderizarLista(allJarabes.filter(p => p.nombre.toLowerCase().includes(e.target.value.toLowerCase())), 'Jarabe', ['nombre', 'precio']));
-        document.getElementById('searchClientes').addEventListener('input', e => { const s = e.target.value.toLowerCase(); renderizarLista(allClientes.filter(c => c.nombre.toLowerCase().includes(s) || (c.telefono && c.telefono.includes(s))), 'Cliente', ['nombre', 'telefono']); });
-        
-        const setFechaYRecargar = (start, end) => document.querySelector("#filtroFecha")._flatpickr.setDate([start, end], true);
-        document.getElementById('btn-filtro-hoy').addEventListener('click', () => { const hoy = new Date(); setFechaYRecargar(hoy, hoy); });
-        document.getElementById('btn-filtro-semana').addEventListener('click', () => { const hoy = new Date(); const d = hoy.getDay(); const p = hoy.getDate() - d + (d === 0 ? -6 : 1); setFechaYRecargar(new Date(hoy.setDate(p)), new Date(hoy.setDate(p+6))); });
-        document.getElementById('btn-filtro-mes').addEventListener('click', () => { const h = new Date(); setFechaYRecargar(new Date(h.getFullYear(), h.getMonth(), 1), new Date(h.getFullYear(), h.getMonth() + 1, 0)); });
+        document.getElementById('btn-filtro-hoy').addEventListener('click', () => {
+          const hoy = new Date();
+          setFechaYRecargar(hoy, hoy);
+        });
+
+        document.getElementById('btn-filtro-semana').addEventListener('click', () => {
+            const hoy = new Date();
+            const diaDeSemana = hoy.getDay();
+            const diff = hoy.getDate() - diaDeSemana + (diaDeSemana === 0 ? -6 : 1);
+            const primerDiaSemana = new Date(hoy.setDate(diff));
+            const ultimoDiaSemana = new Date(primerDiaSemana);
+            ultimoDiaSemana.setDate(ultimoDiaSemana.getDate() + 6);
+            setFechaYRecargar(primerDiaSemana, ultimoDiaSemana);
+        });
+
+        document.getElementById('btn-filtro-mes').addEventListener('click', () => {
+          const hoy = new Date();
+          const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+          const ultimoDiaMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+          setFechaYRecargar(primerDiaMes, ultimoDiaMes);
+        });
       
         document.getElementById('btnRegistrarPagado').addEventListener('click', () => registrarVenta('Pagado'));
         document.getElementById('btnRegistrarPendiente').addEventListener('click', () => registrarVenta('Pendiente de Pago'));
         document.getElementById('btnActualizarVenta').addEventListener('click', () => registrarVenta(null));
         document.getElementById('btnEnviarACocina').addEventListener('click', enviarACocina);
-        document.querySelectorAll('nav a').forEach(b => b.addEventListener('click', (e) => { e.preventDefault(); mostrarSeccion(b.dataset.seccion); }));
-        mainContent.addEventListener('click', (e) => { if (nav.classList.contains('nav-open') && window.innerWidth < 992 && !e.target.closest('.sidebar') && !e.target.closest('#menu-toggle')) nav.classList.remove('nav-open'); });
+        document.querySelectorAll('nav a').forEach(b => b.addEventListener('click', (e) => {
+            e.preventDefault();
+            mostrarSeccion(b.dataset.seccion);
+        }));
+        mainContent.addEventListener('click', (e) => {
+          if (nav.classList.contains('nav-open') && window.innerWidth < 992) {
+            if (!e.target.closest('.sidebar') && !e.target.closest('#menu-toggle')) {
+              nav.classList.remove('nav-open');
+            }
+          }
+        });
         
-        ['formProducto', 'formTopping', 'formJarabe', 'formCliente'].forEach(id => document.getElementById(id).addEventListener('submit', (e) => guardarItem(e, id.replace('form',''))));
-        document.getElementById('formUsuario').addEventListener('submit', guardarUsuario);
+        document.getElementById('formProducto').addEventListener('submit', (e) => guardarItem(e, 'Producto'));
+        document.getElementById('formTopping').addEventListener('submit', (e) => guardarItem(e, 'Topping'));
+        document.getElementById('formJarabe').addEventListener('submit', (e) => guardarItem(e, 'Jarabe'));
+        document.getElementById('formCliente').addEventListener('submit', (e) => guardarItem(e, 'Cliente'));
+        document.getElementById('formUsuario').addEventListener('submit', (e) => guardarUsuario(e));
+        document.getElementById('roleUsuario').addEventListener('change', () => {
+            document.getElementById('permisos-container').style.display = 'block';
+        });
         document.getElementById('btnLimpiarFormUsuario').addEventListener('click', limpiarFormularioUsuario);
         document.getElementById('btnAgregarVenta').addEventListener('click', agregarAVenta);
         document.getElementById('costoDomicilio').addEventListener('input', actualizarTotalVenta);
         document.getElementById('pagoCon').addEventListener('input', calcularCambio);
-        ['filtroEstatus', 'filtroCliente', 'filtroUsuario'].forEach(id => document.getElementById(id).addEventListener('change', cargarVentasHistorial));
+        
+        document.getElementById('filtroEstatus').addEventListener('change', cargarVentasHistorial);
+        document.getElementById('filtroCliente').addEventListener('change', cargarVentasHistorial);
+        document.getElementById('filtroUsuario').addEventListener('change', cargarVentasHistorial);
         
         document.getElementById('btnGenerarReporte').addEventListener('click', generarReportePDF);
-        document.getElementById('btnGenerarPDF').addEventListener('click', () => { if (document.getElementById('ticket').textContent.trim() === '') { showToast('No hay ticket para generar.', 'info'); return; } html2canvas(document.getElementById('ticket')).then(canvas => { const i = canvas.toDataURL('image/png'), p = new jsPDF(), w = p.internal.pageSize.getWidth(), h = (p.getImageProperties(i).height * w) / p.getImageProperties(i).width; p.addImage(i, 'PNG', 0, 0, w, h); p.save("ticket.pdf"); }); });
-        document.getElementById('btnEnviarWhatsapp').addEventListener('click', () => { const t = document.getElementById('ticket').textContent; if (t.trim() === '') { showToast('No hay ticket para enviar.', 'info'); return; } enviarTextoWhatsapp(t); });
-        themeSwitch.addEventListener('change', () => { const theme = themeSwitch.checked ? 'dark' : 'light'; applyTheme(theme); localStorage.setItem('theme', theme); });
+        document.getElementById('btnGenerarPDF').addEventListener('click', () => {
+          const ticketElement = document.getElementById('ticket');
+          if (ticketElement.textContent.trim() === '') { alert('Primero debe registrar una venta para generar un ticket.'); return; }
+          html2canvas(ticketElement).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF();
+            const imgProps= pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save("ticket-dulces-amigas.pdf");
+          });
+        });
+        document.getElementById('btnEnviarWhatsapp').addEventListener('click', () => {
+          const textoTicket = document.getElementById('ticket').textContent;
+          if (textoTicket.trim() === '') { alert('No hay un ticket generado para enviar.'); return; }
+          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoTicket)}`, '_blank');
+        });
+        themeSwitch.addEventListener('change', () => {
+            if (themeSwitch.checked) {
+                applyTheme('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                applyTheme('light');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        document.getElementById('formFechaEntrega').addEventListener('submit', agregarFechaDeEntrega);
+        document.getElementById('btnResumenWhatsapp').addEventListener('click', enviarResumenWhatsapp);
+        document.getElementById('btnResumenPDF').addEventListener('click', generarResumenPDFSimple);
+        document.getElementById('btnDetalleWhatsapp').addEventListener('click', enviarDetalleWhatsapp);
+        document.getElementById('btnDetallePDF').addEventListener('click', generarDetallePDF);
         
-        document.querySelectorAll('.papelera-header button').forEach(btn => btn.addEventListener('click', () => vaciarPapelera(btn.dataset.tipo)));
+        document.querySelectorAll('.papelera-header button').forEach(btn => {
+            btn.addEventListener('click', () => vaciarPapelera(btn.dataset.tipo));
+        });
+
         document.body.addEventListener('click', unlockAudio, { once: true });
         document.body.addEventListener('touchstart', unlockAudio, { once: true });
-        document.getElementById('audio-unlock-banner').addEventListener('click', () => { document.getElementById('notification-sound').play(); document.getElementById('audio-unlock-banner').style.display = 'none'; });
+
+        document.getElementById('audio-unlock-banner').addEventListener('click', () => {
+          const banner = document.getElementById('audio-unlock-banner');
+          const sound = document.getElementById('notification-sound');
+          
+          sound.play();
+          banner.style.display = 'none';
+        });
       }
       
       window.app = { 
-          toggleAgotado, cancelarPedido, cambiarEstatusPedido, asignarRepartidor,
-          restaurarItem, eliminarPermanentemente, cambiarEstatus, marcarComoPagado,
-          cambiarFechaVenta, editarVenta, reimprimirTicket, eliminarItem
+          toggleAgotado, 
+          cancelarPedido, 
+          cambiarEstatusPedido, 
+          convertirPedidoAVenta, 
+          asignarRepartidor,
+          toggleFecha, 
+          eliminarFecha
       };
 
       await loadPublicConfig();
-      localStorage.getItem('token') ? await showApp() : showLogin();
+
+      if (localStorage.getItem('token')) {
+        await showApp();
+      } else {
+        showLogin();
+      }
+      
       document.body.style.visibility = 'visible';
     });
   </script>

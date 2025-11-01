@@ -331,17 +331,18 @@
       justify-content: center;
       gap: 1rem;
     }
-    .modal-actions .btn-confirm {
+    .modal-actions .btn-confirm.btn-confirm-danger {
         background-color: var(--danger-color);
         color: white;
     }
-    .modal-actions .btn-confirm:hover {
+    .modal-actions .btn-confirm.btn-confirm-danger:hover {
         background-color: var(--danger-hover);
     }
-    .modal-actions .btn-confirm.confirm-safe {
+    .modal-actions .btn-confirm.btn-confirm-safe {
         background-color: var(--success-color);
+        color: white;
     }
-    .modal-actions .btn-confirm.confirm-safe:hover {
+    .modal-actions .btn-confirm.btn-confirm-safe:hover {
         background-color: var(--success-hover);
     }
     @keyframes spin {
@@ -928,7 +929,7 @@
       let ventaActual = {}; 
       let miGraficaDeVentas, miGraficaDeProductos, dashboardChartVentas, dashboardChartProductos;
       let ventasEnMemoria = [], ventasFiltradasGlobal = [];
-      let allProducts = [], allToppings = [], allJarabes = [], allClientes = [];
+      let allProducts = [], allToppings = [], allJarabes = [], allClientes = [], allUsuarios = [];
       let procesandoVenta = false;
       const COSTO_DOMICILIO_PREDET = 30.00;
       let pollingIntervalId = null;
@@ -956,7 +957,7 @@
       const eyeOpen = document.getElementById('eye-open');
       const eyeClosed = document.getElementById('eye-closed');
       
-      // --- NUEVAS FUNCIONES DE UI ---
+      // --- UI HELPER FUNCTIONS ---
       function showToast(message, type = 'info', duration = 4000) {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
@@ -1001,14 +1002,15 @@
           if (!button) return;
           if (isLoading) {
               button.disabled = true;
+              button.dataset.originalText = button.innerHTML;
               button.innerHTML = `<span class="spinner"></span> Procesando...`;
           } else {
               button.disabled = false;
-              button.innerHTML = originalText;
+              button.innerHTML = button.dataset.originalText || originalText;
           }
       }
 
-      // --- FIN NUEVAS FUNCIONES DE UI ---
+      // --- END UI HELPER FUNCTIONS ---
       
       togglePassword.addEventListener('click', () => {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -1068,7 +1070,7 @@
               if (file) {
                   const reader = new FileReader();
                   reader.onload = (e) => {
-                      const logo_base64 = e.target.result;
+                      const logo_base_64 = e.target.result;
                       document.getElementById('app-logo').src = logo_base_64;
                       document.getElementById('login-logo').src = logo_base_64;
                       pendingAppearanceChanges.logo_base_64 = logo_base_64;
@@ -1112,17 +1114,16 @@
           const accentColorPicker = document.getElementById('accent-color-picker');
           const darkBgColorPicker = document.getElementById('dark-bg-color-picker');
           const root = document.documentElement;
+          const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
           
           try {
               const response = await fetch('/api/configuracion');
               if (!response.ok) throw new Error(`Error de red: ${response.statusText}`);
               const config = await response.json();
               
-              const defaultLogo = 'https://via.placeholder.com/180x60.png?text=Tu+Logo';
-              
-              if (config && config.logo_base64) {
-                  appLogo.src = config.logo_base64;
-                  loginLogo.src = config.logo_base64;
+              if (config && typeof config.logo_base64 === 'string' && config.logo_base_64.startsWith('data:image')) {
+                  appLogo.src = config.logo_base_64;
+                  loginLogo.src = config.logo_base_64;
               } else {
                    appLogo.src = defaultLogo;
                    loginLogo.src = defaultLogo;
@@ -1139,7 +1140,7 @@
               }
               
               if (config && config.dark_background_color) {
-                  root.style.setProperty('--dark-background-color', dark_background_color);
+                  root.style.setProperty('--dark-background-color', config.dark_background_color);
                   darkBgColorPicker.value = config.dark_background_color;
               } else {
                   darkBgColorPicker.value = '#1e293b';
@@ -1147,9 +1148,8 @@
 
           } catch (error) {
               console.error("No se pudo cargar la configuración de apariencia desde el servidor.", error);
-              const errorLogo = 'https://via.placeholder.com/180x60.png?text=Error';
-              appLogo.src = errorLogo;
-              loginLogo.src = errorLogo;
+              appLogo.src = defaultLogo;
+              loginLogo.src = defaultLogo;
           }
       }
       
@@ -1424,42 +1424,77 @@
         });
       }
       
+      function editItem(tipo, id) {
+        const dataMap = { 'Producto': allProducts, 'Topping': allToppings, 'Jarabe': allJarabes, 'Cliente': allClientes, 'Usuario': allUsuarios };
+        const item = dataMap[tipo].find(i => i.id === id);
+        if (!item) return;
+
+        if (tipo === 'Usuario') {
+            cargarUsuarioEnForm(item);
+        } else if (tipo === 'Cliente') {
+            document.getElementById(`id${tipo}`).value = item.id;
+            document.getElementById(`nombre${tipo}`).value = item.nombre;
+            document.getElementById(`tel${tipo}`).value = item.telefono || '';
+            document.getElementById(`dir${tipo}`).value = item.direccion || '';
+        } else { // Producto, Topping, Jarabe
+            document.getElementById(`id${tipo}`).value = item.id;
+            document.getElementById(`nombre${tipo}`).value = item.nombre;
+            document.getElementById(`precio${tipo}`).value = item.precio;
+        }
+      }
+
       const renderizarLista = (items = [], tipo, campos) => {
         const lista = document.getElementById(`lista${tipo}s`);
         if(!lista) return;
-        lista.innerHTML = items.map(item => {
+        lista.innerHTML = '';
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'product-item';
+
             let displayText = item[campos[0]] || '';
             if (campos[1] && typeof item[campos[1]] === 'number') displayText += ` - $${item[campos[1]].toFixed(2)}`;
             else if (campos[1] && item[campos[1]]) displayText += ` - ${item[campos[1]]}`;
+            
+            const texto = document.createElement('span');
+            texto.textContent = displayText;
 
-            const agotadoSwitchHtml = ['Producto', 'Topping', 'Jarabe'].includes(tipo) ? `
+            const divControles = document.createElement('div');
+            
+            if (['Producto', 'Topping', 'Jarabe'].includes(tipo)) {
+                divControles.innerHTML = `
                 <div class="agotado-switch">
                     <span>Agotado</span>
                     <label class="theme-switch">
                         <input type="checkbox" onchange="window.app.toggleAgotado('${item.id}', '${tipo.toLowerCase()}')" ${item.agotado ? 'checked' : ''}>
                         <span class="slider"></span>
                     </label>
-                </div>` : '';
+                </div>`;
+            }
 
-            return `
-                <li class="product-item">
-                    <span>${displayText}</span>
-                    <div>
-                        ${agotadoSwitchHtml}
-                        <div>
-                            <button class="btn-editar-item" data-id="${item.id}" data-tipo="${tipo}">Editar</button>
-                            <button class="btn-eliminar-item" data-id="${item.id}" data-tipo="${tipo}">Eliminar</button>
-                        </div>
-                    </div>
-                </li>`;
-        }).join('');
+            const divBotones = document.createElement('div');
+            const btnEditar = document.createElement('button');
+            btnEditar.textContent = 'Editar';
+            btnEditar.onclick = () => editItem(tipo, item.id);
+
+            const btnEliminar = document.createElement('button');
+            btnEliminar.textContent = 'Eliminar';
+            btnEliminar.className = 'btn-eliminar-item';
+            btnEliminar.onclick = () => eliminarItem(item.id, tipo);
+
+            divBotones.appendChild(btnEditar);
+            divBotones.appendChild(btnEliminar);
+            divControles.appendChild(divBotones);
+            
+            li.appendChild(texto);
+            li.appendChild(divControles);
+            lista.appendChild(li);
+        });
       };
       
       async function guardarItem(e, tipo) {
         e.preventDefault();
         const form = e.target;
         const button = form.querySelector('button[type="submit"]');
-        const originalButtonText = button.textContent;
         toggleButtonLoading(button, true);
 
         try {
@@ -1482,7 +1517,7 @@
         } catch (err) { 
             showToast(`Error: ${err.message}`, 'error'); 
         } finally {
-            toggleButtonLoading(button, false, originalButtonText);
+            toggleButtonLoading(button, false);
         }
       }
 
@@ -1555,11 +1590,24 @@
               const data = await fetchAPI(url);
               const container = document.getElementById(containerId);
               if (!container || !data) return;
-              container.innerHTML = data.map(item => `
-                <button type="button" class="option-btn" data-id="${item.id}" data-precio="${item.precio}" data-nombre="${item.nombre}" 
-                        ${item.agotado ? 'disabled style="text-decoration: line-through;"' : ''}>
-                    ${item.nombre} - $${item.precio.toFixed(2)}
-                </button>`).join('');
+              container.innerHTML = '';
+              data.forEach(item => {
+                  const button = document.createElement('button');
+                  button.type = 'button';
+                  button.className = 'option-btn';
+                  button.textContent = `${item.nombre} - $${item.precio.toFixed(2)}`;
+                  button.dataset.id = item.id;
+                  button.dataset.precio = item.precio;
+                  button.dataset.nombre = item.nombre;
+                  if (item.agotado) {
+                      button.disabled = true;
+                      button.style.textDecoration = 'line-through';
+                  }
+                  button.onclick = () => {
+                      button.classList.toggle('selected');
+                  };
+                  container.appendChild(button);
+              });
           } catch(e) { /* Error manejado en fetchAPI */ }
       }
       
@@ -1611,7 +1659,6 @@
         
         const botonesIds = ['btnRegistrarPagado', 'btnRegistrarPendiente', 'btnActualizarVenta', 'btnEnviarACocina'];
         const botones = botonesIds.map(id => document.getElementById(id)).filter(Boolean);
-        const originalTexts = botones.map(btn => btn.innerHTML);
         botones.forEach(btn => toggleButtonLoading(btn, true));
         
         try {
@@ -1645,7 +1692,7 @@
             showToast(`Error: ${e.message}`, 'error');
         } finally {
             procesandoVenta = false;
-            botones.forEach((btn, index) => toggleButtonLoading(btn, false, originalTexts[index]));
+            botones.forEach(btn => toggleButtonLoading(btn, false));
         }
       }
 
@@ -1691,8 +1738,11 @@
       function mostrarVentaActual() {
         const lista = document.getElementById('listaVentaActual');
         document.getElementById('lista-venta-divider').style.display = Object.keys(ventaActual).length ? 'block' : 'none';
-        lista.innerHTML = Object.values(ventaActual).map(item => `
-            <li class="list-item-venta">
+        lista.innerHTML = '';
+        Object.values(ventaActual).forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'list-item-venta';
+            li.innerHTML = `
                 <div class="list-item-details">
                     <span>${item.cantidad}x ${item.productoNombre} - $${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
                     ${item.nota ? `<span class="list-item-nota">Nota: ${item.nota}</span>` : ''}
@@ -1702,24 +1752,26 @@
                     <span>${item.cantidad}</span>
                     <button class="quantity-btn-venta" data-id="${item.id}" data-action="increase" aria-label="Aumentar cantidad">+</button>
                     <button class="remove-btn-venta" data-id="${item.id}" aria-label="Quitar producto">X</button>
-                </div>
-            </li>`).join('');
+                </div>`;
+            lista.appendChild(li);
+        });
+        
+        lista.querySelectorAll('button').forEach(btn => btn.addEventListener('click', handleVentaItemAction));
         actualizarTotalVenta();
       }
 
       function handleVentaItemAction(e) {
-        const target = e.target.closest('button');
-        if (!target) return;
-        const id = target.dataset.id;
+        const button = e.currentTarget;
+        const id = button.dataset.id;
         if (!ventaActual[id]) return;
 
-        if (target.classList.contains('quantity-btn-venta')) {
-            if (target.dataset.action === 'increase') ventaActual[id].cantidad++;
+        if (button.classList.contains('quantity-btn-venta')) {
+            if (button.dataset.action === 'increase') ventaActual[id].cantidad++;
             else {
                 ventaActual[id].cantidad--;
                 if (ventaActual[id].cantidad <= 0) delete ventaActual[id];
             }
-        } else if (target.classList.contains('remove-btn-venta')) {
+        } else if (button.classList.contains('remove-btn-venta')) {
             delete ventaActual[id];
         }
         
@@ -1796,8 +1848,8 @@
       
       async function cargarUsuarios() {
           try {
-              const usuarios = await fetchAPI('/api/usuarios');
-              renderizarLista(usuarios, 'Usuario', ['username', 'role']);
+              allUsuarios = await fetchAPI('/api/usuarios');
+              renderizarLista(allUsuarios, 'Usuario', ['username', 'role']);
           } catch (e) { renderizarLista([], 'Usuario', ['username', 'role']); }
       }
 
@@ -1828,7 +1880,6 @@
       async function guardarUsuario(e) {
         e.preventDefault();
         const button = e.target.querySelector('button[type="submit"]');
-        const originalButtonText = button.textContent;
         toggleButtonLoading(button, true);
         try {
             const id = document.getElementById('idUsuario').value;
@@ -1861,14 +1912,14 @@
         } catch(err) {
             showToast(`Error: ${err.message}`, 'error');
         } finally {
-            toggleButtonLoading(button, false, originalButtonText);
+            toggleButtonLoading(button, false);
         }
       }
 
       async function marcarComoPagado(ventaId) {
           const metodoPagoFinal = prompt("Introduce el método de pago final (Efectivo, Tarjeta, Transferencia):", "Efectivo");
           if (metodoPagoFinal && metodoPagoFinal.trim() !== "") {
-              const confirmed = await showConfirmationModal({ title: `¿Marcar como "Pagado" con "${metodoPagoFinal}"?`, confirmText: 'Sí, Marcar', confirmClass: 'confirm-safe' });
+              const confirmed = await showConfirmationModal({ title: `¿Marcar como "Pagado" con "${metodoPagoFinal}"?`, confirmText: 'Sí, Marcar', confirmClass: 'btn-confirm-safe' });
               if (confirmed) {
                   try {
                       await fetchAPI(`/api/ventas/${ventaId}`, { method: 'PUT', body: JSON.stringify({ estatus: "Pagado", metodoPago: metodoPagoFinal.trim() }) });
@@ -1882,7 +1933,7 @@
       async function cambiarEstatus(ventaId, estatusActual) {
         if (!estatusActual || estatusActual === "N/A") { showToast("No se puede cambiar el estatus de este registro.", 'info'); return; }
         const nuevoEstatus = estatusActual === 'Pagado' ? 'Pendiente de Pago' : 'Pagado';
-        const confirmed = await showConfirmationModal({ title: `¿Cambiar estatus a "${nuevoEstatus}"?`, confirmText: 'Sí, Cambiar', confirmClass: 'confirm-safe' });
+        const confirmed = await showConfirmationModal({ title: `¿Cambiar estatus a "${nuevoEstatus}"?`, confirmText: 'Sí, Cambiar', confirmClass: 'btn-confirm-safe' });
         if (confirmed) {
           try {
             await fetchAPI(`/api/ventas/${ventaId}`, { method: 'PUT', body: JSON.stringify({ estatus: nuevoEstatus }) });
@@ -1953,11 +2004,11 @@
           const container = document.createElement('div');
           container.className = 'venta-card-mobile-actions';
           container.innerHTML = `
-              ${venta.estatus === 'Pendiente de Pago' ? `<button class="btn-marcar-pagado" onclick="marcarComoPagado('${venta.id}')">Marcar como Pagado</button>` : ''}
-              ${currentUserRole === 'admin' ? `<button class="btn-cambiar-fecha" title="Cambiar Fecha" aria-label="Cambiar Fecha" onclick="cambiarFechaVenta('${venta.id}', this)"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 12.75h.008v.008H12v-.008z" /></svg></button>` : ''}
-              <button class="btn-editar-venta" title="Editar Venta" aria-label="Editar Venta" onclick="editarVenta('${venta.id}')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>
-              <button class="btn-reimprimir" title="Reimprimir Ticket" aria-label="Reimprimir Ticket" onclick="reimprimirTicket('${venta.id}')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg></button>
-              <button class="btn-eliminar-venta" onclick="eliminarItem('${venta.id}', 'Venta')">X</button>
+              ${venta.estatus === 'Pendiente de Pago' ? `<button class="btn-marcar-pagado" onclick="window.app.marcarComoPagado('${venta.id}')">Marcar como Pagado</button>` : ''}
+              ${currentUserRole === 'admin' ? `<button class="btn-cambiar-fecha" title="Cambiar Fecha" aria-label="Cambiar Fecha" onclick="window.app.cambiarFechaVenta('${venta.id}', this)"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 12.75h.008v.008H12v-.008z" /></svg></button>` : ''}
+              <button class="btn-editar-venta" title="Editar Venta" aria-label="Editar Venta" onclick="window.app.editarVenta('${venta.id}')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>
+              <button class="btn-reimprimir" title="Reimprimir Ticket" aria-label="Reimprimir Ticket" onclick="window.app.reimprimirTicket('${venta.id}')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M10.5 16.5h3m-3.75-3.75a1.875 1.875 0 00-3.75 0v.75c0 1.036.84 1.875 1.875 1.875h3.75c1.036 0 1.875-.84 1.875-1.875v-.75a1.875 1.875 0 00-3.75 0zM12 1.5v4.5m0 0l-3-3m3 3l3-3M3.75 6.75h16.5M3.75 10.5h16.5M3.75 14.25h16.5M3.75 18h16.5" /></svg></button>
+              <button class="btn-eliminar-venta" onclick="window.app.eliminarItem('${venta.id}', 'Venta')">X</button>
           `;
           return container;
       }
@@ -1989,7 +2040,7 @@
               
               const tr = tbody.insertRow();
               tr.innerHTML = `<td>${venta.id.slice(-6)}</td><td>${venta.vendedorUsername}</td><td>${venta.clienteNombre}</td><td>$${venta.total.toFixed(2)}</td><td>${venta.metodoPago || 'N/A'}</td>`;
-              tr.insertCell().innerHTML = `<span class="status-badge ${estatusClass}">${estatusActual}</span> ${currentUserRole === 'admin' ? `<button class="btn-cambiar-estatus" onclick="cambiarEstatus('${venta.id}', '${estatusActual}')" title="Cambiar Estatus" aria-label="Cambiar Estatus"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>` : ''}`;
+              tr.insertCell().innerHTML = `<span class="status-badge ${estatusClass}">${estatusActual}</span> ${currentUserRole === 'admin' ? `<button class="btn-cambiar-estatus" onclick="window.app.cambiarEstatus('${venta.id}', '${estatusActual}')" title="Cambiar Estatus" aria-label="Cambiar Estatus"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg></button>` : ''}`;
               tr.insertCell().textContent = new Date(venta.fecha).toLocaleString('es-MX');
               tr.insertCell().appendChild(createActionButtons(venta));
               
@@ -2035,8 +2086,8 @@
             <li class="product-item">
                 <span>${item.nombre || item.username}</span>
                 <div>
-                    <button class="btn-restaurar" onclick="restaurarItem('${item.id}', '${endpoint}')">Restaurar</button>
-                    <button class="btn-eliminar-perm" onclick="eliminarPermanentemente('${item.id}', '${endpoint}')">Eliminar Permanente</button>
+                    <button class="btn-restaurar" onclick="window.app.restaurarItem('${item.id}', '${endpoint}')">Restaurar</button>
+                    <button class="btn-eliminar-perm" onclick="window.app.eliminarPermanentemente('${item.id}', '${endpoint}')">Eliminar Permanente</button>
                 </div>
             </li>`).join('');
       }
@@ -2046,8 +2097,8 @@
               <tr>
                   <td>${item.clienteNombre || 'N/A'}</td><td>${new Date(item.fecha).toLocaleString()}</td><td>$${item.total.toFixed(2)}</td>
                   <td>
-                      <button class="btn-restaurar" onclick="restaurarItem('${item.id}', 'ventas')">Restaurar</button>
-                      <button class="btn-eliminar-perm" onclick="eliminarPermanentemente('${item.id}', 'ventas')">Eliminar Permanente</button>
+                      <button class="btn-restaurar" onclick="window.app.restaurarItem('${item.id}', 'ventas')">Restaurar</button>
+                      <button class="btn-eliminar-perm" onclick="window.app.eliminarPermanentemente('${item.id}', 'ventas')">Eliminar Permanente</button>
                   </td>
               </tr>`).join('');
       }
@@ -2057,13 +2108,13 @@
               <div class="pedido-card">
                   <div class="pedido-card-header"><h4>${item.nombreCliente}</h4><span>Cancelado: ${new Date(item.updatedAt).toLocaleDateString()}</span></div>
                   <div class="pedido-card-footer"><span class="total">Total: $${item.total.toFixed(2)}</span>
-                      <div><button class="btn-restaurar" onclick="restaurarItem('${item.id}', 'pedidos')">Restaurar</button><button class="btn-eliminar-perm" onclick="eliminarPermanentemente('${item.id}', 'pedidos')">Eliminar Permanente</button></div>
+                      <div><button class="btn-restaurar" onclick="window.app.restaurarItem('${item.id}', 'pedidos')">Restaurar</button><button class="btn-eliminar-perm" onclick="window.app.eliminarPermanentemente('${item.id}', 'pedidos')">Eliminar Permanente</button></div>
                   </div>
               </div>`).join('');
       }
 
       async function restaurarItem(id, tipoEndpoint) {
-        const confirmed = await showConfirmationModal({ title: `¿Restaurar este elemento?`, confirmText: 'Sí, Restaurar', confirmClass: 'confirm-safe' });
+        const confirmed = await showConfirmationModal({ title: `¿Restaurar este elemento?`, confirmText: 'Sí, Restaurar', confirmClass: 'btn-confirm-safe' });
         if (confirmed) {
           try {
             await fetchAPI(`/api/${tipoEndpoint}/${id}/restaurar`, { method: 'PUT' });
@@ -2197,7 +2248,7 @@
       function initDraggableMenu() { /* ... */ }
       function getDragAfterElement(container, y) { /* ... */ }
 
-      // --- NUEVA FUNCIÓN CORTE DE CAJA ---
+      // --- CORTE DE CAJA FUNCTION ---
       async function generarCorteDeCaja() {
         const hoy = new Date();
         const inicioHoy = new Date(hoy.setHours(0, 0, 0, 0)).toISOString();
@@ -2235,14 +2286,6 @@
         document.getElementById('searchToppings').addEventListener('input', e => renderizarLista(allToppings.filter(p => p.nombre.toLowerCase().includes(e.target.value.toLowerCase())), 'Topping', ['nombre', 'precio']));
         document.getElementById('searchJarabes').addEventListener('input', e => renderizarLista(allJarabes.filter(p => p.nombre.toLowerCase().includes(e.target.value.toLowerCase())), 'Jarabe', ['nombre', 'precio']));
         document.getElementById('searchClientes').addEventListener('input', e => { const s = e.target.value.toLowerCase(); renderizarLista(allClientes.filter(c => c.nombre.toLowerCase().includes(s) || (c.telefono && c.telefono.includes(s))), 'Cliente', ['nombre', 'telefono']); });
-
-        document.getElementById('listaProductos').addEventListener('click', e => { if (e.target.classList.contains('btn-editar-item')) { const item = allProducts.find(i => i.id === e.target.dataset.id); if(item) { document.getElementById('idProducto').value = item.id; document.getElementById('nombreProducto').value = item.nombre; document.getElementById('precioProducto').value = item.precio; } } else if (e.target.classList.contains('btn-eliminar-item')) eliminarItem(e.target.dataset.id, 'Producto'); });
-        document.getElementById('listaToppings').addEventListener('click', e => { if (e.target.classList.contains('btn-editar-item')) { const item = allToppings.find(i => i.id === e.target.dataset.id); if(item) { document.getElementById('idTopping').value = item.id; document.getElementById('nombreTopping').value = item.nombre; document.getElementById('precioTopping').value = item.precio; } } else if (e.target.classList.contains('btn-eliminar-item')) eliminarItem(e.target.dataset.id, 'Topping'); });
-        document.getElementById('listaJarabes').addEventListener('click', e => { if (e.target.classList.contains('btn-editar-item')) { const item = allJarabes.find(i => i.id === e.target.dataset.id); if(item) { document.getElementById('idJarabe').value = item.id; document.getElementById('nombreJarabe').value = item.nombre; document.getElementById('precioJarabe').value = item.precio; } } else if (e.target.classList.contains('btn-eliminar-item')) eliminarItem(e.target.dataset.id, 'Jarabe'); });
-        document.getElementById('listaClientes').addEventListener('click', e => { if (e.target.classList.contains('btn-editar-item')) { const item = allClientes.find(i => i.id === e.target.dataset.id); if(item) { document.getElementById('idCliente').value = item.id; document.getElementById('nombreCliente').value = item.nombre; document.getElementById('telCliente').value = item.telefono || ''; document.getElementById('dirCliente').value = item.direccion || ''; } } else if (e.target.classList.contains('btn-eliminar-item')) eliminarItem(e.target.dataset.id, 'Cliente'); });
-        document.getElementById('listaVentaActual').addEventListener('click', handleVentaItemAction);
-        document.getElementById('toppings-container').addEventListener('click', e => { if(e.target.classList.contains('option-btn')) e.target.classList.toggle('selected'); });
-        document.getElementById('jarabes-container').addEventListener('click', e => { if(e.target.classList.contains('option-btn')) e.target.classList.toggle('selected'); });
         
         const setFechaYRecargar = (start, end) => document.querySelector("#filtroFecha")._flatpickr.setDate([start, end], true);
         document.getElementById('btn-filtro-hoy').addEventListener('click', () => { const hoy = new Date(); setFechaYRecargar(hoy, hoy); });
@@ -2275,7 +2318,11 @@
         document.getElementById('audio-unlock-banner').addEventListener('click', () => { document.getElementById('notification-sound').play(); document.getElementById('audio-unlock-banner').style.display = 'none'; });
       }
       
-      window.app = { toggleAgotado, cancelarPedido, cambiarEstatusPedido, asignarRepartidor };
+      window.app = { 
+          toggleAgotado, cancelarPedido, cambiarEstatusPedido, asignarRepartidor,
+          restaurarItem, eliminarPermanentemente, cambiarEstatus, marcarComoPagado,
+          cambiarFechaVenta, editarVenta, reimprimirTicket, eliminarItem
+      };
 
       await loadPublicConfig();
       localStorage.getItem('token') ? await showApp() : showLogin();
